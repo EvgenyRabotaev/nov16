@@ -134,6 +134,7 @@
   .btn-r.r4 { border-color: #c070ff; color: #f0d8ff; box-shadow: 0 0 14px rgba(180,90,255,.3); }
   .btn-r.r5 { border-color: #ffc44a; color: #ffe9b0; box-shadow: 0 0 14px rgba(255,196,70,.3); }
   .btn-r.r6 { border-color: #ff8a1e; color: #ffd2a8; box-shadow: 0 0 14px rgba(255,130,30,.35); }
+  .btn-r[hidden] { display: none; }
   .btn-r[disabled] { opacity: .4; cursor: default; transform: none; pointer-events: none; box-shadow: none; }
   #poolStatus {
     font-family: "Segoe UI", system-ui, sans-serif;
@@ -388,21 +389,65 @@
     }
   };
 
-  // Превью-пул: только карточки, уже прописанные в этой странице.
-  // Полный набор из QUEST.md сюда пока не добавляем.
+  // Набор карточек — финальные рамки Жени (14.11), папки 3х/4х/5х = ранг. 39 штук.
+  // Картинки: gacha/cards/<id>_<ранг>star.jpg (исходники: cards/framed_in/).
   const CARDS = [
-    { id: 'pizza', rarity: 3, title: 'Пицца', note: '', img: '../cards/pizza_3star.jpg' },
-    { id: 'cooking', rarity: 4, title: 'Совместная готовка', note: '', img: '../cards/cooking_4star.jpg' },
-    { id: 'travel', rarity: 5, title: 'Путешествие', note: '', img: '../cards/travel_5star.jpg' },
-    { id: 'zhenya', rarity: 6, title: 'Женя', note: 'Карточку нарисуем отдельно', img: './star6_placeholder.jpg' }
+    { id: 'cherryjam', rarity: 3, title: 'Вишнёвое варенье', note: '', img: './cards/cherryjam_3star.jpg' },
+    { id: 'treats', rarity: 3, title: 'Вкусняшки', note: '', img: './cards/treats_3star.jpg' },
+    { id: 'greentea', rarity: 3, title: 'Зелёный чай', note: '', img: './cards/greentea_3star.jpg' },
+    { id: 'yogurt', rarity: 3, title: 'Йогурты', note: '', img: './cards/yogurt_3star.jpg' },
+    { id: 'shrimp', rarity: 3, title: 'Креветки', note: '', img: './cards/shrimp_3star.jpg' },
+    { id: 'kfc', rarity: 3, title: 'KFC', note: '', img: './cards/kfc_3star.jpg' },
+    { id: 'olives', rarity: 3, title: 'Оливки', note: '', img: './cards/olives_3star.jpg' },
+    { id: 'beer', rarity: 3, title: 'Пиво', note: '', img: './cards/beer_3star.jpg' },
+    { id: 'pizza', rarity: 3, title: 'Пицца', note: '', img: './cards/pizza_3star.jpg' },
+    { id: 'rolls', rarity: 3, title: 'Роллы', note: '', img: './cards/rolls_3star.jpg' },
+    { id: 'shopping', rarity: 3, title: 'Шопинг', note: '', img: './cards/shopping_3star.jpg' },
+    { id: 'pcs', rarity: 4, title: 'Два компа', note: '', img: './cards/pcs_4star.jpg' },
+    { id: 'heater', rarity: 4, title: 'Грелка', note: '', img: './cards/heater_4star.jpg' },
+    { id: 'card', rarity: 4, title: 'Карта', note: '', img: './cards/card_4star.jpg' },
+    { id: 'club', rarity: 4, title: 'Клуб', note: '', img: './cards/club_4star.jpg' },
+    { id: 'concert', rarity: 4, title: 'Концерт', note: '', img: './cards/concert_4star.jpg' },
+    { id: 'skates', rarity: 4, title: 'Коньки', note: '', img: './cards/skates_4star.jpg' },
+    { id: 'vision', rarity: 4, title: 'Коррекция зрения', note: '', img: './cards/vision_4star.jpg' },
+    { id: 'cooking', rarity: 4, title: 'Совместная готовка', note: '', img: './cards/cooking_4star.jpg' },
+    { id: 'courses', rarity: 4, title: 'Курсы', note: '', img: './cards/courses_4star.jpg' },
+    { id: 'moving', rarity: 4, title: 'Переезд', note: '', img: './cards/moving_4star.jpg' },
+    { id: 'tablet', rarity: 4, title: 'Планшет', note: '', img: './cards/tablet_4star.jpg' },
+    { id: 'therapy', rarity: 4, title: 'Психолог', note: '', img: './cards/therapy_4star.jpg' },
+    { id: 'restaurant', rarity: 4, title: 'Ресторан', note: '', img: './cards/restaurant_4star.jpg' },
+    { id: 'tv', rarity: 4, title: 'ТВ', note: '', img: './cards/tv_4star.jpg' },
+    { id: 'study', rarity: 4, title: 'Учёба', note: '', img: './cards/study_4star.jpg' },
+    { id: 'audi', rarity: 5, title: 'Ауди', note: '', img: './cards/audi_5star.jpg' },
+    { id: 'house', rarity: 5, title: 'Дом', note: '', img: './cards/house_5star.jpg' },
+    { id: 'canada', rarity: 5, title: 'Канада', note: '', img: './cards/canada_5star.jpg' },
+    { id: 'ring', rarity: 5, title: 'Кольцо', note: '', img: './cards/ring_5star.jpg' },
+    { id: 'cunni', rarity: 5, title: 'Куни', note: '', img: './cards/cunni_5star.jpg' },
+    { id: 'massage', rarity: 5, title: 'Массаж', note: '', img: './cards/massage_5star.jpg' },
+    { id: 'newzealand', rarity: 5, title: 'Новая Зеландия', note: '', img: './cards/newzealand_5star.jpg' },
+    { id: 'knife', rarity: 5, title: 'Нож', note: '', img: './cards/knife_5star.jpg' },
+    { id: 'orgasm', rarity: 5, title: 'Оргазм', note: '', img: './cards/orgasm_5star.jpg' },
+    { id: 'travel', rarity: 5, title: 'Путешествие', note: '', img: './cards/travel_5star.jpg' },
+    { id: 'sex', rarity: 5, title: 'Секс', note: '', img: './cards/sex_5star.jpg' },
+    { id: 'ferret', rarity: 5, title: 'Хорёк', note: '', img: './cards/ferret_5star.jpg' },
+    { id: 'japan', rarity: 5, title: 'Япония', note: '', img: './cards/japan_5star.jpg' },
+    // Секретные карточки с числами (QUEST.md): только число, без звёзд и подписи.
+    // Падают в обычной крутке «Крутить» (анимация как у синей), в кнопки цветов не входят.
+    // Смысл чисел пока не раскрываем.
+    { id: 'secret_2039', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_2039.jpg' },
+    { id: 'secret_344', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_344.jpg' },
+    { id: 'secret_577', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_577.jpg' },
+    { id: 'secret_687', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_687.jpg' }
   ];
 
-  const RARITY_WEIGHT = { 3: 55, 4: 30, 5: 12, 6: 3 };
+  const RARITY_WEIGHT = { 3: 55, 4: 30, 5: 12, 6: 3, S: 20 }; // S — секретные карточки (своя группа)
   const STORAGE_KEY = 'quest_gacha_pulled_v1';
   const EMPTY_MSG = 'Все карточки из этого набора уже собраны';
 
   function cardView(card) {
-    return Object.assign({}, FX[card.rarity], card);
+    const v = Object.assign({}, FX[card.rarity], card);
+    if (card.secret) { v.label = ''; v.stars = 0; }
+    return v;
   }
 
   function loadPulled() {
@@ -429,7 +474,7 @@
   }
 
   function remainingOf(rarity) {
-    return remainingCards().filter(c => c.rarity === rarity);
+    return remainingCards().filter(c => c.rarity === rarity && !c.secret);
   }
 
   function markPulled(card) {
@@ -454,7 +499,7 @@
 
     function poolNow() {
       let list = CARDS.filter(c => !taken.has(c.id));
-      if (preferredRarity != null) list = list.filter(c => c.rarity === preferredRarity);
+      if (preferredRarity != null) list = list.filter(c => c.rarity === preferredRarity && !c.secret);
       return list;
     }
 
@@ -464,8 +509,8 @@
         return list[Math.floor(Math.random() * list.length)];
       }
       const byR = {};
-      for (const c of list) (byR[c.rarity] || (byR[c.rarity] = [])).push(c);
-      const rarities = Object.keys(byR).map(Number);
+      for (const c of list) { const g = c.secret ? 'S' : c.rarity; (byR[g] || (byR[g] = [])).push(c); }
+      const rarities = Object.keys(byR);
       const totalW = rarities.reduce((s, r) => s + (RARITY_WEIGHT[r] || 1), 0);
       let roll = Math.random() * totalW;
       let chosenR = rarities[rarities.length - 1];
@@ -496,6 +541,7 @@
     if (btn) btn.disabled = empty || gems < COST;
     if (window.QuestHUD && empty) QuestHUD.showNext('К подаркам');
     document.querySelectorAll('.btn-r').forEach(b => {
+      b.hidden = !CARDS.some(c => c.rarity === +b.dataset.r && !c.secret); /* ранга нет в наборе (6★) — кнопку не показываем */
       b.disabled = remainingOf(+b.dataset.r).length === 0;
     });
     if (status) {
@@ -1259,7 +1305,7 @@
     (async () => {
       await wait(900);
       resetPool();
-      for (const r of [3, 4, 5, 6]) {
+      for (const r of [3, 4, 5, 6].filter(r => CARDS.some(c => c.rarity === r))) {
         await play(r, false);
         await waitUntil(() => !busy, 25000);
         await wait(500);
