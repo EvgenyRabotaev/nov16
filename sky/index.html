@@ -41,11 +41,18 @@
   .skip.show { opacity: .75; pointer-events: auto; }
   .skip.show:hover { opacity: 1; background: rgba(255, 250, 244, .42); }
   @media (max-width: 600px) { .skip { right: calc(10px + env(safe-area-inset-right, 0px)); bottom: calc(58px + env(safe-area-inset-bottom, 0px)); font-size: 13px; padding: 6px 12px; } }
+  /* звук вкл/выкл — левый верх, маленький */
+  .mute { position: fixed; z-index: 9; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); width: 38px; height: 38px; display: none;
+    align-items: center; justify-content: center; padding: 0; border: 1px solid rgba(255, 255, 255, .55); border-radius: 50%; background: rgba(255, 250, 244, .28);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); cursor: pointer; opacity: .8; touch-action: manipulation; }
+  .mute.show { display: flex; }
+  .mute svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 2px rgba(90, 40, 70, .5)); }
+  .mute .off { display: none; } .mute.muted .on { display: none; } .mute.muted .off { display: inline; }
   @keyframes tapPulse { 50% { box-shadow: 0 0 50px rgba(255, 190, 140, 1); } }
 </style>
-<link rel="stylesheet" href="../common/hud.css">
-<script src="../common/quest_config.js"></script>
-<script src="../common/hud.js" data-screen="sky" data-counter="off"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115a">
+<script src="../common/quest_config.js?v=20261115a"></script>
+<script src="../common/hud.js?v=20261115a" data-screen="sky" data-counter="off"></script>
 </head>
 <body>
 <img id="bg" alt="">
@@ -56,6 +63,7 @@
 <div class="caption" id="caption">Летим дальше — вместе</div>
 <div class="veil" id="veil"></div>
 <button type="button" class="skip" id="skipBtn">Пропустить ›</button>
+<button type="button" class="mute" id="muteBtn" aria-label="Звук"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#fff"/><path class="on" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="off" d="M17 9l5 6M22 9l-5 6"/></svg></button>
 <div class="tap-start" id="tapStart">Коснись, чтобы полететь ✨</div>
 <script>
 (function () {
@@ -185,9 +193,10 @@
   }
 
   /* ---------- музыка (необязательно) ---------- */
-  let audio = null;
+  let audio = null, audioFailed = false, lastAT = -1;
   if (CFG.MUSIC && !FAST) {
-    audio = new Audio(); audio.preload = "auto"; audio.src = CFG.MUSIC;
+    audio = new Audio(); audio.preload = "auto"; audio.setAttribute("playsinline", ""); audio.src = CFG.MUSIC + (/[?]/.test(CFG.MUSIC) ? "&" : "?") + "v=20261115a";
+    audio.addEventListener("error", () => { audioFailed = true; });
     audio.addEventListener("loadedmetadata", () => {
       if (isFinite(audio.duration) && audio.duration > 0) { FLIGHT = Math.max(8000, audio.duration * 1000 - RISE - LAND); setTimeline(); }
     });
@@ -201,7 +210,7 @@
     if (t0 == null) { t0 = now; last = now; }
     const rdt = Math.min(50, now - last); const dt = rdt * SPEED; last = now;
     /* время: по музыке, если играет; иначе по часам */
-    if (audio && !skipped && !audio.paused && !audio.ended) clock = audio.currentTime * 1000; else clock += dt;
+    if (audio && !skipped && !audio.paused && !audio.ended && audio.currentTime !== lastAT) { lastAT = audio.currentTime; clock = lastAT * 1000; } else clock += dt;
     const t = clock;
     if (audio && !audio.paused) { const left = T.landEnd - t; audio.volume = Math.max(0, Math.min(1, left / FADE)); if (left <= 0) audio.pause(); }
     skipBtn.classList.toggle("show", !skipped && t > T.enter + 400 && t < T.islandStart);
@@ -272,16 +281,40 @@
   }
   skipBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
   skipBtn.addEventListener("click", (e) => { e.stopPropagation(); skip(); });
+  /* звук вкл/выкл */
+  const muteBtn = document.getElementById("muteBtn");
+  const MKEY = "nov16_sky_muted";
+  function setMuted(m) { if (!audio) return; audio.muted = m; muteBtn.classList.toggle("muted", m); try { localStorage.setItem(MKEY, m ? "1" : "0"); } catch (e) {} }
+  if (audio) { muteBtn.classList.add("show"); setMuted((() => { try { return localStorage.getItem(MKEY) === "1"; } catch (e) { return false; } })()); }
+  muteBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+  muteBtn.addEventListener("click", (e) => { e.stopPropagation(); if (audio.paused && started && !doneShown) audio.play().catch(() => {}); setMuted(!audio.muted); });
+
   let started = false;
-  const start = () => { if (started) return; started = true; tapStart.classList.remove("show"); veil.classList.add("off"); requestAnimationFrame(frame); };
+  const start = () => { if (started) return; started = true; tapStart.classList.remove("show"); veil.classList.remove("half"); veil.classList.add("off"); requestAnimationFrame(frame); };
+  /* Музыка. Жест «Дальше» на прошлой странице на новую загрузку не переносится, поэтому автозапуск со звуком
+     браузер обычно блокирует. Пробуем play(); если отказ (или ответа нет 1.5 с) — «Коснись, чтобы полететь ✨»,
+     и по касанию запускаем музыку и полёт одновременно. Если трек не грузится — летим без музыки. */
+  function askTap() {
+    if (started) return;
+    tapStart.classList.add("show"); veil.classList.add("half");
+    const go = (e) => {
+      if (started) return;
+      ["click", "touchend", "keydown"].forEach((ev) => removeEventListener(ev, go, true));
+      if (audioFailed) { start(); return; }
+      const pr = audio.play();          /* вызов прямо в обработчике жеста — разблокирует звук */
+      start();
+      if (pr && pr.catch) pr.catch(() => { window.__sky.audioBlocked = true; });
+    };
+    ["click", "touchend", "keydown"].forEach((ev) => addEventListener(ev, go, true));
+  }
   function begin() {
-    if (!audio) { start(); return; }
-    /* музыка: пробуем сразу (жест «Дальше» на прошлом экране); если браузер не дал — «коснись, чтобы полететь» */
-    audio.play().then(start, () => {
-      tapStart.classList.add("show"); veil.classList.add("half");
-      const go = () => { audio.play().catch(() => {}); start(); removeEventListener("pointerdown", go); };
-      addEventListener("pointerdown", go);
-    });
+    if (!audio || audioFailed) { start(); return; }
+    let settled = false;
+    const timer = setTimeout(() => { if (!settled) askTap(); }, 1500);
+    let pr;
+    try { pr = audio.play(); } catch (e) { pr = Promise.reject(e); }
+    Promise.resolve(pr).then(() => { settled = true; clearTimeout(timer); start(); },
+      () => { settled = true; clearTimeout(timer); if (audioFailed) start(); else askTap(); });
   }
   Promise.all(["pair.png", "island.png", cur.src].map((src) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = src; }))).then(() => setTimeout(begin, 200));
 })();
