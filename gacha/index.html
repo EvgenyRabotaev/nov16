@@ -320,13 +320,6 @@
   <div class="title">Крутка</div>
   <p class="sub">Открытие за примогемы</p>
   <button class="btn-main" id="btnPull">Крутить · 100</button>
-  <div class="preview-row">
-    <button class="btn-r r3" data-r="3">Синяя · 3★</button>
-    <button class="btn-r r4" data-r="4">Фиолетовая · 4★</button>
-    <button class="btn-r r5" data-r="5">Золотая · 5★</button>
-    <button class="btn-r r6" data-r="6">Оранжевая · 6★</button>
-  </div>
-  <p class="hint">Нажми цвет, чтобы посмотреть падение звезды и открытие карточки. «Крутить» сразу запускает случайную крутку.</p>
   <p id="poolStatus" aria-live="polite"></p>
 </div>
 
@@ -440,8 +433,7 @@
     { id: 'secret_687', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_687.jpg' }
   ];
 
-  const RARITY_WEIGHT = { 3: 55, 4: 30, 5: 12, 6: 3, S: 20 }; // S — секретные карточки (своя группа)
-  const STORAGE_KEY = 'quest_gacha_pulled_v1';
+    const STORAGE_KEY = 'quest_gacha_pulled_v1';
   const EMPTY_MSG = 'Все карточки из этого набора уже собраны';
 
   function cardView(card) {
@@ -508,18 +500,8 @@
       if (preferredRarity != null) {
         return list[Math.floor(Math.random() * list.length)];
       }
-      const byR = {};
-      for (const c of list) { const g = c.secret ? 'S' : c.rarity; (byR[g] || (byR[g] = [])).push(c); }
-      const rarities = Object.keys(byR);
-      const totalW = rarities.reduce((s, r) => s + (RARITY_WEIGHT[r] || 1), 0);
-      let roll = Math.random() * totalW;
-      let chosenR = rarities[rarities.length - 1];
-      for (const r of rarities) {
-        roll -= (RARITY_WEIGHT[r] || 1);
-        if (roll <= 0) { chosenR = r; break; }
-      }
-      const group = byR[chosenR];
-      return group[Math.floor(Math.random() * group.length)];
+      // 14.11: полный рандом — каждая оставшаяся карточка (включая секретные) с равной вероятностью.
+      return list[Math.floor(Math.random() * list.length)];
     }
 
     const available = preferredRarity != null ? remainingOf(preferredRarity).length : remainingCards().length;
@@ -540,10 +522,6 @@
     const status = document.getElementById('poolStatus');
     if (btn) btn.disabled = empty || gems < COST;
     if (window.QuestHUD && empty) QuestHUD.showNext('К подаркам');
-    document.querySelectorAll('.btn-r').forEach(b => {
-      b.hidden = !CARDS.some(c => c.rarity === +b.dataset.r && !c.secret); /* ранга нет в наборе (6★) — кнопку не показываем */
-      b.disabled = remainingOf(+b.dataset.r).length === 0;
-    });
     if (status) {
       if (empty) {
         status.textContent = EMPTY_MSG;
@@ -1255,18 +1233,13 @@
   }
 
   document.getElementById('btnClose').addEventListener('click', finishPull);
+  // Отладка: gacha/index.html?rank=3|4|5 — «Крутить» тянет только этот ранг (Вике не видно).
+  const DEBUG_RANK = (location.search.match(/[?&]rank=([3-6])/) || [])[1] ? +location.search.match(/[?&]rank=([3-6])/)[1] : null;
   document.getElementById('btnPull').addEventListener('click', () => {
     if (busy) return;
     if (remainingCards().length === 0) { updatePoolUI(); return; }
     if (gems < COST) return;
-    play(null, true);
-  });
-  document.querySelectorAll('.btn-r').forEach(b => {
-    b.addEventListener('click', () => {
-      if (busy) return;
-      if (remainingOf(+b.dataset.r).length === 0) { updatePoolUI(); return; }
-      play(+b.dataset.r, false);
-    });
+    play(DEBUG_RANK, true);
   });
 
   function loop(now) {
