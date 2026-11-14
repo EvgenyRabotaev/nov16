@@ -11,7 +11,6 @@ window.QUEST_CONFIG = {
     { id: "start",        path: "start/",                 theme: "quest",      title: "Старт" },
     { id: "pubg-skin",    path: "pubg/skin.html",         theme: "pubg",       title: "Выбор скина" },
     { id: "pubg-flight",  path: "pubg/flight.html",       theme: "pubg",       title: "Полёт" },
-    { id: "pubg-landing", path: "pubg/landing.html",      theme: "pubg",       title: "Прыжок и приземление" },
     { id: "pubg-zone",    path: "pubg/zone.html",         theme: "pubg",       title: "Зоны: вопросы 1–8, аирдроп после 6-го, снайпер, победа" },
     { id: "minecraft",    path: "minecraft/house.html",   theme: "minecraft",  title: "Наш дом" },
     { id: "subnautica",   path: "subnautica/transition.html", theme: "subnautica", title: "Подводный мир" },
