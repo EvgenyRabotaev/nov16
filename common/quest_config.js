@@ -14,6 +14,7 @@ window.QUEST_CONFIG = {
     { id: "pubg-zone",    path: "pubg/zone.html",         theme: "pubg",       title: "Зоны: вопросы 1–8, аирдроп после 6-го, снайпер, победа" },
     { id: "sky",          path: "sky/index.html",         theme: "quest",      title: "Переход: полёт по ветру (в духе Sky)" },
     { id: "minecraft",    path: "minecraft/house.html",   theme: "minecraft",  title: "Наш дом" },
+    { id: "boat",         path: "boat/index.html",        theme: "minecraft",  title: "Переход: плывём на лодке к капсуле" },
     { id: "subnautica",   path: "subnautica/transition.html", theme: "subnautica", title: "Подводный мир" },
     { id: "genshin",      path: "genshin/index.html",     theme: "genshin",    title: "Тейват" },
     { id: "finale",       path: "finale/index.html",      theme: "quest",      title: "Финал" },
@@ -95,7 +96,12 @@ window.QUEST_CONFIG = {
       { after: 3, id: "walls_roof", craft: "crafting_table", hint: "Скрафти верстак",          title: "Стены и крыша",        img: "bg_stage2.jpg" },
       { after: 4, id: "windows",    craft: "bed",            hint: "Скрафти кровать",          title: "Окна и свет",          img: "bg_stage3.jpg" },
       { after: 5, id: "blue",       craft: "blue_dye",       hint: "Скрафти синий краситель",  title: "Голубые стены",        img: "bg_stage4.jpg", wallColor: "#9EC5E8" }
-    ]
+    ],
+    /* Выход из Майна (15.11): после сердечка «Дальше» → вопрос (без примогемов) → крафт лодки → boat/. */
+    EXIT: {
+      question: { id: "mc-exit", text: "Двигаемся дальше?", parts: [{ accept: ["да"] }] },
+      craft: "boat", hint: "Скрафти лодку"
+    }
   },
 
   /* События на переходах между фазами PUBG (pubg/zone.html).
@@ -202,6 +208,10 @@ window.QUEST_CONFIG = {
     "minecraft:craft3": "Четыре доски квадратом 2×2",
     "minecraft:craft4": "Сверху три шерсти, под ними три доски",
     "minecraft:craft5": "Василёк в любую клетку",
+    "minecraft:exit": "Просто ответь «да» 🙂",
+    "boat:sail": "Просто смотри, как мы плывём ⛵ Можно нажать «Пропустить»",
+    "boat:confirm": "Жми «Заходим» — дальше подводный мир",
+    "minecraft:craftboat": "Пять досок буквой U: в среднем ряду — по краям, в нижнем — все три",
     // "subnautica:loc2": "…",
   },
 
@@ -214,6 +224,17 @@ window.QUEST_CONFIG = {
     FLIGHT_MS: 30000,
     RISE_MS: 2600,
     LAND_MS: 2600,
+    FADE_MS: 3000
+  },
+
+  /* Переход «на лодке к капсуле» (boat/index.html) — как SKY.
+     MUSIC: путь от папки boat/ или URL; пусто — без музыки. С музыкой: плавание = длина трека − ENTER_MS − ARRIVE_MS.
+     Без музыки: плавание SAIL_MS. */
+  BOAT: {
+    MUSIC: "",
+    SAIL_MS: 22000,
+    ENTER_MS: 1800,
+    ARRIVE_MS: 4500,
     FADE_MS: 3000
   },
 

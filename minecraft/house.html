@@ -70,10 +70,10 @@
     .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 10px; max-height: 32vh; }
   }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115b">
-<script src="../common/quest_config.js?v=20261115b"></script>
-<script src="../common/hud.js?v=20261115b" data-screen="minecraft"></script>
-<script src="craft.js?v=20261115b"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115c">
+<script src="../common/quest_config.js?v=20261115c"></script>
+<script src="../common/hud.js?v=20261115c" data-screen="minecraft"></script>
+<script src="craft.js?v=20261115c"></script>
 </head>
 <body>
 <div class="scene" id="scene">
@@ -100,6 +100,9 @@
   const CFG = window.QUEST_CONFIG || {};
   const QUESTIONS = (CFG.QUESTIONS && CFG.QUESTIONS.minecraft) || [];
   const MC = CFG.MINECRAFT || {};
+  const EXIT = MC.EXIT || null;     /* выход из Майна: вопрос «Двигаемся дальше?» → крафт лодки → boat/ */
+  let exitMode = false;
+  const curQ = () => exitMode ? EXIT.question : QUESTIONS[question];
   const N = Math.max(1, QUESTIONS.length);
 
   /* Раскладка: середину (~34% ширины) держим под будущий дом. */
@@ -262,7 +265,23 @@
   }
   function finish() {
     done = true;
-    finale().then(() => { busy = false; if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); } window.__mcDone = true; });
+    finale().then(() => { busy = false; if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше", EXIT ? { onClick: startExit } : undefined); } window.__mcDone = true; });
+  }
+  /* «Дальше» после сердечка → вопрос «Двигаемся дальше?» (без примогемов) */
+  function startExit() {
+    if (!EXIT) { QuestHUD.next(); return; }
+    if (window.QuestHUD) QuestHUD.hideNext();
+    exitMode = true; busy = false; render();
+  }
+  async function exitCorrect() {
+    await new Promise((r) => setTimeout(r, 650));
+    panel.classList.add("hidden");
+    if (window.QuestHUD) QuestHUD.setStep("craft" + EXIT.craft);
+    if (window.MCCraft) await MCCraft.open({ craft: EXIT.craft, hint: EXIT.hint });
+    sparkle(vika, 12); sparkle(zhenya, 12);
+    window.__mcBoat = true;
+    await new Promise((r) => setTimeout(r, 1100));
+    if (window.QuestHUD) QuestHUD.next();
   }
 
   function ease(t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
@@ -355,10 +374,10 @@
   function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
   function render() {
-    const q = QUESTIONS[question];
-    qNum.textContent = "Вопрос " + (question + 1) + " из " + QUESTIONS.length;
+    const q = curQ();
+    qNum.textContent = exitMode ? "Новый путь" : "Вопрос " + (question + 1) + " из " + QUESTIONS.length;
     answerInputs.innerHTML = ""; ansMsg.textContent = ""; ansMsg.className = "ans-msg";
-    if (window.QuestHUD) QuestHUD.setStep("q" + (question + 1));
+    if (window.QuestHUD) QuestHUD.setStep(exitMode ? "exit" : "q" + (question + 1));
     if (!q) { qText.textContent = "(вопрос — заглушка)"; return; }
     qText.innerHTML = esc(q.text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
     qText.scrollTop = 0;
@@ -379,6 +398,7 @@
   }
 
   async function onCorrect() {
+    if (exitMode) { exitCorrect(); return; }
     const q = QUESTIONS[question];
     if (window.QuestHUD && q) QuestHUD.award(q.id || ("mc-q" + (question + 1)), q.placeholder ? 0 : undefined); /* заглушки — без примогемов */
     await new Promise((r) => setTimeout(r, 650));
@@ -395,8 +415,8 @@
   }
 
   function submit() {
-    if (busy || done) return;
-    const q = QUESTIONS[question];
+    if (busy || (done && !exitMode)) return;
+    const q = curQ();
     const inputs = [...answerInputs.querySelectorAll(".ans-input")];
     if (!q || !window.QuestHUD) { busy = true; onCorrect(); return; }
     const r = QuestHUD.checkAnswer(q, inputs.map((i) => i.value));
@@ -426,9 +446,18 @@
   layout();
   window.__mc = { get state() { return { question, step, shown, busy, done, n: QUESTIONS.length, houseLevel }; }, layout };
 
-  /* Отладка: house.html?craft=N (N = 2…5) — сразу крафт после вопроса N (предыдущие этапы дома уже стоят). */
+  /* Отладка: house.html?craft=N (N = 2…5) — сразу крафт после вопроса N (предыдущие этапы дома уже стоят).
+     house.html?exit=1 — сразу вопрос «Двигаемся дальше?»; house.html?craft=boat — сразу крафт лодки. */
   const CRAFT_DEBUG = +((location.search.match(/[?&]craft=(\d)/) || [])[1] || 0);
-  if (CRAFT_DEBUG >= 2 && stageAfter(CRAFT_DEBUG)) {
+  const EXIT_DEBUG = EXIT && (/[?&]exit=1/.test(location.search) ? "q" : /[?&]craft=boat/.test(location.search) ? "craft" : "");
+  if (EXIT_DEBUG) {
+    question = QUESTIONS.length; step = shown = N; done = true;
+    vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
+    STAGES.forEach((st) => applyStage(st, true));
+    together = 1; layout(); heartEl.classList.add("on");
+    if (EXIT_DEBUG === "q") setTimeout(startExit, 500);
+    else { exitMode = true; busy = true; setTimeout(exitCorrect, 500); }
+  } else if (CRAFT_DEBUG >= 2 && stageAfter(CRAFT_DEBUG)) {
     question = CRAFT_DEBUG - 1; step = shown = CRAFT_DEBUG;
     vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
     STAGES.filter((st) => st.after < CRAFT_DEBUG).forEach((st) => applyStage(st, true));

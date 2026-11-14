@@ -92,6 +92,11 @@
       const rows = ["....XX......", "...XbBX..XX.", "..XbBbbXXbBX", "..XbbbdXbbdX", ".XXbddX.XdX.", "XbBXXX..XXX.", "XbbdX..XBbX.", ".XddX.XbbdX.", "..XX..XXddX.", "........XX.."];
       rows.forEach((r, y) => [...r].forEach((ch, x) => { const c = { X: "#0f1d5a", b: "#2a4fc8", B: "#6f8ff0", d: "#1c3796" }[ch]; if (c) { ctx.fillStyle = c; ctx.fillRect(x + 2, y + 3, 1, 1); } }));
     },
+    boat(ctx) {
+      // лодка как предмет в Майне: деревянный корпус-«корыто» и весло
+      const rows = ["................", "............Xo..", "...........XoX..", "..........XoX...", ".X.......XoX..X.", "XbX.....XoX..XbX", "XbbXXXXXXXXXXbbX", "XbBbbbBbbbbBbbbX", "XbbbbbbbbbbbbbbX", ".XdbbBbbbbbBbdX.", "..XddddddddddX..", "...XXXXXXXXXX..."];
+      rows.forEach((r, y) => [...r].forEach((ch, x) => { const c = { X: "#2b1d0f", b: "#a8804b", B: "#8a6638", d: "#6e4f2c", o: "#c9a26b" }[ch]; if (c) { ctx.fillStyle = c; ctx.fillRect(x, y + 2, 1, 1); } }));
+    },
     bed(ctx) {
       // кровать сбоку: белое одеяло, голубая подушка, деревянная рама
       ctx.fillStyle = "#2b1d0f"; ctx.fillRect(1, 6, 14, 1); ctx.fillRect(1, 6, 1, 7); ctx.fillRect(14, 6, 1, 7);
@@ -111,14 +116,15 @@
     return (ICONS[id] = c.toDataURL());
   }
 
-  const NAMES = { log: "Бревно", planks: "Доски", stick: "Палка", cobblestone: "Булыжник", crafting_table: "Верстак", wool: "Шерсть", bed: "Кровать", cornflower: "Василёк", lapis: "Лазурит", blue_dye: "Синий краситель" };
+  const NAMES = { log: "Бревно", planks: "Доски", stick: "Палка", cobblestone: "Булыжник", crafting_table: "Верстак", wool: "Шерсть", bed: "Кровать", cornflower: "Василёк", lapis: "Лазурит", blue_dye: "Синий краситель", boat: "Лодка" };
 
   /* Рецепты (форма может стоять в любом месте сетки, как в игре). */
   const RECIPES = {
     planks: { patterns: [["L"]], key: { L: "log" }, count: 4, inv: [["log", 1], ["stick", 2], ["cobblestone", 3]] },
     crafting_table: { patterns: [["PP", "PP"]], key: { P: "planks" }, count: 1, inv: [["planks", 4], ["stick", 2], ["cobblestone", 2]] },
     bed: { patterns: [["WWW", "PPP"]], key: { W: "wool", P: "planks" }, count: 1, inv: [["wool", 3], ["planks", 3], ["stick", 1], ["cobblestone", 2]] },
-    blue_dye: { patterns: [["F"], ["Z"]], key: { F: "cornflower", Z: "lapis" }, count: 1, inv: [["cornflower", 1], ["stick", 1], ["cobblestone", 2]] }
+    blue_dye: { patterns: [["F"], ["Z"]], key: { F: "cornflower", Z: "lapis" }, count: 1, inv: [["cornflower", 1], ["stick", 1], ["cobblestone", 2]] },
+    boat: { patterns: [["P.P", "PPP"]], key: { P: "planks", ".": null }, count: 1, inv: [["planks", 5], ["stick", 2], ["cobblestone", 2]] }
   };
 
   function trim(grid) {
@@ -200,7 +206,7 @@
       const grid = Array(9).fill(null);
       const inv = Array(9).fill(null).map((_, i) => recipe.inv[i] ? { id: recipe.inv[i][0], n: recipe.inv[i][1] } : null);
       let fails = 0, wasFull = false, ghost = null, sel = null, finished = false, showRecipe = false;
-      const need = recipe.patterns[0].join("").length;
+      const need = recipe.patterns[0].join("").replace(/\./g, "").length;
       const gridSlots = [], invSlots = [];
       for (let i = 0; i < 9; i++) { const s = document.createElement("div"); s.className = "mc-slot"; s.dataset.k = "g" + i; gridEl.appendChild(s); gridSlots.push(s); }
       for (let i = 0; i < 9; i++) { const s = document.createElement("div"); s.className = "mc-slot"; s.dataset.k = "i" + i; invEl.appendChild(s); invSlots.push(s); }

@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Плывём к капсуле</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='8' width='12' height='4' fill='%23a8804b'/%3E%3Crect y='12' width='16' height='4' fill='%233f76e4'/%3E%3C/svg%3E">
+<style>
+  /* Переход Майнкрафт → Сабнавтика (15.11): пиксельные Вика и Женя плывут на лодке (Женя гребёт), в конце — спасательная капсула
+     на воде (оригинальная пиксельная графика в духе Subnautica). Всё рисуется кодом в маленьком canvas и масштабируется «пикселями».
+     Длительность и музыка — QUEST_CONFIG.BOAT (как SKY). Отладка: boat/index.html?fast=1 — ×4 быстрее, без музыки. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #6fa8ff; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  #view { position: fixed; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .veil { position: fixed; inset: 0; z-index: 8; pointer-events: none; background: #0b1020; opacity: 1; transition: opacity 1.4s ease; }
+  .veil.off { opacity: 0; }
+  .veil.half { opacity: .45; }
+  .caption { position: fixed; left: 50%; top: calc(18px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 7; pointer-events: none; text-align: center;
+    font: 700 clamp(16px, 2.2vw, 24px)/1.25 "Courier New", "DejaVu Sans Mono", monospace; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; opacity: 0; transition: opacity 1.2s ease; width: min(92vw, 640px); }
+  .caption.on { opacity: 1; }
+  .tap-start { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 9; display: none; padding: 14px 24px; cursor: pointer;
+    font: 700 19px/1.2 "Courier New", "DejaVu Sans Mono", monospace; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; background: #8b8b8b; border: 3px solid #1b1b1b; box-shadow: inset 3px 3px 0 #c6c6c6, inset -3px -3px 0 #555; }
+  .tap-start.show { display: block; animation: tapPulse 1.6s ease-in-out infinite; }
+  @keyframes tapPulse { 50% { transform: translate(-50%, -50%) scale(1.05); } }
+  .skip { position: fixed; z-index: 9; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    padding: 7px 14px; border: 2px solid rgba(20, 20, 20, .6); background: rgba(139, 139, 139, .55); color: #fff; font: 700 14px/1.2 "Courier New", "DejaVu Sans Mono", monospace;
+    text-shadow: 1px 1px 0 #333; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .8s ease; touch-action: manipulation; }
+  .skip.show { opacity: .8; pointer-events: auto; }
+  .skip.show:hover { opacity: 1; }
+  @media (max-width: 600px) { .skip { right: calc(10px + env(safe-area-inset-right, 0px)); bottom: calc(58px + env(safe-area-inset-bottom, 0px)); font-size: 13px; padding: 6px 11px; } }
+  .mute { position: fixed; z-index: 9; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); width: 38px; height: 38px; display: none;
+    align-items: center; justify-content: center; padding: 0; border: 2px solid rgba(20, 20, 20, .6); background: rgba(139, 139, 139, .55); cursor: pointer; touch-action: manipulation; }
+  .mute.show { display: flex; }
+  .mute svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: square; }
+  .mute .off { display: none; } .mute.muted .on { display: none; } .mute.muted .off { display: inline; }
+  /* окно подтверждения — в стиле КПК Сабнавтики (следующий мир) */
+  .confirm { position: fixed; inset: 0; z-index: 12; display: flex; align-items: flex-end; justify-content: center; padding: 20px 20px calc(78px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent 45%, rgba(2, 12, 24, .45));
+    opacity: 0; pointer-events: none; transition: opacity .6s ease; }
+  .confirm.show { opacity: 1; pointer-events: auto; }
+  .pda { width: min(420px, 100%); padding: 22px 22px 20px; text-align: center; color: #dff9ff; border: 1.5px solid rgba(90, 230, 255, .8); border-radius: 14px;
+    background: linear-gradient(180deg, rgba(8, 38, 58, .92), rgba(4, 20, 36, .94)); box-shadow: 0 0 30px rgba(60, 200, 255, .45), inset 0 0 22px rgba(60, 200, 255, .18);
+    font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif; transform: translateY(14px) scale(.96); transition: transform .6s cubic-bezier(.2, 1.4, .4, 1); }
+  .confirm.show .pda { transform: none; }
+  .pda .tag { font-size: 12px; letter-spacing: .28em; color: #5ae6ff; margin-bottom: 10px; }
+  .pda h2 { margin: 0 0 6px; font-size: 24px; font-weight: 600; }
+  .pda p { margin: 0 0 18px; font-size: 14px; color: #a9dbe8; }
+  .pda button { appearance: none; cursor: pointer; min-width: 170px; padding: 12px 26px; font: 600 16px/1 "Segoe UI", system-ui, sans-serif; letter-spacing: .08em; color: #04202e;
+    background: linear-gradient(180deg, #8ff1ff, #3cc8ef); border: 0; border-radius: 999px; box-shadow: 0 0 18px rgba(90, 230, 255, .7); }
+  .pda button:hover { filter: brightness(1.08); }
+</style>
+<link rel="stylesheet" href="../common/hud.css?v=20261115c">
+<script src="../common/quest_config.js?v=20261115c"></script>
+<script src="../common/hud.js?v=20261115c" data-screen="boat" data-counter="off"></script>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div class="caption" id="caption">К новому миру — вместе</div>
+<div class="veil" id="veil"></div>
+<button type="button" class="skip" id="skipBtn">Пропустить ›</button>
+<button type="button" class="mute" id="muteBtn" aria-label="Звук"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#fff" stroke="none"/><path class="on" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="off" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+<div class="tap-start" id="tapStart">Коснись, чтобы поплыть ⛵</div>
+<div class="confirm" id="confirm"><div class="pda">
+  <div class="tag">СПАСАТЕЛЬНАЯ КАПСУЛА</div>
+  <h2>Заходим в капсулу?</h2>
+  <p>Впереди — подводный мир.</p>
+  <button type="button" id="enterBtn">Заходим</button>
+</div></div>
+<script>
+(function () {
+  "use strict";
+  const CFG = (window.QUEST_CONFIG && window.QUEST_CONFIG.BOAT) || {};
+  const FAST = /[?&]fast=1/.test(location.search);
+  const SPEED = FAST ? 4 : 1;
+  const ENTER = CFG.ENTER_MS || 1800, ARRIVE = CFG.ARRIVE_MS || 4500;
+  let FADE = CFG.FADE_MS || 3000, SAIL = CFG.SAIL_MS || 22000, skipped = false;
+  const T = {};
+  function setTimeline() {
+    if (skipped) return;
+    T.enter = ENTER; T.arrive = ENTER + SAIL; T.end = T.arrive + ARRIVE;
+  }
+  setTimeline();
+
+  /* ---------- холст: мир в «пикселях», масштаб P ---------- */
+  const view = document.getElementById("view"), ctx = view.getContext("2d");
+  let W, H, P, LW, LH, portrait, HOR, WL, BX;
+  function resize() {
+    W = innerWidth; H = innerHeight; portrait = H > W * 1.1;
+    P = Math.max(2, Math.floor(portrait ? W / 84 : Math.min(W / 160, H / 92)));
+    LW = Math.ceil(W / P); LH = Math.ceil(H / P);
+    view.width = LW; view.height = LH;
+    view.style.width = LW * P + "px"; view.style.height = LH * P + "px";
+    ctx.imageSmoothingEnabled = false;
+    HOR = Math.round(LH * (portrait ? 0.44 : 0.42));                 /* горизонт */
+    WL = Math.round(HOR + (LH - HOR) * (portrait ? 0.3 : 0.36));      /* ватерлиния лодки */
+    BX = Math.round((LW - (BL + 3 + POD_W)) / 2);                     /* левый край лодки: в конце лодка+капсула по центру */
+    makeIslands();
+  }
+
+  /* ---------- маленький рандом ---------- */
+  function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+  const rect = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w, h); };
+  function sprite(rows, pal) {   /* строки-карта → canvas */
+    const c = document.createElement("canvas"); c.width = Math.max(...rows.map((r) => r.length)); c.height = rows.length;
+    const g = c.getContext("2d");
+    rows.forEach((r, y) => [...r].forEach((ch, x) => { if (pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); } }));
+    return c;
+  }
+  function lerpC(a, b, t) { const p = (h) => [1, 3, 5].map((i) => parseInt(h.substr(i, 2), 16)); const A = p(a), B = p(b); return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")"; }
+
+  /* ---------- персонажи (как в Майне: Вика — кудри, очки, бантик, чёрное платье, букет; Женя — тёмные волосы, борода, чёрная футболка) ---------- */
+  const VIKA = sprite([
+    "...hHHHHh...",
+    "RR.HHHHHHH..",
+    "RRRHHhHHHHH.",
+    ".RHHHHHHHHHH",
+    ".HHSSSSSSHHH",
+    ".HGGGGGGGGHH",
+    ".HGEwGGEwGHH",
+    "HHGGGSSGGGHH",
+    "HHHSSSSSSHHH",
+    "HHHSSmmSSHHH",
+    "HHHHSSSSHHHH",
+    "HHHDDDDDDHHH",
+    "HHDDDDDDDDHH",
+    ".HDDYPLPBDH.",
+    ".HDSLPYPSDH.",
+    "..DDDLLDDD.."
+  ], { H: "#4a2a18", h: "#7a4a2a", R: "#c4161c", S: "#e9b895", G: "#2a1a12", E: "#6b4a3a", w: "#cfe3ff", m: "#c0504d", D: "#151515", P: "#ff7fb6", Y: "#ffe066", B: "#6f8ff0", L: "#4f9a33" });
+  const ZHENYA_HEAD = sprite([
+    ".HHHHHHHH.",
+    ".HHHhHHHH.",
+    ".HSSSSSSH.",
+    "sSSSSSSSSs",
+    "sSwiSSiwSs",
+    ".SSSssSSS.",
+    ".BSBmmBSB.",
+    ".BBBBBBBB."
+  ], { H: "#2e211a", h: "#4a372b", S: "#e5b48e", s: "#c9926c", w: "#ffffff", i: "#3f7a4a", B: "#4e3626", m: "#a8564a" });
+  const ZHENYA_BODY = sprite([
+    "TTTTTTTTTT",
+    "TTTTTTTTTT",
+    "TTTTtTTTTT",
+    "TTTTTTTTTT"
+  ], { T: "#161616", t: "#2a2a2a" });
+
+  /* ---------- лодка (как в Майне: доски) ---------- */
+  const BL = 46;   /* длина */
+  const BOAT = (() => {
+    const rows = [];
+    for (let y = 0; y < 8; y++) {
+      const inset = y < 4 ? 0 : y - 3;
+      let r = "";
+      for (let x = 0; x < BL; x++) {
+        if (x < inset || x >= BL - inset) { r += "."; continue; }
+        let ch = "b";
+        if (y === 0) ch = "r";
+        else if (y === 7 || x === inset || x === BL - 1 - inset) ch = "d";
+        else if (y === 3 || ((x + (y > 3 ? 6 : 0)) % 12 === 0)) ch = "l";
+        else if ((x * 7 + y * 13) % 11 === 0) ch = "B";
+        r += ch;
+      }
+      rows.push(r);
+    }
+    return sprite(rows, { b: "#a8804b", B: "#b8925a", l: "#7a5a32", d: "#5b4128", r: "#6e4f2c" });
+  })();
+
+  /* ---------- капсула (оригинальная пиксельная, в духе Lifepod 5): белый корпус, оранжевый пояс, люк, маячок, поплавок ---------- */
+  const POD_W = 30;
+  const POD = (() => {
+    const c = document.createElement("canvas"); c.width = POD_W; c.height = 34; const g = c.getContext("2d");
+    const cx = 15;
+    for (let y = 6; y < 30; y++) {
+      const half = y < 13 ? Math.round(5 + Math.sqrt(Math.max(0, 49 - (13 - y) * (13 - y))) * 0.95) : 11;
+      for (let x = cx - half; x < cx + half; x++) {
+        const u = (x - (cx - half)) / (2 * half);
+        let col = u < 0.18 ? "#ffffff" : u > 0.78 ? "#aeb6bd" : u > 0.6 ? "#cdd3d8" : "#e8ecef";
+        if (y >= 17 && y <= 19) col = u > 0.78 ? "#c96a12" : u < 0.18 ? "#ffb04a" : "#f08a1c";          /* оранжевый пояс */
+        if (y === 20 && ((x + y) % 4 < 2)) col = "#2b2b2b";                                               /* предупреждающие полосы */
+        if (y === 20 && ((x + y) % 4 >= 2)) col = "#f7c531";
+        g.fillStyle = col; g.fillRect(x, y, 1, 1);
+      }
+    }
+    /* люк сверху и кольцо */
+    rect(g, 9, 6, 12, 1, "#7d868d"); rect(g, 10, 5, 10, 1, "#9aa3aa"); rect(g, 11, 4, 8, 1, "#b8c0c6"); rect(g, 12, 3, 6, 1, "#7d868d");
+    /* антенна и маячок */
+    rect(g, 21, 0, 1, 6, "#5d656b");
+    /* иллюминатор */
+    rect(g, 6, 11, 4, 3, "#1c4a66"); rect(g, 7, 10, 2, 5, "#1c4a66"); rect(g, 7, 11, 1, 1, "#7fe3ff"); rect(g, 6, 11, 1, 3, "#4d5a63");
+    /* «16» — наш день */
+    const D = { 1: [".#", "##", ".#", ".#", "###"], 6: ["###", "#..", "###", "#.#", "###"] };
+    [[1, 13], [6, 17]].forEach(([d, x0]) => D[d].forEach((r, y) => [...r].forEach((ch, x) => { if (ch === "#") rect(g, x0 + x, 22 + y, 1, 1, "#4a535a"); })));
+    /* поплавок у воды */
+    for (let x = 1; x < POD_W - 1; x++) { rect(g, x, 29, 1, 1, "#3a3f44"); rect(g, x, 30, 1, 1, x % 6 < 3 ? "#f7c531" : "#2f3438"); rect(g, x, 31, 1, 1, "#24282c"); }
+    rect(g, 0, 30, 1, 1, "#24282c"); rect(g, POD_W - 1, 30, 1, 1, "#24282c");
+    return c;
+  })();
+
+  /* ---------- острова и облака (блочные) ---------- */
+  let islands = [];
+  function makeIsland(r, far) {
+    const w = 18 + Math.floor(r() * (far ? 30 : 24)), hgt = 3 + Math.floor(r() * 4);
+    const c = document.createElement("canvas"); c.width = w + 2; c.height = hgt + 16; const g = c.getContext("2d");
+    const base = c.height - 1;
+    const tone = far ? 0.55 : 0;
+    const mix = (col) => lerpC(col, "#a9c9f0", tone);
+    let top = [];
+    for (let x = 0; x < w; x++) { const edge = Math.min(x, w - 1 - x); top.push(base - Math.min(hgt, 1 + Math.floor(edge / 2) + (r() < 0.3 ? 1 : 0))); }
+    top.forEach((ty, x) => { for (let y = ty; y <= base; y++) rect(g, x + 1, y, 1, 1, mix(y === ty ? "#5fae3a" : y < ty + 2 ? "#7a5a3a" : y >= base - 1 ? "#e3d39a" : "#8a6a48")); });
+    const trees = 1 + Math.floor(r() * 3);
+    for (let i = 0; i < trees; i++) {
+      const tx = 3 + Math.floor(r() * (w - 6)), ty = top[tx];
+      const th = 3 + Math.floor(r() * 3);
+      rect(g, tx + 1, ty - th, 1, th, mix("#6b4f2a"));
+      for (let yy = -2; yy <= 1; yy++) for (let xx = -2; xx <= 2; xx++) if (Math.abs(xx) + Math.abs(yy) < 4 && r() < 0.9) rect(g, tx + 1 + xx, ty - th - 1 + yy, 1, 1, mix(r() < 0.3 ? "#3f8a2a" : "#2f7a24"));
+    }
+    return c;
+  }
+  function makeIslands() {
+    const r = rng(1611);
+    islands = [];
+    for (let i = 0; i < 7; i++) islands.push({ c: makeIsland(r, true), far: true, x: i * 70 + r() * 40, k: 0.12 });
+    for (let i = 0; i < 5; i++) islands.push({ c: makeIsland(r, false), far: false, x: 40 + i * 120 + r() * 60, k: 0.28 });
+  }
+  const clouds = (() => { const r = rng(77); return Array.from({ length: 9 }, () => ({ x: r() * 600, y: r(), w: 10 + Math.floor(r() * 18), h: 2 + Math.floor(r() * 3), k: 0.05 + r() * 0.04 })); })();
+
+  /* ---------- небо: дневная палитра → к прибытию теплее ---------- */
+  const SKY_A = ["#6ea2f5", "#86b4f7", "#a2c6f8", "#bcd6f8", "#d4e5f8"];
+  const SKY_B = ["#6f8fe0", "#9aa6e6", "#d6a8c8", "#f2b99a", "#ffd9a0"];
+  const WATER_A = ["#3f76e4", "#3669d6", "#2f5ec8", "#2853b8"];
+  const WATER_B = ["#4a6fd0", "#3d60c0", "#3555b0", "#2c4a9e"];
+
+  /* ---------- состояние ---------- */
+  let scroll = 0, clock = 0, last = null, doneShown = false, started = false;
+  const wake = [], splash = [], gulls = [], fish = [];
+  let nextGull = 4000, nextFish = 7000;
+
+  function drawSky(u) {
+    const bands = SKY_A.length;
+    for (let i = 0; i < bands; i++) {
+      const y0 = Math.round(HOR * i / bands), y1 = Math.round(HOR * (i + 1) / bands);
+      const col = lerpC(SKY_A[i], SKY_B[i], u);
+      rect(ctx, 0, y0, LW, y1 - y0, col);
+      if (i < bands - 1) { const nx = lerpC(SKY_A[i + 1], SKY_B[i + 1], u); ctx.fillStyle = nx; for (let x = (i % 2); x < LW; x += 2) ctx.fillRect(x, y1 - 1, 1, 1); }  /* дизеринг */
+    }
+    /* солнце */
+    const sx = Math.round(LW * 0.78), sy = Math.round(HOR * (0.22 + 0.5 * u));
+    rect(ctx, sx - 5, sy - 5, 10, 10, lerpC("#fff6c8", "#ffd27a", u)); rect(ctx, sx - 4, sy - 4, 8, 8, lerpC("#fffbe6", "#ffe3a0", u));
+    /* облака (плоские, как в Майне) */
+    clouds.forEach((c) => {
+      const x = ((c.x - scroll * c.k - clock * 0.0012) % (LW + 60) + LW + 60) % (LW + 60) - 30;
+      const y = Math.round(4 + c.y * HOR * 0.5);
+      ctx.fillStyle = "rgba(255,255,255,.88)"; ctx.fillRect(Math.round(x), y, c.w, c.h);
+      ctx.fillStyle = "rgba(220,230,245,.9)"; ctx.fillRect(Math.round(x), y + c.h, c.w, 1);
+    });
+  }
+  function drawIslands(far) {
+    islands.forEach((is) => {
+      if (is.far !== far) return;
+      const span = far ? 490 : 640;
+      const x = ((is.x - scroll * is.k) % span + span) % span - 40;
+      if (x > LW + 10) return;
+      ctx.drawImage(is.c, Math.round(x), HOR - is.c.height + (far ? 1 : 2));
+    });
+  }
+  function drawWater(u) {
+    const n = WATER_A.length, h = LH - HOR;
+    for (let i = 0; i < n; i++) { const y0 = HOR + Math.round(h * (i / n) ** 1.3), y1 = HOR + Math.round(h * ((i + 1) / n) ** 1.3); rect(ctx, 0, y0, LW, y1 - y0, lerpC(WATER_A[i], WATER_B[i], u)); }
+    rect(ctx, 0, HOR, LW, 1, lerpC("#9cc4ff", "#ffd1a8", u));
+    /* бегущие волны: ближе к зрителю — быстрее и длиннее */
+    for (let y = HOR + 2; y < LH; y += 2) {
+      const d = (y - HOR) / h, sp = 0.25 + d * 1.6, gap = Math.round(14 + d * 26), len = 2 + Math.round(d * 5);
+      const off = Math.floor(scroll * sp + clock * 0.004 * (1 + d)) % gap, ph = (y * 37) % gap;
+      ctx.fillStyle = d < 0.5 ? "rgba(170,205,255,.55)" : "rgba(190,220,255,.6)";
+      for (let x = -gap + ((ph - off) % gap); x < LW; x += gap) ctx.fillRect(x, y, len, 1);
+    }
+  }
+  function drawLine(x0, y0, x1, y1, col, thick) {
+    ctx.fillStyle = col;
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+    for (let i = 0; i <= n; i++) { const x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n); ctx.fillRect(x, y, thick || 1, thick || 1); }
+  }
+
+  function frame(now) {
+    if (last == null) last = now;
+    const rdt = Math.min(50, now - last), dt = rdt * SPEED; last = now;
+    if (audio && !skipped && !audio.paused && !audio.ended && audio.currentTime !== lastAT) { lastAT = audio.currentTime; clock = lastAT * 1000; } else clock += dt;
+    const t = clock;
+    if (audio && !audio.paused) { const left = T.end - t; audio.volume = Math.max(0, Math.min(1, left / FADE)); if (left <= 0) audio.pause(); }
+    skipBtn.classList.toggle("show", !skipped && t > T.enter + 400 && t < T.arrive);
+    const arr = Math.max(0, Math.min(1, (t - T.arrive) / (T.end - T.arrive)));
+    const easeOut = 1 - Math.pow(1 - arr, 3);
+    const speed = 0.024 * (1 - arr * arr * (3 - 2 * arr));           /* «пиксели» за мс; к капсуле — тормозим */
+    scroll += speed * dt;
+    const u = Math.min(1, t / T.end) * 0.55;                           /* к концу — золотой час */
+
+    drawSky(u);
+    drawIslands(true); drawIslands(false);
+    drawWater(u);
+
+    /* чайки и рыбы — для разнообразия */
+    if (t > nextGull) { nextGull = t + 5000 + Math.random() * 5000; gulls.push({ x: LW + 4, y: 6 + Math.random() * HOR * 0.4, v: 0.012 + Math.random() * 0.008, f: Math.random() * 6 }); }
+    for (let i = gulls.length - 1; i >= 0; i--) { const g = gulls[i]; g.x -= g.v * dt + speed * dt * 0.2; if (g.x < -6) { gulls.splice(i, 1); continue; }
+      const up = Math.floor((t / 180 + g.f) % 2); ctx.fillStyle = "#2f2f3a"; ctx.fillRect(Math.round(g.x), Math.round(g.y), 1, 1); ctx.fillRect(Math.round(g.x) - 1, Math.round(g.y) - up, 1, 1); ctx.fillRect(Math.round(g.x) + 1, Math.round(g.y) - up, 1, 1); ctx.fillRect(Math.round(g.x) - 2, Math.round(g.y) - 1 + up, 1, 1); ctx.fillRect(Math.round(g.x) + 2, Math.round(g.y) - 1 + up, 1, 1); }
+    if (t > nextFish && t < T.arrive) { nextFish = t + 6000 + Math.random() * 6000; fish.push({ x0: BX + BL + 20 + Math.random() * Math.max(10, LW - BX - BL - 40), y0: WL + 6 + Math.random() * 10, t0: t }); }
+    for (let i = fish.length - 1; i >= 0; i--) { const f = fish[i], k = (t - f.t0) / 1100; if (k > 1) { fish.splice(i, 1); continue; }
+      const fx = Math.round(f.x0 - k * 14 - (t - f.t0) * speed), fy = Math.round(f.y0 - Math.sin(k * Math.PI) * 12);
+      rect(ctx, fx, fy, 3, 1, "#ff9d3a"); rect(ctx, fx + 3, fy - 1, 1, 3, "#e0782a"); rect(ctx, fx, fy, 1, 1, "#222");
+      if (k < 0.12 || k > 0.88) for (let s = 0; s < 3; s++) rect(ctx, fx - 1 + s * 2, Math.round(f.y0) - Math.round(Math.random() * 2), 1, 1, "#e8f4ff"); }
+
+    /* капсула приплывает справа */
+    let podX = null;
+    if (t > T.arrive - 600) {
+      const target = BX + BL + 3;
+      podX = Math.round(LW + 6 + (target - LW - 6) * easeOut);
+      const bobP = Math.round(Math.sin(t / 900 + 1) * 1);
+      ctx.drawImage(POD, podX, WL - 30 + bobP);
+      /* маячок */
+      if (Math.floor(t / 600) % 2 === 0) { rect(ctx, podX + 20, WL - 31 + bobP, 3, 1, "#ff5a2a"); rect(ctx, podX + 21, WL - 32 + bobP, 1, 3, "#ff5a2a"); }
+      rect(ctx, podX + 1, WL + 2 + bobP, POD_W - 2, 1, "rgba(20,40,90,.35)");
+    }
+
+    /* лодка + герои */
+    const bob = Math.round(Math.sin(t / 650) * 1);
+    const by = WL - 6 + bob;          /* верх борта */
+    const rowing = t > T.enter * 0.6 && arr < 0.85;
+    const ph = rowing ? t / 520 : Math.PI;                                   /* фаза гребка */
+    const zx = BX + 14, vx = BX + 30;                                        /* центры сидений */
+    const lean = rowing ? Math.round(Math.cos(ph) * 1) : 0;
+    /* дальнее весло (за лодкой) */
+    const hand = { x: zx + 3 + Math.round(Math.cos(ph) * 3), y: by - 4 + Math.round(Math.sin(ph) * 1) };
+    const bladeFar = { x: zx - 2 - Math.round(Math.cos(ph) * 7), y: by + 7 + (Math.sin(ph) > 0 ? 0 : -3) - 2 };
+    drawLine(hand.x - 1, hand.y - 1, bladeFar.x - 1, bladeFar.y - 2, "#5b4128");
+    rect(ctx, bladeFar.x - 2, bladeFar.y - 3, 3, 2, "#5b4128");
+    /* Женя */
+    ctx.drawImage(ZHENYA_BODY, zx - 5 + lean, by - 4);
+    ctx.drawImage(ZHENYA_HEAD, zx - 5 + lean, by - 12);
+    /* Вика */
+    ctx.drawImage(VIKA, vx - 6, by - 15);
+    /* корпус лодки */
+    ctx.drawImage(BOAT, BX, by);
+    /* вода перед корпусом + пена у носа */
+    rect(ctx, BX + 4, WL + 2, BL - 8, 1, "rgba(40,83,184,.65)");
+    if (speed > 0.004) { const fz = Math.floor(t / 120) % 3; rect(ctx, BX + BL - 2 + fz, WL - 1, 2, 1, "#e8f4ff"); rect(ctx, BX + BL - 1, WL, 3, 1, "#cfe6ff"); }
+    /* след за лодкой */
+    if (speed > 0.004 && Math.random() < 0.5) wake.push({ x: BX - 1, y: WL - 1 + Math.round(Math.random() * 3), a: 1 });
+    for (let i = wake.length - 1; i >= 0; i--) { const w = wake[i]; w.x -= speed * dt * 1.0 + 0.004 * dt; w.a -= 0.0012 * dt; if (w.a <= 0 || w.x < -2) { wake.splice(i, 1); continue; } ctx.fillStyle = "rgba(232,244,255," + w.a.toFixed(2) + ")"; ctx.fillRect(Math.round(w.x), w.y, 2, 1); }
+    /* ближнее весло и руки Жени */
+    const bladeNear = { x: zx - 3 - Math.round(Math.cos(ph) * 9), y: by + (Math.sin(ph) > 0 ? 11 : 6) };   /* в воде — ниже днища, на возврате — над водой */
+    drawLine(zx - 4 + lean, by - 3, hand.x, hand.y, "#e5b48e", 1);           /* руки к рукояти */
+    drawLine(zx + 4 + lean, by - 3, hand.x + 1, hand.y, "#e5b48e", 1);
+    rect(ctx, zx - 4 + lean, by - 4, 2, 2, "#161616"); rect(ctx, zx + 3 + lean, by - 4, 2, 2, "#161616");  /* рукава */
+    drawLine(hand.x, hand.y, bladeNear.x, bladeNear.y, "#3e2b17");
+    rect(ctx, bladeNear.x - 2, bladeNear.y - 1, 4, 4, "#c9a26b"); rect(ctx, bladeNear.x - 2, bladeNear.y + 2, 4, 1, "#8a6638"); rect(ctx, bladeNear.x - 3, bladeNear.y, 1, 2, "#3e2b17");
+    rect(ctx, hand.x - 1, hand.y, 3, 1, "#c9926c");                          /* кисти */
+    if (rowing && Math.sin(ph) > 0 && Math.sin(ph - 0.25) <= 0) for (let s = 0; s < 4; s++) splash.push({ x: bladeNear.x - 1 + s, y: WL + 1, vy: -0.02 - Math.random() * 0.02, a: 1 });
+    for (let i = splash.length - 1; i >= 0; i--) { const s = splash[i]; s.y += s.vy * dt; s.vy += 0.00012 * dt; s.x -= speed * dt; s.a -= 0.0018 * dt; if (s.a <= 0) { splash.splice(i, 1); continue; } ctx.fillStyle = "rgba(232,244,255," + s.a.toFixed(2) + ")"; ctx.fillRect(Math.round(s.x), Math.round(s.y), 1, 1); }
+
+    if (t > T.end - 1500) caption.classList.add("on");
+    if (t >= T.end && !doneShown) {
+      doneShown = true; window.__boat.done = true;
+      confirmEl.classList.add("show"); if (window.QuestHUD) QuestHUD.setStep("confirm");
+    }
+    Object.assign(window.__boat, { t, scroll, podX, arr });
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- музыка (как в sky) ---------- */
+  let audio = null, audioFailed = false, lastAT = -1;
+  if (CFG.MUSIC && !FAST) {
+    audio = new Audio(); audio.preload = "auto"; audio.setAttribute("playsinline", ""); audio.src = CFG.MUSIC + (/[?]/.test(CFG.MUSIC) ? "&" : "?") + "v=20261115c";
+    audio.addEventListener("error", () => { audioFailed = true; });
+    audio.addEventListener("loadedmetadata", () => { if (isFinite(audio.duration) && audio.duration > 0) { SAIL = Math.max(8000, audio.duration * 1000 - ENTER - ARRIVE); setTimeline(); } });
+  }
+  const veil = document.getElementById("veil"), tapStart = document.getElementById("tapStart"), caption = document.getElementById("caption");
+  const confirmEl = document.getElementById("confirm"), skipBtn = document.getElementById("skipBtn"), muteBtn = document.getElementById("muteBtn");
+  window.__boat = { t: 0, done: false, T, speed: SPEED, music: !!audio, audio, skipped: false };
+
+  function skip() {
+    const t = clock;
+    if (skipped || t < T.enter || t >= T.arrive) return;
+    skipped = true; window.__boat.skipped = true; skipBtn.classList.remove("show");
+    T.arrive = t; T.end = t + 3500; FADE = 3500;
+  }
+  skipBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+  skipBtn.addEventListener("click", (e) => { e.stopPropagation(); skip(); });
+
+  const MKEY = "nov16_boat_muted";
+  function setMuted(m) { if (!audio) return; audio.muted = m; muteBtn.classList.toggle("muted", m); try { localStorage.setItem(MKEY, m ? "1" : "0"); } catch (e) {} }
+  if (audio) { muteBtn.classList.add("show"); setMuted((() => { try { return localStorage.getItem(MKEY) === "1"; } catch (e) { return false; } })()); }
+  muteBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+  muteBtn.addEventListener("click", (e) => { e.stopPropagation(); if (audio.paused && started && !doneShown) audio.play().catch(() => {}); setMuted(!audio.muted); });
+
+  document.getElementById("enterBtn").addEventListener("click", () => { window.__boat.entered = true; if (audio) audio.pause(); if (window.QuestHUD) QuestHUD.next(); });
+
+  const start = () => { if (started) return; started = true; tapStart.classList.remove("show"); veil.classList.remove("half"); veil.classList.add("off"); requestAnimationFrame(frame); };
+  function askTap() {
+    if (started) return;
+    tapStart.classList.add("show"); veil.classList.add("half");
+    const go = () => {
+      if (started) return;
+      ["click", "touchend", "keydown"].forEach((ev) => removeEventListener(ev, go, true));
+      if (audioFailed) { start(); return; }
+      const pr = audio.play(); start();
+      if (pr && pr.catch) pr.catch(() => { window.__boat.audioBlocked = true; });
+    };
+    ["click", "touchend", "keydown"].forEach((ev) => addEventListener(ev, go, true));
+  }
+  function begin() {
+    if (!audio || audioFailed) { start(); return; }
+    let settled = false;
+    const timer = setTimeout(() => { if (!settled) askTap(); }, 1500);
+    let pr; try { pr = audio.play(); } catch (e) { pr = Promise.reject(e); }
+    Promise.resolve(pr).then(() => { settled = true; clearTimeout(timer); start(); }, () => { settled = true; clearTimeout(timer); if (audioFailed) start(); else askTap(); });
+  }
+  resize(); addEventListener("resize", resize);
+  if (window.QuestHUD) QuestHUD.setStep("sail");
+  /* первый кадр сразу (под вуалью), потом старт */
+  setTimeout(begin, 250);
+})();
+</script>
+</body>
+</html>

@@ -50,9 +50,9 @@
   .mute .off { display: none; } .mute.muted .on { display: none; } .mute.muted .off { display: inline; }
   @keyframes tapPulse { 50% { box-shadow: 0 0 50px rgba(255, 190, 140, 1); } }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115b">
-<script src="../common/quest_config.js?v=20261115b"></script>
-<script src="../common/hud.js?v=20261115b" data-screen="sky" data-counter="off"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115c">
+<script src="../common/quest_config.js?v=20261115c"></script>
+<script src="../common/hud.js?v=20261115c" data-screen="sky" data-counter="off"></script>
 </head>
 <body>
 <img id="bg" alt="">
@@ -195,7 +195,7 @@
   /* ---------- музыка (необязательно) ---------- */
   let audio = null, audioFailed = false, lastAT = -1;
   if (CFG.MUSIC && !FAST) {
-    audio = new Audio(); audio.preload = "auto"; audio.setAttribute("playsinline", ""); audio.src = CFG.MUSIC + (/[?]/.test(CFG.MUSIC) ? "&" : "?") + "v=20261115b";
+    audio = new Audio(); audio.preload = "auto"; audio.setAttribute("playsinline", ""); audio.src = CFG.MUSIC + (/[?]/.test(CFG.MUSIC) ? "&" : "?") + "v=20261115c";
     audio.addEventListener("error", () => { audioFailed = true; });
     audio.addEventListener("loadedmetadata", () => {
       if (isFinite(audio.duration) && audio.duration > 0) { FLIGHT = Math.max(8000, audio.duration * 1000 - RISE - LAND); setTimeline(); }
