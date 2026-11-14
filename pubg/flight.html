@@ -237,9 +237,12 @@
       .prompt { bottom: 38%; width: 90%; }
     }
   </style>
+<link rel="stylesheet" href="../common/hud.css">
+<script src="../common/quest_config.js"></script>
+<script src="../common/hud.js" data-screen="pubg-flight" data-avoid="#squadHud"></script>
 </head>
 <body>
-  <img id="map" src="../maps/island_fullscreen.jpg" alt="Карта острова">
+  <img id="map" data-hud-map src="../maps/island_fullscreen.jpg" alt="Карта острова">
   <img id="plane" src="../maps/plane.png" alt="">
 
   <aside class="squad-hud" id="squadHud" aria-label="Отряд">
@@ -417,6 +420,7 @@
         if (flightTime >= FLIGHT_MS) {
           flightTime = FLIGHT_MS;
           finished = true;
+          if (window.QuestHUD) setTimeout(QuestHUD.next, 900);
         }
       }
       placePlane();

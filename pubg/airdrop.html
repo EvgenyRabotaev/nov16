@@ -327,6 +327,9 @@
       .btn { padding: 8px 20px; min-width: 124px; font-size: 13px; }
     }
   </style>
+<link rel="stylesheet" href="../common/hud.css">
+<script src="../common/quest_config.js"></script>
+<script src="../common/hud.js" data-screen="pubg-airdrop" data-avoid="#nextBtn"></script>
 </head>
 <body>
   <div class="bg" aria-hidden="true">
@@ -445,6 +448,7 @@
 
     function updateChrome() {
       const n = placed.size;
+      if (placed.has("primo") && window.QuestHUD) QuestHUD.award("pubg-airdrop", PRIMO_COUNT);
       packCount.textContent = n + " / 2";
       slotList.classList.toggle("has-items", n > 0);
       const empty = n >= 2;
@@ -454,6 +458,7 @@
       if (n >= 2) {
         nextBtn.hidden = false;
         requestAnimationFrame(() => nextBtn.classList.add("show"));
+        if (window.QuestHUD) setTimeout(QuestHUD.layout, 600);
       }
     }
 
@@ -675,6 +680,8 @@
         });
       }));
     }
+
+    nextBtn.addEventListener("click", () => { if (window.QuestHUD) QuestHUD.next(); });
 
     (async function boot() {
       await waitImages();

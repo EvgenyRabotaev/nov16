@@ -106,6 +106,9 @@
         0 1px 0 #7a5a10;
     }
   </style>
+<link rel="stylesheet" href="../common/hud.css">
+<script src="../common/quest_config.js"></script>
+<script src="../common/hud.js" data-screen="minecraft" data-avoid="#panel"></script>
 </head>
 <body>
   <canvas id="c"></canvas>
@@ -1751,8 +1754,10 @@ function onStageSettled(next) {
     animating = false;
     window.__HOUSE_DONE = true;
     window.__HOUSE_STAGE = 5;
+    if (window.QuestHUD) { QuestHUD.award("mc-q5"); QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); }
     return;
   }
+  if (window.QuestHUD) { QuestHUD.award("mc-q" + next); QuestHUD.setStep("q" + (next + 1)); }
   question = next + 1;
   qNum.textContent = "Вопрос " + question + " из 5";
   animating = false;
@@ -1795,7 +1800,9 @@ function revealInstant(upTo) {
     finished = true;
     panel.classList.add("hidden");
     finale.classList.add("show");
+    if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); }
   } else if (upTo > 0) {
+    if (window.QuestHUD) QuestHUD.setStep("q" + (upTo + 1));
     question = upTo + 1;
     qNum.textContent = "Вопрос " + question + " из 5";
   }
@@ -1861,6 +1868,7 @@ function tick() {
 }
 
 applyPalette(paletteAt(0), 0);
+if (window.QuestHUD) QuestHUD.setStep("q1");
 if (START_STAGE > 0) revealInstant(START_STAGE);
 window.__HOUSE_STAGE = stage;
 window.__HOUSE_READY = false;

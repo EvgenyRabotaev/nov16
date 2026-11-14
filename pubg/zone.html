@@ -232,9 +232,13 @@
       .kf-line { font-size: 14px; padding: 4px 8px 3px; }
     }
   </style>
+<script>window.QUEST_SCREEN = (parseInt(new URLSearchParams(location.search).get("q"), 10) >= 4) ? "pubg-zone-b" : "pubg-zone-a";</script>
+<link rel="stylesheet" href="../common/hud.css">
+<script src="../common/quest_config.js"></script>
+<script src="../common/hud.js" data-screen="pubg-zone-a" data-avoid="#panel, #squadHud"></script>
 </head>
 <body>
-  <img id="map" src="../maps/island_fullscreen.jpg" alt="Карта острова">
+  <img id="map" data-hud-map src="../maps/island_fullscreen.jpg" alt="Карта острова">
   <canvas id="overlay"></canvas>
 
   <div class="alive-hud" id="aliveHud" aria-live="polite" aria-label="В живых: 100">
@@ -708,6 +712,7 @@
       finished = true;
       animating = false;
       draw();
+      if (window.QuestHUD) { QuestHUD.setStep("victory"); QuestHUD.showNext("Дальше"); }
     }
 
     async function animateAnswer() {
@@ -771,6 +776,13 @@
     }
 
     async function onArrived(k) {
+      if (window.QuestHUD) QuestHUD.award("pubg-q" + k);
+      /* Между вопросами 3 и 4 — аирдроп (отдельная страница), потом zone.html?q=4. */
+      if (k === 3 && !AUTO && window.QuestHUD && QuestHUD.screen === "pubg-zone-a") {
+        phase = "to-airdrop";
+        setTimeout(QuestHUD.next, 700);
+        return;
+      }
       if (k === 8) {
         finished = true;
         panel.classList.add("hidden");
@@ -780,6 +792,7 @@
       }
       question = k + 1;
       qNum.textContent = "Вопрос " + question + " из 8";
+      if (window.QuestHUD) QuestHUD.setStep("q" + question);
       fadeInWhite(ZONES[question - 1]);
       animating = false;
       phase = "idle";
@@ -799,6 +812,7 @@
       killFeed.innerHTML = "";
       question = k;
       qNum.textContent = "Вопрос " + question + " из 8";
+      if (window.QuestHUD) QuestHUD.setStep("q" + question);
       setAlive(ALIVE_BY_PHASE[k - 1]);
       if (k === 1) {
         blue = { ...INITIAL };
@@ -844,6 +858,9 @@
       resize();
       window.addEventListener("resize", resize);
       answerBtn.addEventListener("click", animateAnswer);
+      const startQ = parseInt(new URLSearchParams(location.search).get("q"), 10);
+      if (startQ >= 2 && startQ <= 8) jumpToPhase(startQ);
+      else if (window.QuestHUD) QuestHUD.setStep("q1");
       if (AUTO) setTimeout(autoTick, AUTO_FIRST_MS);
     }
 

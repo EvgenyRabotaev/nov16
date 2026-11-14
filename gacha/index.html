@@ -304,6 +304,9 @@
   body.approach #ground { opacity: 1; }
 
 </style>
+<link rel="stylesheet" href="../common/hud.css">
+<script src="../common/quest_config.js"></script>
+<script src="../common/hud.js" data-screen="gacha" data-counter="off"></script>
 </head>
 <body>
 <canvas id="fx"></canvas>
@@ -490,6 +493,7 @@
     const btn = document.getElementById('btnPull');
     const status = document.getElementById('poolStatus');
     if (btn) btn.disabled = empty || gems < COST;
+    if (window.QuestHUD && empty) QuestHUD.showNext('К подаркам');
     document.querySelectorAll('.btn-r').forEach(b => {
       b.disabled = remainingOf(+b.dataset.r).length === 0;
     });
@@ -515,7 +519,8 @@
   let falling = null;
   let flightSpeed = 0;
   let flightTarget = 0;
-  let gems = 1800;
+  let gems = window.QuestHUD ? QuestHUD.getPrimos() : 1800; // общий баланс квеста (localStorage nov16_primos)
+  document.getElementById('pg').textContent = gems;
   let busy = false;
   let resolveWait = null;
   let gen = 0;
@@ -1100,6 +1105,7 @@
   function setGems(n) {
     gems = Math.max(0, n);
     document.getElementById('pg').textContent = gems;
+    if (window.QuestHUD) QuestHUD.setPrimos(gems);
   }
 
   function wait(ms) {

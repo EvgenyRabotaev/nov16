@@ -1,0 +1,196 @@
+/* Квест 16.11 — общий HUD (подсказка + примогемы + «Дальше») и стили заглушек. */
+@font-face { font-family: "QHUD Barlow"; src: url("../pubg/fonts/BarlowCondensed-SemiBold.ttf") format("truetype"); font-weight: 600; }
+@font-face { font-family: "QHUD Barlow"; src: url("../pubg/fonts/BarlowCondensed-Medium.ttf") format("truetype"); font-weight: 500; }
+
+.qhud {
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 9000;
+  font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.qhud-row { display: flex; align-items: center; gap: 8px; }
+.qhud-counter {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 40px; padding: 0 12px 0 8px;
+  font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums;
+}
+.qhud-gem { width: 22px; height: 22px; filter: drop-shadow(0 0 4px rgba(140, 200, 255, .7)); }
+.qhud-counter.qhud-bump .qhud-gem { animation: qhud-bump .6s ease; }
+@keyframes qhud-bump { 30% { transform: scale(1.45) rotate(20deg); } 100% { transform: none; } }
+.qhud-float {
+  position: absolute; right: 8px; bottom: 100%;
+  font-weight: 800; font-size: 15px; color: #bfe3ff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .8);
+  animation: qhud-float 1.4s ease-out forwards; pointer-events: none;
+}
+@keyframes qhud-float { from { opacity: 0; transform: translateY(6px); } 20% { opacity: 1; } to { opacity: 0; transform: translateY(-26px); } }
+.qhud-hint {
+  appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 14px 0 10px;
+  font: inherit; font-weight: 700; font-size: 15px;
+  transition: transform .15s, filter .15s, box-shadow .15s;
+}
+.qhud-hint:hover { filter: brightness(1.1); }
+.qhud-hint:active { transform: translateY(1px); }
+.qhud-ico { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-weight: 800; line-height: 1; }
+.qhud-panel {
+  position: absolute; right: 0; bottom: calc(100% + 10px);
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px 14px;
+  font-size: 15px; line-height: 1.45;
+  animation: qhud-in .22s ease;
+}
+.qhud-panel[hidden] { display: none; }
+@keyframes qhud-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.qhud-panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.qhud-panel-title { font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
+.qhud-close { appearance: none; border: 0; background: none; color: inherit; font-size: 16px; cursor: pointer; opacity: .7; padding: 2px 4px; }
+.qhud-close:hover { opacity: 1; }
+
+/* «Дальше» */
+.qhud-next {
+  position: fixed; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 10px); opacity: 0; pointer-events: none;
+  z-index: 8990; appearance: none; cursor: pointer;
+  min-width: 170px; padding: 13px 30px;
+  font: 700 17px/1 "Segoe UI", "Noto Sans", system-ui, sans-serif;
+  transition: opacity .45s ease, transform .45s ease, filter .15s;
+}
+.qhud-next.qhud-next--show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.qhud-next:hover { filter: brightness(1.08); }
+
+/* ---------- PUBG: тёмный HUD, жёлтый акцент ---------- */
+.qhud--pubg { font-family: "QHUD Barlow", "Barlow Condensed", "Segoe UI", sans-serif; }
+.qhud--pubg .qhud-counter, .qhud--pubg .qhud-hint, .qhud--pubg .qhud-panel {
+  background: rgba(8, 9, 12, .74); color: #f0efe9; border: 1px solid rgba(255, 255, 255, .14); border-radius: 2px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .45);
+}
+.qhud--pubg .qhud-counter { font-size: 20px; font-weight: 600; letter-spacing: .02em; }
+.qhud--pubg .qhud-hint { border-left: 3px solid #f2c230; font-size: 16px; font-weight: 600; letter-spacing: .14em; }
+.qhud--pubg .qhud-ico { border: 1.5px solid #f2c230; color: #f2c230; width: 22px; height: 22px; font-size: 15px; }
+.qhud--pubg .qhud-hint:hover { background: rgba(30, 28, 18, .86); box-shadow: 0 0 0 1px rgba(242, 194, 48, .5); }
+.qhud--pubg .qhud-panel { border-left: 3px solid #f2c230; font-family: "Segoe UI", "Noto Sans", sans-serif; }
+.qhud--pubg .qhud-panel-title { color: #f2c230; font-family: "QHUD Barlow", sans-serif; font-size: 15px; letter-spacing: .16em; }
+.qhud-next--pubg {
+  background: #f2c230; color: #15130c; border: 0; border-radius: 2px;
+  font-family: "QHUD Barlow", "Barlow Condensed", sans-serif; font-weight: 600; font-size: 20px; letter-spacing: .14em; text-transform: uppercase;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .5);
+}
+
+/* ---------- Minecraft: пиксельные блок-кнопки ---------- */
+.qhud--minecraft { font-family: "Courier New", "DejaVu Sans Mono", monospace; }
+.qhud--minecraft .qhud-counter, .qhud--minecraft .qhud-hint, .qhud--minecraft .qhud-panel {
+  border-radius: 0; color: #fff; text-shadow: 2px 2px 0 #3f3f3f;
+  border: 3px solid #1b1b1b;
+}
+.qhud--minecraft .qhud-hint, .qhud--minecraft .qhud-counter {
+  background: #8b8b8b;
+  box-shadow: inset 3px 3px 0 #c6c6c6, inset -3px -3px 0 #555;
+  font-weight: 700;
+}
+.qhud--minecraft .qhud-counter { background: #6e6e6e; box-shadow: inset 3px 3px 0 #9a9a9a, inset -3px -3px 0 #3d3d3d; }
+.qhud--minecraft .qhud-hint:hover { background: #7c8fd4; box-shadow: inset 3px 3px 0 #a9b9f0, inset -3px -3px 0 #4a5a99; filter: none; }
+.qhud--minecraft .qhud-ico { color: #ffff55; font-size: 19px; }
+.qhud--minecraft .qhud-panel { background: rgba(16, 0, 16, .92); border: 3px solid #25015b; box-shadow: inset 0 0 0 2px #5000aa; }
+.qhud--minecraft .qhud-panel-title { color: #ffff55; letter-spacing: .06em; }
+.qhud-next--minecraft {
+  background: #8b8b8b; color: #fff; border: 3px solid #1b1b1b; border-radius: 0;
+  box-shadow: inset 3px 3px 0 #c6c6c6, inset -3px -3px 0 #555;
+  text-shadow: 2px 2px 0 #3f3f3f; font-family: "Courier New", monospace; font-size: 18px;
+}
+.qhud-next--minecraft:hover { background: #7c8fd4; box-shadow: inset 3px 3px 0 #a9b9f0, inset -3px -3px 0 #4a5a99; filter: none; }
+
+/* ---------- Subnautica: подводный PDA, циан ---------- */
+.qhud--subnautica .qhud-counter, .qhud--subnautica .qhud-hint, .qhud--subnautica .qhud-panel {
+  background: linear-gradient(180deg, rgba(4, 42, 58, .78), rgba(2, 22, 34, .86));
+  color: #dffaff; border: 1px solid rgba(90, 230, 255, .65); border-radius: 12px;
+  box-shadow: 0 0 14px rgba(60, 210, 255, .35), inset 0 0 12px rgba(60, 210, 255, .12);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.qhud--subnautica .qhud-hint { letter-spacing: .14em; font-size: 13px; }
+.qhud--subnautica .qhud-ico { border: 1.5px solid #5ae6ff; border-radius: 50%; color: #5ae6ff; width: 22px; height: 22px; font-size: 14px; font-family: Georgia, serif; font-style: italic; }
+.qhud--subnautica .qhud-panel-title { color: #5ae6ff; }
+.qhud-next--subnautica {
+  background: linear-gradient(180deg, rgba(10, 70, 92, .88), rgba(4, 36, 52, .92)); color: #e6fcff;
+  border: 1px solid rgba(90, 230, 255, .8); border-radius: 999px;
+  box-shadow: 0 0 18px rgba(60, 210, 255, .45); letter-spacing: .08em;
+}
+
+/* ---------- Genshin: кремовый, золото ---------- */
+.qhud--genshin .qhud-counter, .qhud--genshin .qhud-hint {
+  background: #ece5d8; color: #495366; border: 2px solid #d3bc8e; border-radius: 999px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .35), 0 4px 12px rgba(40, 30, 10, .35);
+}
+.qhud--genshin .qhud-counter { background: rgba(30, 36, 52, .72); color: #f5ecd6; border-color: rgba(211, 188, 142, .8); }
+.qhud--genshin .qhud-ico { color: #c49a3c; font-size: 17px; }
+.qhud--genshin .qhud-panel {
+  background: #f3eee4; color: #3b4255; border: 2px solid #d3bc8e; border-radius: 10px;
+  box-shadow: inset 0 0 0 4px #f3eee4, inset 0 0 0 5px rgba(211, 188, 142, .7), 0 8px 24px rgba(40, 30, 10, .35);
+}
+.qhud--genshin .qhud-panel-title { color: #a8853f; }
+.qhud-next--genshin {
+  background: #ece5d8; color: #495366; border: 2px solid #d3bc8e; border-radius: 999px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .4), 0 6px 18px rgba(40, 30, 10, .35);
+}
+
+/* ---------- Квест (старт / финал / гача): мягкий голубой ---------- */
+.qhud--quest .qhud-counter, .qhud--quest .qhud-hint, .qhud--quest .qhud-panel {
+  background: rgba(14, 22, 48, .62); color: #eef5ff; border: 1px solid rgba(150, 195, 255, .5); border-radius: 999px;
+  box-shadow: 0 0 16px rgba(90, 150, 255, .28); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.qhud--quest .qhud-panel { border-radius: 16px; background: rgba(14, 22, 48, .86); }
+.qhud--quest .qhud-ico { font-size: 16px; }
+.qhud--quest .qhud-panel-title { color: #a9d1ff; }
+.qhud-next--quest {
+  background: linear-gradient(180deg, #8cc4ff, #4f8fe6); color: #fff; border: 0; border-radius: 999px;
+  box-shadow: 0 6px 22px rgba(60, 120, 230, .45);
+}
+
+/* ---------- телефон ---------- */
+@media (max-width: 600px) {
+  .qhud { right: calc(10px + env(safe-area-inset-right, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .qhud-label { display: none; }
+  .qhud-hint { width: 40px; padding: 0; justify-content: center; }
+  .qhud--pubg .qhud-hint { width: 42px; }
+  .qhud-counter { padding: 0 10px 0 7px; font-size: 15px; }
+  .qhud--pubg .qhud-counter { font-size: 18px; }
+  .qhud-next { min-width: 150px; padding: 12px 24px; font-size: 16px; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ============ Заглушки миров ============ */
+.ph-body { margin: 0; min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.ph-bg { position: fixed; inset: 0; background-size: cover; background-position: center; z-index: 0; }
+.ph-card { position: relative; z-index: 1; width: min(560px, calc(100vw - 40px)); text-align: center; padding: 34px 30px 30px; }
+.ph-kicker { font-size: 13px; letter-spacing: .2em; text-transform: uppercase; opacity: .8; }
+.ph-title { margin: 10px 0 12px; font-size: clamp(30px, 6vw, 46px); line-height: 1.1; }
+.ph-text { margin: 0 0 24px; font-size: 17px; line-height: 1.5; opacity: .9; }
+.ph-btn { appearance: none; cursor: pointer; min-width: 170px; padding: 13px 30px; font: 700 17px/1 "Segoe UI", "Noto Sans", system-ui, sans-serif; }
+@media (max-width: 600px) { .ph-card { margin-bottom: 70px; padding: 26px 20px 24px; } }
+
+.ph--pubg { background: #1b1d1f; color: #f0efe9; font-family: "QHUD Barlow", "Barlow Condensed", sans-serif; }
+.ph--pubg .ph-bg { background-image: url("../maps/island_fullscreen.jpg"); filter: brightness(.45) saturate(.8); }
+.ph--pubg .ph-card { background: rgba(8, 9, 12, .78); border-left: 4px solid #f2c230; border-radius: 2px; text-align: left; }
+.ph--pubg .ph-kicker { color: #f2c230; font-weight: 600; font-size: 16px; }
+.ph--pubg .ph-title { font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.ph--pubg .ph-text { font-family: "Segoe UI", "Noto Sans", sans-serif; font-size: 16px; }
+.ph--pubg .ph-btn { background: #f2c230; color: #15130c; border: 0; border-radius: 2px; font-family: "QHUD Barlow", sans-serif; font-weight: 600; font-size: 20px; letter-spacing: .14em; text-transform: uppercase; }
+
+.ph--genshin { background: #2a3550; color: #3b4255; font-family: Georgia, "Times New Roman", "Noto Serif", serif; }
+.ph--genshin .ph-bg { background-image: url("../genshin/map_bg.jpg"); filter: brightness(.82); }
+.ph--genshin .ph-card { background: rgba(243, 238, 228, .94); border: 2px solid #d3bc8e; border-radius: 14px; box-shadow: inset 0 0 0 6px rgba(243,238,228,.94), inset 0 0 0 7px rgba(211, 188, 142, .75), 0 14px 40px rgba(20, 20, 40, .45); }
+.ph--genshin .ph-kicker { color: #a8853f; font-family: "Segoe UI", sans-serif; }
+.ph--genshin .ph-title { color: #3b4255; }
+.ph--genshin .ph-btn { background: #ece5d8; color: #495366; border: 2px solid #d3bc8e; border-radius: 999px; box-shadow: 0 0 0 2px #fff, 0 4px 14px rgba(40,30,10,.3); }
+
+.ph--quest { background: #1a1d36; color: #f2f6ff; font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif; }
+.ph--quest .ph-bg { background-image: url("../code/bg.jpg"); }
+@media (orientation: portrait) { .ph--quest .ph-bg { background-image: url("../code/bg_portrait.jpg"); } }
+.ph--quest .ph-card { background: rgba(14, 20, 44, .55); border: 1px solid rgba(160, 200, 255, .35); border-radius: 24px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 18px 50px rgba(10, 10, 40, .4); }
+.ph--quest .ph-kicker { color: #a9d1ff; }
+.ph--quest .ph-title { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600; }
+.ph--quest .ph-btn { background: linear-gradient(180deg, #8cc4ff, #4f8fe6); color: #fff; border: 0; border-radius: 999px; box-shadow: 0 6px 22px rgba(60, 120, 230, .45); }

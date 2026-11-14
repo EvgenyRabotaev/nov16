@@ -137,6 +137,9 @@
       pointer-events: none;
     }
   </style>
+<link rel="stylesheet" href="../common/hud.css">
+<script src="../common/quest_config.js"></script>
+<script src="../common/hud.js" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
 </head>
 <body>
   <div id="stage">
@@ -491,9 +494,11 @@
       document.documentElement.dataset.progress = "0";
       window.__progress = 0;
       document.documentElement.dataset.index = String(index);
+      if (window.QuestHUD) { QuestHUD.award("sub-q" + index); QuestHUD.setStep("loc" + (index + 1)); }
       if (index >= LOCS.length - 1) {
         deeper.classList.add("hidden");
         deeper.disabled = true;
+        if (window.QuestHUD) QuestHUD.showNext("Дальше");
       } else {
         deeper.classList.remove("hidden");
         deeper.disabled = false;
@@ -558,6 +563,7 @@
       applyLayer(layerNext, 16, 0, 1, 0, 1);
       setDepth(LOCS[0].depth);
       boot.classList.add("gone");
+      if (window.QuestHUD) QuestHUD.setStep("loc1");
       setTimeout(() => boot.remove(), 600);
       document.documentElement.dataset.ready = "1";
       document.documentElement.dataset.index = "0";
