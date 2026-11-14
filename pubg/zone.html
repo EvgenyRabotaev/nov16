@@ -328,7 +328,8 @@
     }
     #evCard.show { opacity: 1; transform: translate(-50%, -50%); pointer-events: auto; }
     #evCard.red { border-left-color: #e5483b; }
-    .ev-pic { flex: 0 0 42%; min-height: 180px; background: #222 center / cover no-repeat; border: 1px solid rgba(255,255,255,.1); }
+    /* картинка всегда 4:3, одного размера во всех событиях (не зависит от длины текста) */
+    .ev-pic { flex: 0 0 42%; aspect-ratio: 4 / 3; align-self: flex-start; background: #222 center / cover no-repeat; border: 1px solid rgba(255,255,255,.1); }
     .ev-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     .ev-kicker { font-size: 12px; letter-spacing: .2em; color: #f5c542; text-transform: uppercase; }
     #evCard.red .ev-kicker { color: #ff7a6e; }
@@ -355,7 +356,7 @@
     @media (max-width: 640px) {
       #evCard { flex-direction: column; gap: 10px; padding: 12px; top: auto; bottom: 64px; transform: translate(-50%, 12px); max-height: calc(100vh - 150px); }
       #evCard.show { transform: translate(-50%, 0); }
-      .ev-pic { flex: 0 0 auto; min-height: 0; aspect-ratio: 16 / 9; width: 100%; }
+      .ev-pic { flex: 0 0 auto; min-height: 0; aspect-ratio: 4 / 3; width: min(100%, calc(38vh * 4 / 3)); align-self: center; }
       .ev-title { font-size: 22px; margin-bottom: 4px; }
       .ev-intro { font-size: 15px; } .ev-lines li { font-size: 16px; } .ev-note { font-size: 14px; } .ev-feed { font-size: 15px; }
       .ev-actions { justify-content: stretch; } .ev-next { width: 100%; }
@@ -485,7 +486,7 @@
     /* Safe circles in map-image coordinates. Nested, all on the island. */
     /* Маршрут и зоны по рельефу карты (14.11, по просьбе Жени), координаты картинки 2560×1440.
        Фазы 1–2: деревня у западного берега, они в синей зоне. После 3-го — едут в безопасную
-       зону через центральный мост (аирдроп уже внутри зоны 3). С 3-й фазы каждый круг лежит
+       зону через центральный мост (аирдроп — после 6-го вопроса, внутри зон 6 и 7). С 3-й фазы каждый круг лежит
        внутри предыдущего, а маршрут не выходит за текущий круг. Финал — открытый луг
        к востоку от моста, у кромки леса. Проверка: /tmp/zd/check.py. */
     const ZONES = [
@@ -938,12 +939,13 @@
 
 
     /* ---- Аирдроп на карте: после вопроса 3, внутри зоны 3 (и зоны 4). ---- */
-    /* Ящик падает у дороги к центральному мосту, внутри зоны 3. */
-    const CRATE = { x: 1222, y: 742 };
-    const CRATE_STAND = { x: 1232, y: 733 };      /* где встаёт отряд рядом с ящиком */
-    const CRATE_ROUTE_IN = [ { x: 1240, y: 712 }, { x: 1236, y: 722 }, CRATE_STAND ];
-    /* После лута — на машине через мост (вопрос 4, событие «кабриолет»). */
-    const CRATE_ROUTE_OUT = [ CRATE_STAND, { x: 1250, y: 716 }, { x: 1282, y: 716 }, { x: 1322, y: 718 }, { x: 1362, y: 720 }, { x: 1372, y: 732 } ];
+    /* Аирдроп — после 6-го вопроса (14.11): ящик падает на луг внутри зоны 6 (и зоны 7). */
+    const AIRDROP_AFTER = 6;
+    const CRATE = { x: 1400, y: 800 };
+    const CRATE_STAND = { x: 1396, y: 791 };      /* где встаёт отряд рядом с ящиком */
+    const CRATE_ROUTE_IN = [ { x: 1394, y: 769 }, { x: 1393, y: 781 }, CRATE_STAND ];
+    /* После лута — вопрос 7: от ящика в край зоны 7. */
+    const CRATE_ROUTE_OUT = [ CRATE_STAND, { x: 1403, y: 787 }, { x: 1409, y: 783 } ];
     const DROP_ALT = 260;   /* «высота» самолёта над ящиком, в координатах карты */
     const DROP_PLANE_MS = 5200;
     const DROP_FALL_MS = 2600;
@@ -1076,9 +1078,10 @@
         const fromA = route.alpha;
         await animateValue(ROUTE_FADE_MS, (t) => { route.alpha = fromA * (1 - t); draw(); });
       }
-      question = 4;
+      question = AIRDROP_AFTER + 1;
       renderQuestion();
-      fadeInWhite(ZONES[3]);
+      if (window.QuestHUD) QuestHUD.setStep("q" + question);
+      fadeInWhite(ZONES[AIRDROP_AFTER]);
       animating = false;
       phase = "idle";
       panel.classList.remove("hidden");
@@ -1214,10 +1217,10 @@
       const targetBlue = { ...ZONES[k - 1] };
       const fromBlue = { ...blue };
       const toPos = { ...LANDINGS[k - 1] };
-      const pts = (k === 4 && afterCrate)
+      const pts = (k === AIRDROP_AFTER + 1 && afterCrate)
         ? buildRoute(pos, CRATE_ROUTE_OUT, toPos)
         : buildRoute(pos, ROUTES[k - 1], toPos);
-      if (k === 4 && afterCrate) crateEl.classList.add("gone");
+      if (k === AIRDROP_AFTER + 1 && afterCrate) crateEl.classList.add("gone");
 
       /* Countdown runs alongside the existing move; not used on the last answer
          (that one keeps 4 until the finale after arrival). */
@@ -1269,8 +1272,8 @@
 
     async function onArrived(k) {
       if (window.QuestHUD) QuestHUD.award("pubg-q" + k);
-      /* Между вопросами 3 и 4 — самолёт сбрасывает аирдроп прямо на карте. */
-      if (k === 3 && !AUTO) {
+      /* Между вопросами 6 и 7 — самолёт сбрасывает аирдроп прямо на карте. */
+      if (k === AIRDROP_AFTER && !AUTO) {
         runAirdrop();
         return;
       }

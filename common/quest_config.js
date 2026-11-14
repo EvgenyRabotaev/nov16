@@ -12,7 +12,7 @@ window.QUEST_CONFIG = {
     { id: "pubg-skin",    path: "pubg/skin.html",         theme: "pubg",       title: "Выбор скина" },
     { id: "pubg-flight",  path: "pubg/flight.html",       theme: "pubg",       title: "Полёт" },
     { id: "pubg-landing", path: "pubg/landing.html",      theme: "pubg",       title: "Прыжок и приземление" },
-    { id: "pubg-zone",    path: "pubg/zone.html",         theme: "pubg",       title: "Зоны: вопросы 1–8, аирдроп после 3-го, победа" },
+    { id: "pubg-zone",    path: "pubg/zone.html",         theme: "pubg",       title: "Зоны: вопросы 1–8, аирдроп после 6-го, снайпер, победа" },
     { id: "minecraft",    path: "minecraft/house.html",   theme: "minecraft",  title: "Наш дом" },
     { id: "subnautica",   path: "subnautica/transition.html", theme: "subnautica", title: "Подводный мир" },
     { id: "genshin",      path: "genshin/index.html",     theme: "genshin",    title: "Тейват" },
@@ -79,7 +79,7 @@ window.QUEST_CONFIG = {
 
   /* События на переходах между фазами PUBG (pubg/zone.html).
      after — после какого вопроса показывается (пока сужается зона).
-     После 3-го — аирдроп (своя механика), после 8-го — снайпер, поэтому их тут нет.
+     После 6-го — аирдроп (своя механика), после 8-го — снайпер, поэтому их тут нет.
      lines: who — "Женя" / "Вика" (или "" для ремарки), text — фраза.
      note — подпись снизу, feed — строка кил-фида. Картинки — pubg/events/. */
   PUBG_EVENTS: [
@@ -91,7 +91,7 @@ window.QUEST_CONFIG = {
         { who: "Вика", text: "Отметила тебе Берил 👀" },
         { who: "Женя", text: "А я тебе МП5" }
       ],
-      note: "Вторая фаза уже почти закончилась. Отряд всё ещё лутает третий дом."
+      note: "Первая фаза. Синяя зона ещё далеко."
     },
     {
       after: 2, image: "events/ev_fence.jpg", title: "Застрял в заборе",
@@ -100,20 +100,10 @@ window.QUEST_CONFIG = {
         { who: "Вика", text: "Ты где там ходишь?" },
         { who: "Женя", text: "О, щас бегу, в заборе застрял." }
       ],
-      note: ""
+      note: "Вторая фаза уже почти закончилась. Отряд всё ещё лутает третий дом."
     },
     {
-      after: 4, image: "events/ev2_cabrio.jpg", title: "Голубой кабриолет",
-      intro: "Вика находит купешку и перекрашивает в голубой кабриолет.",
-      lines: [
-        { who: "Женя", text: "Может, я за руль?" },
-        { who: "Вика", text: "Нет, я поведу." },
-        { who: "", text: "(Садится за руль.)" }
-      ],
-      note: "Отряд заезжает в безопасную зону на четвёртой фазе."
-    },
-    {
-      after: 5, image: "events/ev4_meds.jpg", title: "Аптечки",
+      after: 3, image: "events/ev4_meds.jpg", title: "Аптечки",
       intro: "",
       lines: [
         { who: "Вика", text: "Сколько у тебя аптечек?" },
@@ -124,7 +114,17 @@ window.QUEST_CONFIG = {
       note: "Медик отряда, Вика: 1. Аптечки Жени: снова Викины."
     },
     {
-      after: 6, image: "events/ev5_redzone.jpg", title: "Красная зона", red: true,
+      after: 4, image: "events/ev2_cabrio.jpg", title: "Голубой кабриолет",
+      intro: "Вика находит купешку и перекрашивает в голубой кабриолет.",
+      lines: [
+        { who: "Женя", text: "Может, я за руль?" },
+        { who: "Вика", text: "Нет, я поведу." },
+        { who: "", text: "(Садится за руль.)" }
+      ],
+      note: "На четвёртой фазе отряд на машине переезжает мост к центру зоны."
+    },
+    {
+      after: 5, image: "events/ev5_redzone.jpg", title: "Красная зона", red: true,
       intro: "Экран краснеет, падают снаряды, машина петляет.",
       lines: [
         { who: "Женя", text: "ВИКА, РАКЕТЫ!" },
