@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Полёт по ветру</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23ffd89a'/%3E%3C/svg%3E">
+<link rel="preload" as="image" href="pair.png">
+<link rel="preload" as="image" href="island.png">
+<style>
+  /* Переход «в духе Sky: Children of the Light» (оригинальная графика): после победы в PUBG.
+     Два героя в плащах (Вика — жёлтый, Женя — оранжевый) влетают снизу, ~10 с летят по световому потоку,
+     прилетают к парящему острову — и только тогда появляется «Дальше». Отладка: sky/index.html, ?fast=1 — в 4 раза быстрее. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #f3d6d0; user-select: none; -webkit-user-select: none; }
+  #bg { position: fixed; left: 0; top: 0; will-change: transform; transform-origin: 50% 30%; }
+  #fx, #fxFront { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #fxFront { z-index: 6; }
+  .sprite { position: fixed; left: 0; top: 0; pointer-events: none; will-change: transform, opacity; opacity: 0; }
+  #island { z-index: 3; filter: drop-shadow(0 0 30px rgba(255, 230, 200, .45)); }
+  #pairWrap { z-index: 5; }
+  #pair { display: block; width: 100%; height: auto; transform-origin: 50% 40%; filter: drop-shadow(0 0 18px rgba(255, 236, 190, .75)) drop-shadow(0 10px 18px rgba(120, 60, 90, .25)); }
+  #pairGlow { position: absolute; left: 10%; right: 10%; top: 5%; bottom: 10%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 244, 214, .7), rgba(255, 220, 170, 0)); filter: blur(10px); z-index: -1; }
+  #island img { display: block; width: 100%; height: auto; }
+  .veil { position: fixed; inset: 0; z-index: 8; pointer-events: none; background: radial-gradient(circle at 50% 40%, #fffaf0, #ffe6d6); opacity: 1; transition: opacity 1.6s ease; }
+  .veil.off { opacity: 0; }
+  .caption { position: fixed; left: 50%; bottom: calc(120px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 7; text-align: center; pointer-events: none;
+    font: 500 clamp(18px, 2.4vw, 28px)/1.3 "Segoe UI", "Noto Sans", system-ui, sans-serif; letter-spacing: .04em; color: #fff; text-shadow: 0 0 10px rgba(150, 70, 100, .75), 0 0 22px rgba(255, 170, 110, .8), 0 2px 6px rgba(90, 40, 70, .6);
+    opacity: 0; transition: opacity 1.4s ease; width: min(90vw, 640px); }
+  .caption.on { opacity: 1; }
+</style>
+<link rel="stylesheet" href="../common/hud.css">
+<script src="../common/quest_config.js"></script>
+<script src="../common/hud.js" data-screen="sky" data-counter="off"></script>
+</head>
+<body>
+<img id="bg" alt="">
+<canvas id="fx"></canvas>
+<div class="sprite" id="island"><img src="island.png" alt=""></div>
+<div class="sprite" id="pairWrap"><div id="pairGlow"></div><img id="pair" src="pair.png" alt="Вика и Женя"></div>
+<canvas id="fxFront"></canvas>
+<div class="caption" id="caption">Летим дальше — вместе</div>
+<div class="veil" id="veil"></div>
+<script>
+(function () {
+  "use strict";
+  const SPEED = /[?&]fast=1/.test(location.search) ? 4 : 1;
+  const T = { enter: 2600, flyEnd: 12600, islandStart: 8200, landEnd: 15200 };   /* мс */
+  const bg = document.getElementById("bg"), fx = document.getElementById("fx"), fxF = document.getElementById("fxFront");
+  const ctx = fx.getContext("2d"), ctxF = fxF.getContext("2d");
+  const pairWrap = document.getElementById("pairWrap"), pair = document.getElementById("pair"), island = document.getElementById("island");
+  const caption = document.getElementById("caption"), veil = document.getElementById("veil");
+  const PAIR_AR = 552 / 900, ISL_AR = 781 / 705;
+  let W, H, dpr, portrait, vp, cover;
+  const IMGS = { wide: { src: "bg_wide.jpg", w: 1920, h: 1080, vx: 0.53, vy: 0.33 }, tall: { src: "bg_tall.jpg", w: 576, h: 1024, vx: 0.51, vy: 0.22 } };
+  let cur = null;
+
+  function layout() {
+    W = innerWidth; H = innerHeight; dpr = Math.min(2, devicePixelRatio || 1);
+    portrait = H > W * 1.05;
+    const im = portrait ? IMGS.tall : IMGS.wide;
+    if (cur !== im) { cur = im; bg.src = im.src; }
+    const s = Math.max(W / im.w, H / im.h);
+    cover = { s, ox: (W - im.w * s) / 2, oy: (H - im.h * s) / 2 };
+    Object.assign(bg.style, { width: im.w * s + "px", height: im.h * s + "px", left: cover.ox + "px", top: cover.oy + "px", transformOrigin: (im.vx * 100) + "% " + (im.vy * 100) + "%" });
+    vp = { x: cover.ox + im.vx * im.w * s, y: cover.oy + im.vy * im.h * s };
+    [fx, fxF].forEach((c) => { c.width = W * dpr; c.height = H * dpr; });
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctxF.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener("resize", layout); layout();
+
+  /* ---------- частицы: световые струи, искры, облачка (всё летит от горизонта на нас) ---------- */
+  const streaks = [], motes = [], wisps = [], trail = [];
+  function spawnStreak(far) {
+    const a = Math.PI * (0.12 + Math.random() * 0.76) + (Math.random() < 0.25 ? Math.PI : 0);   /* в основном вниз, к зрителю */
+    streaks.push({ a: a + Math.sin(performance.now() / 1800) * 0.25, d: far ? 10 + Math.random() * 40 : 40 + Math.random() * 400, w: 0.6 + Math.random() * 1.8, hue: Math.random() < 0.7 ? "255,246,220" : "255,214,160", life: 0 });
+  }
+  function spawnMote(far) { const a = Math.random() * Math.PI * 2; motes.push({ a, d: far ? 5 + Math.random() * 30 : 20 + Math.random() * 500, r: 0.8 + Math.random() * 1.8, tw: Math.random() * 6 }); }
+  function spawnWisp() { const a = Math.PI * (0.05 + Math.random() * 0.9) + (Math.random() < 0.5 ? Math.PI : 0); wisps.push({ a, d: 30 + Math.random() * 40, r: 60 + Math.random() * 90 }); }
+  for (let i = 0; i < 70; i++) spawnStreak(false);
+  for (let i = 0; i < 90; i++) spawnMote(false);
+  for (let i = 0; i < 4; i++) spawnWisp();
+
+  function drawFx(dt, flow) {
+    ctx.clearRect(0, 0, W, H); ctxF.clearRect(0, 0, W, H);
+    const R = Math.hypot(W, H);
+    const grow = 1 + 0.0011 * dt * flow;
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = streaks.length - 1; i >= 0; i--) {
+      const s = streaks[i]; s.d *= grow; s.life += dt;
+      if (s.d > R) { streaks.splice(i, 1); continue; }
+      const k = Math.min(1, s.d / (R * 0.5)), len = s.d * (0.10 + 0.08 * flow);
+      const x1 = vp.x + Math.cos(s.a) * s.d, y1 = vp.y + Math.sin(s.a) * s.d;
+      const x0 = vp.x + Math.cos(s.a) * (s.d - len), y0 = vp.y + Math.sin(s.a) * (s.d - len);
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, "rgba(" + s.hue + ",0)"); g.addColorStop(1, "rgba(" + s.hue + "," + (0.55 * k * Math.min(1, flow + 0.2)) + ")");
+      ctx.strokeStyle = g; ctx.lineWidth = s.w * (0.6 + 2.2 * k); ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    }
+    while (streaks.length < 70 * Math.max(0.35, flow)) spawnStreak(true);
+    for (let i = motes.length - 1; i >= 0; i--) {
+      const m = motes[i]; m.d *= 1 + 0.0008 * dt * flow + 0.00005 * dt; m.tw += dt * 0.004;
+      if (m.d > R) { motes.splice(i, 1); continue; }
+      const k = Math.min(1, m.d / (R * 0.45));
+      const x = vp.x + Math.cos(m.a) * m.d, y = vp.y + Math.sin(m.a) * m.d, r = m.r * (0.5 + 2.4 * k);
+      const al = (0.35 + 0.35 * Math.sin(m.tw)) * Math.min(1, k * 3);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3); g.addColorStop(0, "rgba(255,250,230," + al + ")"); g.addColorStop(1, "rgba(255,220,170,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3, 0, Math.PI * 2); ctx.fill();
+    }
+    while (motes.length < 90) spawnMote(true);
+    ctx.globalCompositeOperation = "source-over";
+    /* облачные клочья пролетают у краёв (параллакс, передний план) */
+    for (let i = wisps.length - 1; i >= 0; i--) {
+      const w = wisps[i]; w.d *= 1 + 0.0009 * dt * flow;
+      const k = Math.min(1, w.d / R);
+      if (w.d > R * 1.3) { wisps.splice(i, 1); continue; }
+      const x = vp.x + Math.cos(w.a) * w.d * 1.15, y = vp.y + Math.sin(w.a) * w.d * 0.9, r = w.r * (0.3 + 3.2 * k);
+      const g = ctxF.createRadialGradient(x, y, 0, x, y, r); const al = 0.5 * Math.sin(Math.PI * Math.min(1, k * 1.2));
+      g.addColorStop(0, "rgba(255,244,240," + al + ")"); g.addColorStop(0.6, "rgba(255,226,226," + al * 0.5 + ")"); g.addColorStop(1, "rgba(255,226,226,0)");
+      ctxF.fillStyle = g; ctxF.beginPath(); ctxF.arc(x, y, r, 0, Math.PI * 2); ctxF.fill();
+    }
+    if (wisps.length < 4 && Math.random() < 0.02 * flow) spawnWisp();
+    /* искорки с плащей */
+    for (let i = trail.length - 1; i >= 0; i--) {
+      const p = trail[i]; p.t += dt; if (p.t > p.life) { trail.splice(i, 1); continue; }
+      p.x += p.vx * dt; p.y += p.vy * dt; const al = 1 - p.t / p.life;
+      ctxF.fillStyle = "rgba(" + p.c + "," + al * 0.9 + ")"; ctxF.beginPath(); ctxF.arc(p.x, p.y, p.r * (0.5 + al), 0, Math.PI * 2); ctxF.fill();
+    }
+  }
+
+  /* ---------- таймлайн ---------- */
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3), easeIO = (t) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, easeIn = (t) => t * t * t;
+  const clamp = (v) => Math.max(0, Math.min(1, v));
+  let t0 = null, last = null, doneShown = false;
+  function frame(now) {
+    if (t0 == null) { t0 = now; last = now; }
+    const dt = Math.min(50, now - last) * SPEED; last = now;
+    const t = (now - t0) * SPEED;
+    /* поток: разгон на входе, полёт, торможение у острова */
+    const flow = t < T.enter ? 0.4 + 0.6 * clamp(t / T.enter) : t < T.flyEnd ? 1 : 1 - 0.85 * clamp((t - T.flyEnd) / (T.landEnd - T.flyEnd));
+    bg.style.transform = "scale(" + (1.02 + 0.16 * easeIO(clamp(t / T.landEnd))) + ")";
+    drawFx(dt, flow);
+
+    /* пара: снизу в центр, потом полёт с покачиванием, в конце — к острову (уменьшаясь) */
+    const pw = portrait ? Math.min(W * 0.9, 520) : Math.min(W * 0.36, H * 0.62 / PAIR_AR, 620);
+    const ph = pw * PAIR_AR;
+    const cyFly = portrait ? H * 0.64 : H * 0.6;
+    let cx = W / 2, cy, sc = 1, rot = 0, op = 1;
+    const isl = { w: portrait ? Math.min(W * 0.82, 420) : Math.min(W * 0.34, H * 0.62 / ISL_AR, 600) };
+    isl.h = isl.w * ISL_AR; isl.cx = W / 2; isl.cy = portrait ? H * 0.38 : H * 0.42;
+    if (t < T.enter) { const e = easeOut(clamp(t / T.enter)); cy = H + ph * 0.8 + (cyFly - H - ph * 0.8) * e; sc = 1.25 - 0.25 * e; op = clamp(t / 500); }
+    else if (t < T.flyEnd) { const u = t - T.enter; cy = cyFly + Math.sin(u / 900) * H * 0.018; cx = W / 2 + Math.sin(u / 2300) * W * 0.03; rot = Math.sin(u / 1300) * 2.2; }
+    else {
+      const e = easeIO(clamp((t - T.flyEnd) / (T.landEnd - T.flyEnd)));
+      const tx = isl.cx - isl.w * 0.02, ty = isl.cy - isl.h * 0.2;   /* на траву перед аркой */
+      const u = t - T.enter; const y0 = cyFly + Math.sin(u / 900) * H * 0.018 * (1 - e);
+      cx = W / 2 + (tx - W / 2) * e; cy = y0 + (ty - y0) * e; sc = 1 - 0.8 * e; rot = Math.sin(u / 1300) * 2.2 * (1 - e);
+    }
+    const flutter = 1 + Math.sin(t / 260) * 0.012;
+    pairWrap.style.width = pw + "px"; pairWrap.style.opacity = op;
+    pairWrap.style.transform = "translate(" + (cx - pw / 2) + "px," + (cy - ph / 2) + "px) scale(" + sc + ") rotate(" + rot + "deg)";
+    pair.style.transform = "scale(" + (1 / flutter) + "," + flutter + ") skewX(" + Math.sin(t / 420) * 1.2 + "deg)";
+    if (t > 400 && t < T.landEnd - 600 && Math.random() < 0.6) {
+      const side = Math.random() < 0.5 ? -1 : 1;
+      trail.push({ x: cx + side * pw * sc * (0.32 + Math.random() * 0.14), y: cy + ph * sc * (0.05 + Math.random() * 0.3), vx: side * 0.02 * Math.random(), vy: 0.05 + Math.random() * 0.06, r: 1 + Math.random() * 2.2 * sc, t: 0, life: 900 + Math.random() * 700, c: side < 0 ? "255,226,120" : "255,170,90" });
+    }
+
+    /* остров: появляется у горизонта и приближается */
+    if (t > T.islandStart) {
+      const e = easeIn(clamp((t - T.islandStart) / (T.flyEnd + 1400 - T.islandStart)));
+      const s2 = 0.05 + 0.95 * e;
+      const x = vp.x + (isl.cx - vp.x) * e, y = vp.y + (isl.cy - vp.y) * e;
+      island.style.width = isl.w + "px";
+      island.style.opacity = clamp((t - T.islandStart) / 1200);
+      island.style.transform = "translate(" + (x - isl.w / 2) + "px," + (y - isl.h / 2 + Math.sin(t / 1500) * 4) + "px) scale(" + s2 + ")";
+    }
+    if (t > T.landEnd - 1200) caption.classList.add("on");
+    if (t >= T.landEnd && !doneShown) {
+      doneShown = true; window.__sky.done = true;
+      if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); }
+    }
+    window.__sky.t = t;
+    requestAnimationFrame(frame);
+  }
+  window.__sky = { t: 0, done: false, T, speed: SPEED };
+  const start = () => { veil.classList.add("off"); requestAnimationFrame(frame); };
+  Promise.all(["pair.png", "island.png", cur.src].map((src) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = src; }))).then(() => setTimeout(start, 200));
+})();
+</script>
+</body>
+</html>

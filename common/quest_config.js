@@ -12,6 +12,7 @@ window.QUEST_CONFIG = {
     { id: "pubg-skin",    path: "pubg/skin.html",         theme: "pubg",       title: "Выбор скина" },
     { id: "pubg-flight",  path: "pubg/flight.html",       theme: "pubg",       title: "Полёт" },
     { id: "pubg-zone",    path: "pubg/zone.html",         theme: "pubg",       title: "Зоны: вопросы 1–8, аирдроп после 6-го, снайпер, победа" },
+    { id: "sky",          path: "sky/index.html",         theme: "quest",      title: "Переход: полёт по ветру (в духе Sky)" },
     { id: "minecraft",    path: "minecraft/house.html",   theme: "minecraft",  title: "Наш дом" },
     { id: "subnautica",   path: "subnautica/transition.html", theme: "subnautica", title: "Подводный мир" },
     { id: "genshin",      path: "genshin/index.html",     theme: "genshin",    title: "Тейват" },
