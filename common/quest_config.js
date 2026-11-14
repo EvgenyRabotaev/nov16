@@ -110,7 +110,7 @@ window.QUEST_CONFIG = {
         { who: "Вика", text: "Ой, ты горе луковое, щас скину." },
         { who: "", text: "Летят три аптечки и бинты." }
       ],
-      note: "Медик отряда, Вика: 1. Аптечки Жени: снова Викины."
+      note: "Аптечки у Вики снова на двоих."
     },
     {
       after: 4, image: "events/ev2_cabrio.jpg", title: "Голубой кабриолет",
@@ -135,17 +135,17 @@ window.QUEST_CONFIG = {
     },
     {
       after: 7, image: "events/ev6_headshot.jpg", title: "Хедшот",
-      intro: "Вика с М24 на холме.",
+      intro: "Вика на холме с AWM, залутанной из аирдропа.",
       lines: [
         { who: "Женя", text: "Он за деревом, далеко…" },
         { who: "Вика", text: "…" },
         { who: "", text: "Бах." }
       ],
-      feed: "Marusabelle ➤ Enemy, M24, headshot, 412 m",
+      feed: "Marusabelle ➤ Enemy, AWM, headshot, 412 m",
       after_lines: [
         { who: "Женя", text: "Я влюбился второй раз" }
       ],
-      note: ""
+      note: "Вика снимает врага из залутанной AWM, 412 м."
     }
 
   ],
