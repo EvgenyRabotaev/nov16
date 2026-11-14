@@ -248,7 +248,7 @@
     window.__sky.t = t; window.__sky.cx = cx; window.__sky.rot = rot;
     requestAnimationFrame(frame);
   }
-  window.__sky = { t: 0, done: false, T, speed: SPEED, steer, music: !!audio };
+  window.__sky = { t: 0, done: false, T, speed: SPEED, steer, music: !!audio, audio };
   let started = false;
   const start = () => { if (started) return; started = true; tapStart.classList.remove("show"); veil.classList.add("off"); requestAnimationFrame(frame); };
   function begin() {

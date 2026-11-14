@@ -210,7 +210,7 @@ window.QUEST_CONFIG = {
      С музыкой: полёт = длина трека − RISE_MS − LAND_MS, остров прилетает к концу трека, в конце мягкое затухание.
      Без музыки: полёт FLIGHT_MS. */
   SKY: {
-    MUSIC: "",
+    MUSIC: "music.mp3",
     FLIGHT_MS: 30000,
     RISE_MS: 2600,
     LAND_MS: 2600,
