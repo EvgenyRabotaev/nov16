@@ -95,6 +95,7 @@ window.QUEST_CONFIG = {
            subnautica → loc1…loc7. */
   HINTS: {
     DEFAULT: "Подсказка появится позже",
+    "pubg-zone:sniper": "Подсказка появится позже",
     // "pubg-zone:q1": "…",
     // "pubg-zone:q5": "Отправь Жене кружочек — и он подскажет голосом 💙",
     "minecraft:q1": "Подсказка появится позже",

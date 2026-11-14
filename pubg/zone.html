@@ -303,6 +303,56 @@
       .kill-feed { top: 84px; right: 10px; }
       .kf-line { font-size: 14px; padding: 4px 8px 3px; }
     }
+    /* ===== Финальная мини-игра: снайпер (M24) ===== */
+    #sniper {
+      position: fixed; inset: 0; z-index: 22; background: #000;
+      opacity: 0; pointer-events: none; transition: opacity .45s ease;
+      touch-action: none; user-select: none; -webkit-user-select: none; cursor: none;
+    }
+    #sniper.show { opacity: 1; pointer-events: auto; }
+    #sniperCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #sniperFlash { position: absolute; inset: 0; background: #fff8e0; opacity: 0; pointer-events: none; }
+    #sniperFlash.on { animation: snFlash .22s ease-out; }
+    @keyframes snFlash { 0% { opacity: .85; } 100% { opacity: 0; } }
+    .sn-top {
+      position: absolute; left: 50%; top: 18px; transform: translateX(-50%);
+      color: #f2efe6; font: 600 15px/1.3 "Segoe UI", system-ui, sans-serif; letter-spacing: .04em;
+      text-align: center; text-shadow: 0 1px 3px #000; pointer-events: none; width: min(92vw, 520px);
+    }
+    .sn-top b { color: #f5c542; font-weight: 700; }
+    .sn-msg {
+      position: absolute; left: 50%; top: 64%; transform: translate(-50%, 0) scale(.9);
+      color: #fff; font: 700 22px/1.2 "Segoe UI", system-ui, sans-serif; text-shadow: 0 2px 6px #000;
+      opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; white-space: nowrap;
+    }
+    .sn-msg.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    .sn-kill {
+      position: absolute; left: 50%; top: 70%; transform: translateX(-50%) translateY(10px);
+      background: rgba(10, 10, 10, .72); border-left: 3px solid #f5c542; color: #fff;
+      font: 600 19px/1.2 "Segoe UI", system-ui, sans-serif; padding: 9px 16px; white-space: nowrap;
+      opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none;
+    }
+    .sn-kill.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .sn-kill .k-v { color: #f5c542; } .sn-kill .k-hs { color: #ff6b5e; }
+    #shotBtn {
+      position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+      display: none; width: 132px; height: 64px; border-radius: 32px;
+      border: 2px solid rgba(255,255,255,.55); background: rgba(190, 40, 30, .82); color: #fff;
+      font: 800 20px/1 "Segoe UI", system-ui, sans-serif; letter-spacing: .08em; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,.5); touch-action: manipulation;
+    }
+    #shotBtn:active { background: rgba(230, 60, 45, .95); }
+    #sniper.touch #shotBtn { display: block; }
+    #sniper.touch { cursor: default; }
+    /* во время прицела HUD — в правом нижнем углу экрана, а не под картой */
+    body.sniper-on .qhud { left: auto !important; top: auto !important; right: 12px !important; bottom: 12px !important; }
+    @media (max-width: 600px) {
+      #shotBtn { bottom: 84px; }
+      .sn-top { top: 142px !important; }
+      .sn-top { font-size: 13px; top: 12px; }
+      .sn-kill { font-size: 15px; padding: 7px 12px; }
+      .sn-msg { font-size: 19px; }
+    }
   </style>
 <link rel="stylesheet" href="../common/hud.css">
 <script src="../common/quest_config.js"></script>
@@ -348,6 +398,14 @@
     <button class="btn" id="answerBtn" type="button">Ответить</button>
   </aside>
 
+  <div id="sniper" aria-hidden="true">
+    <canvas id="sniperCanvas"></canvas>
+    <div id="sniperFlash"></div>
+    <div class="sn-top" id="snTop">Последний враг. <b>Прицелься</b> в каску и стреляй</div>
+    <div class="sn-msg" id="snMsg">Мимо! Ещё раз</div>
+    <div class="sn-kill" id="snKill"><span class="k-v">Vika</span> ➤ Enemy, M24, <span class="k-hs">headshot</span></div>
+    <button id="shotBtn" type="button" aria-label="Выстрел">ШОТ</button>
+  </div>
   <div class="victory" id="victory" aria-hidden="true">
     <h1>Winner winner chicken dinner!</h1>
   </div>
@@ -1033,6 +1091,12 @@
       await wait(700);
     }
 
+    async function playFinaleRest() {
+      appendKillLine(FINALE_KILLS[1], false);
+      setAlive(FINALE_KILLS[1].to);
+      await wait(700);
+    }
+
     function showVictory() {
       panel.classList.add("hidden");
       victory.classList.add("show");
@@ -1121,8 +1185,14 @@
       if (k === 8) {
         finished = true;
         panel.classList.add("hidden");
-        await playFinale(false);
-        showVictory();
+        /* Финал: Женя нокает первого (4→3), последнего снимает Вика из M24 (мини-игра) → 2 → победа. */
+        phase = "finale";
+        await wait(550);
+        appendKillLine(FINALE_KILLS[0], false);
+        setAlive(FINALE_KILLS[0].to);
+        await wait(1100);
+        if (AUTO) { await playFinaleRest(); showVictory(); return; }
+        await runSniper();
         return;
       }
       question = k + 1;
@@ -1196,9 +1266,437 @@
       answerBtn.addEventListener("click", submitAnswer);
       renderQuestion();
       const startQ = parseInt(new URLSearchParams(location.search).get("q"), 10);
-      if (startQ >= 2 && startQ <= 8) jumpToPhase(startQ);
+      const SNIPER_DEBUG = new URLSearchParams(location.search).get("sniper") === "1";
+      if (SNIPER_DEBUG) jumpToSniper();
+      else if (startQ >= 2 && startQ <= 8) jumpToPhase(startQ);
       else if (window.QuestHUD) QuestHUD.setStep("q1");
       if (AUTO) setTimeout(autoTick, AUTO_FIRST_MS);
+    }
+
+    /* ===== Финальная мини-игра: снайпер =====
+       Мир сцены — 1200×700 условных единиц. Прицел всегда в центре экрана,
+       мир сдвигается под ним. Мышь: позиция курсора = куда смотрим.
+       Телефон: тянем пальцем — водим прицелом; стреляем кнопкой «ШОТ» (или коротким тапом). */
+    const Sniper = (function () {
+      const WW = 1200, WH = 700;
+      const root = document.getElementById("sniper");
+      const cv = document.getElementById("sniperCanvas");
+      const c2 = cv.getContext("2d");
+      const flashEl = document.getElementById("sniperFlash");
+      const msgEl = document.getElementById("snMsg");
+      const killEl = document.getElementById("snKill");
+      const topEl = document.getElementById("snTop");
+      const shotBtn = document.getElementById("shotBtn");
+      const TREE = { x: 520, base: 520, w: 34, crownY: 300 };
+      const ROCK = { x: 780, y: 528, w: 120, h: 70 };
+      /* Точки, откуда выглядывает голова: x, y (центр головы при полном появлении), откуда выезжает. */
+      const SPOTS = [
+        { x: 482, y: 455, dx: 26, dy: 0, cover: "tree" },   /* слева из-за дерева */
+        { x: 558, y: 450, dx: -26, dy: 0, cover: "tree" },  /* справа из-за дерева */
+        { x: 760, y: 442, dx: 0, dy: 40, cover: "rock" },   /* над камнем */
+        { x: 812, y: 446, dx: 0, dy: 40, cover: "rock" }
+      ];
+      const HEAD_R = 15;
+      let W = 0, H = 0, dpr = 1, R = 0, Z = 1;
+      let aim = { x: 640, y: 470 }, kick = { x: 0, y: 0 }, twitch = { x: 0, y: 0 }, twitchT = { x: 0, y: 0 };
+      let nextTwitch = 0, running = false, done = false, misses = 0, shots = 0, raf = 0, t0 = 0;
+      let target = null; /* {spot, start, hold, upMs, state} */
+      let nextPopAt = 0, lastSpot = -1, puffs = [], hitMark = null, shake = 0, testNoSway = false;
+      let resolveWin = null, msgTimer = 0;
+      let touchMode = false, drag = null;
+
+      function easy() { return misses >= 4; }
+      function swayAmp() { return easy() ? 3.5 : 9; }
+      function hitRadius() { return easy() ? HEAD_R * 3.2 : HEAD_R * 1.75; }
+
+      function resize() {
+        dpr = Math.min(2, window.devicePixelRatio || 1);
+        W = window.innerWidth; H = window.innerHeight;
+        cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+        R = Math.min(W, H) * 0.44;
+        if (W < H) R = Math.min(W * 0.47, H * 0.36);
+        Z = R / 210; /* в круг прицела помещается ~420 ед. мира */
+      }
+
+      function clampAim() {
+        aim.x = Math.max(300, Math.min(950, aim.x));
+        aim.y = Math.max(330, Math.min(600, aim.y));
+      }
+
+      function swayAt(t) {
+        if (testNoSway) return { x: 0, y: 0 };
+        const A = swayAmp(), s = t / 1000;
+        return {
+          x: A * Math.sin(s * 0.95) + A * 0.35 * Math.sin(s * 2.3 + 1.7) + twitch.x,
+          y: A * 0.75 * Math.sin(s * 1.35 + 0.6) + A * 0.25 * Math.sin(s * 3.1) + twitch.y
+        };
+      }
+      function viewPoint(t) {
+        const s = swayAt(t);
+        return { x: aim.x + s.x + kick.x, y: aim.y + s.y + kick.y };
+      }
+
+      function popFrac(now) {
+        if (!target) return 0;
+        const e = now - target.start;
+        const up = target.upMs, hold = target.hold;
+        if (target.state === "hit") return 1;
+        if (e < 0) return 0;
+        if (e < up) return e / up;
+        if (e < up + hold) return 1;
+        if (e < up * 2 + hold) return 1 - (e - up - hold) / up;
+        return 0;
+      }
+      function headPos(now) {
+        const sp = SPOTS[target.spot];
+        const f = popFrac(now);
+        const k = 1 - f;
+        let x = sp.x + sp.dx * k, y = sp.y + sp.dy * k;
+        if (target.state === "hit") {
+          const e = (now - target.hitAt) / 1000;
+          x += target.fall * e * 40; y += Math.min(60, e * e * 160);
+        }
+        return { x, y, f };
+      }
+
+      function schedulePop(now, delay) {
+        let i;
+        do { i = Math.floor(Math.random() * SPOTS.length); } while (i === lastSpot && SPOTS.length > 1);
+        lastSpot = i;
+        target = { spot: i, start: now + delay, upMs: 220, hold: easy() ? 1700 : 1050 + Math.random() * 450, state: "pop" };
+      }
+
+      /* ---------- рисование сцены (в координатах мира) ---------- */
+      function drawWorld(now) {
+        const g = c2;
+        const sky = g.createLinearGradient(0, 0, 0, 420);
+        sky.addColorStop(0, "#9fb7c6"); sky.addColorStop(1, "#dfe3d6");
+        g.fillStyle = sky; g.fillRect(-400, -400, WW + 800, 820);
+        g.fillStyle = "#8f9f86"; g.fillRect(-400, 419, WW + 800, 120); /* без щелей между слоями холмов */
+        /* дальние холмы */
+        g.fillStyle = "#8f9f86";
+        g.beginPath(); g.moveTo(-400, 420);
+        for (let x = -400; x <= WW + 400; x += 60) g.lineTo(x, 380 - 34 * Math.sin(x / 170) - 18 * Math.sin(x / 61));
+        g.lineTo(WW + 400, 460); g.lineTo(-400, 460); g.closePath(); g.fill();
+        g.fillStyle = "#76895f";
+        g.beginPath(); g.moveTo(-400, 470);
+        for (let x = -400; x <= WW + 400; x += 50) g.lineTo(x, 440 - 22 * Math.sin(x / 130 + 1) - 10 * Math.sin(x / 37));
+        g.lineTo(WW + 400, 520); g.lineTo(-400, 520); g.closePath(); g.fill();
+        /* поле */
+        const fld = g.createLinearGradient(0, 470, 0, WH + 300);
+        fld.addColorStop(0, "#8a9a55"); fld.addColorStop(1, "#5e6e34");
+        g.fillStyle = fld; g.fillRect(-400, 500, WW + 800, WH + 400);
+        g.fillStyle = "#7d8f4a";
+        g.beginPath(); g.moveTo(-400, 520);
+        for (let x = -400; x <= WW + 400; x += 40) g.lineTo(x, 505 + 8 * Math.sin(x / 90));
+        g.lineTo(WW + 400, 540); g.lineTo(-400, 540); g.closePath(); g.fill();
+        /* травинки */
+        g.strokeStyle = "rgba(60, 75, 30, .55)"; g.lineWidth = 1.4;
+        for (let i = 0; i < 160; i++) {
+          const x = ((i * 97.3) % (WW + 600)) - 300, y = 540 + ((i * 53.7) % 300);
+          const sw = Math.sin(now / 900 + i) * 1.5;
+          g.beginPath(); g.moveTo(x, y); g.lineTo(x + sw + 2, y - 9 - (i % 5)); g.stroke();
+        }
+        /* голова ЗА укрытиями (рисуем до укрытий) */
+        if (target) drawHead(now);
+        /* дерево */
+        g.fillStyle = "#5a4330";
+        g.beginPath();
+        g.moveTo(TREE.x - TREE.w / 2 - 8, TREE.base + 6); g.lineTo(TREE.x - TREE.w / 2, TREE.crownY + 40);
+        g.lineTo(TREE.x + TREE.w / 2, TREE.crownY + 40); g.lineTo(TREE.x + TREE.w / 2 + 8, TREE.base + 6); g.closePath(); g.fill();
+        g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(TREE.x + 4, TREE.crownY + 40, TREE.w / 2 - 2, TREE.base - TREE.crownY - 34);
+        const crown = [[0, 0, 92], [-70, 34, 62], [72, 30, 66], [-30, -52, 64], [38, -46, 60], [0, 46, 70]];
+        crown.forEach(([dx, dy, r], i) => {
+          g.fillStyle = i % 2 ? "#3f5a2a" : "#4b6a31";
+          g.beginPath(); g.arc(TREE.x + dx + Math.sin(now / 1400 + i) * 1.2, TREE.crownY + dy, r, 0, Math.PI * 2); g.fill();
+        });
+        g.fillStyle = "rgba(255,255,220,.07)";
+        g.beginPath(); g.arc(TREE.x - 30, TREE.crownY - 30, 60, 0, Math.PI * 2); g.fill();
+        /* камень */
+        g.fillStyle = "#7d7d76";
+        g.beginPath();
+        g.moveTo(ROCK.x - ROCK.w / 2 - 10, ROCK.y + 14);
+        g.lineTo(ROCK.x - ROCK.w / 2, ROCK.y - 30); g.lineTo(ROCK.x - 20, ROCK.y - ROCK.h + 8);
+        g.lineTo(ROCK.x + 26, ROCK.y - ROCK.h + 2); g.lineTo(ROCK.x + ROCK.w / 2 + 2, ROCK.y - 26);
+        g.lineTo(ROCK.x + ROCK.w / 2 + 14, ROCK.y + 14); g.closePath(); g.fill();
+        g.fillStyle = "#64645e";
+        g.beginPath(); g.moveTo(ROCK.x + 26, ROCK.y - ROCK.h + 2); g.lineTo(ROCK.x + ROCK.w / 2 + 2, ROCK.y - 26);
+        g.lineTo(ROCK.x + ROCK.w / 2 + 14, ROCK.y + 14); g.lineTo(ROCK.x + 16, ROCK.y + 14); g.closePath(); g.fill();
+        g.fillStyle = "#94948b";
+        g.beginPath(); g.moveTo(ROCK.x - ROCK.w / 2, ROCK.y - 30); g.lineTo(ROCK.x - 20, ROCK.y - ROCK.h + 8); g.lineTo(ROCK.x - 6, ROCK.y - 30); g.closePath(); g.fill();
+        g.fillStyle = "#6f8442"; g.fillRect(ROCK.x - ROCK.w / 2 - 20, ROCK.y + 8, ROCK.w + 50, 10);
+        /* пыль от промахов */
+        puffs = puffs.filter(p => now - p.t < 700);
+        puffs.forEach(p => {
+          const k = (now - p.t) / 700;
+          g.fillStyle = "rgba(200, 190, 160," + (0.55 * (1 - k)) + ")";
+          for (let i = 0; i < 5; i++) {
+            g.beginPath(); g.arc(p.x + Math.cos(i * 1.3) * 10 * k * 2, p.y - 6 * k * 3 + Math.sin(i * 2.1) * 6 * k, 5 + 9 * k, 0, Math.PI * 2); g.fill();
+          }
+        });
+      }
+
+      function drawHead(now) {
+        const g = c2, hp = headPos(now);
+        if (hp.f <= 0.01 && target.state !== "hit") return;
+        const sp = SPOTS[target.spot];
+        g.save();
+        /* клипуем, чтобы голова «выезжала» из-за укрытия */
+        /* за деревом — режем по краю ствола; камень сам закрывает голову (рисуется поверх) */
+        if (sp.cover === "tree") {
+          const edgeL = TREE.x - TREE.w / 2, edgeR = TREE.x + TREE.w / 2;
+          g.beginPath();
+          if (sp.dx > 0) g.rect(edgeL - 300, sp.y - 150, 300, 400);
+          else g.rect(edgeR, sp.y - 150, 300, 400);
+          g.clip();
+        }
+        const x = hp.x, y = hp.y, r = HEAD_R;
+        /* лицо */
+        g.fillStyle = "#c99a78"; g.beginPath(); g.ellipse(x, y + 3, r * 0.82, r * 0.95, 0, 0, Math.PI * 2); g.fill();
+        /* очки/маска */
+        g.fillStyle = "#222"; g.fillRect(x - r * 0.7, y + 1, r * 1.4, 4);
+        /* каска 3 уровня: широкий купол + край + ремешок */
+        g.fillStyle = "#3d4733";
+        g.beginPath(); g.arc(x, y - 1, r * 1.12, Math.PI, 0); g.lineTo(x + r * 1.25, y + 3); g.lineTo(x - r * 1.25, y + 3); g.closePath(); g.fill();
+        g.fillStyle = "#2c3425"; g.fillRect(x - r * 1.3, y + 1, r * 2.6, 4);
+        g.fillStyle = "#566348"; g.beginPath(); g.ellipse(x - r * 0.35, y - r * 0.6, r * 0.38, r * 0.2, -0.4, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = "#1e1e1e"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x - r * 0.95, y + 4); g.lineTo(x - r * 0.4, y + r * 1.1); g.stroke();
+        g.restore();
+      }
+
+      function drawScope(now, vp) {
+        const g = c2, cx = W / 2, cy = H / 2;
+        const sh = shake > 0 ? (Math.random() - 0.5) * shake : 0;
+        g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        g.clearRect(0, 0, W, H);
+        g.save();
+        g.translate(cx + sh, cy + sh);
+        g.scale(Z, Z);
+        g.translate(-vp.x, -vp.y);
+        drawWorld(now);
+        g.restore();
+        /* попадание: хитмаркер */
+        if (hitMark && now - hitMark.t < 900) {
+          const a = 1 - (now - hitMark.t) / 900, s = 14;
+          g.strokeStyle = "rgba(255,70,60," + a + ")"; g.lineWidth = 3;
+          g.beginPath();
+          g.moveTo(cx - s, cy - s); g.lineTo(cx - s / 3, cy - s / 3); g.moveTo(cx + s, cy - s); g.lineTo(cx + s / 3, cy - s / 3);
+          g.moveTo(cx - s, cy + s); g.lineTo(cx - s / 3, cy + s / 3); g.moveTo(cx + s, cy + s); g.lineTo(cx + s / 3, cy + s / 3);
+          g.stroke();
+        }
+        /* виньетка-прицел: чёрное всё вне круга */
+        const rr = R;
+        g.save();
+        g.beginPath(); g.rect(0, 0, W, H); g.moveTo(cx + rr, cy); g.arc(cx, cy, rr, 0, Math.PI * 2, true);
+        g.fillStyle = "#000"; g.fill("evenodd");
+        const vg = g.createRadialGradient(cx, cy, rr * 0.72, cx, cy, rr);
+        vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.85)");
+        g.fillStyle = vg; g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = "#111"; g.lineWidth = 6; g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.stroke();
+        g.restore();
+        /* перекрестие + mil-dots */
+        g.strokeStyle = "#0b0b0b"; g.fillStyle = "#0b0b0b";
+        g.lineWidth = Math.max(3, rr * 0.016);
+        const gap = rr * 0.3;
+        g.beginPath();
+        g.moveTo(cx - rr, cy); g.lineTo(cx - gap, cy); g.moveTo(cx + gap, cy); g.lineTo(cx + rr, cy);
+        g.moveTo(cx, cy + gap); g.lineTo(cx, cy + rr); g.moveTo(cx, cy - rr); g.lineTo(cx, cy - gap);
+        g.stroke();
+        g.lineWidth = 1.4;
+        g.beginPath(); g.moveTo(cx - gap, cy); g.lineTo(cx + gap, cy); g.moveTo(cx, cy - gap); g.lineTo(cx, cy + gap); g.stroke();
+        const md = gap / 4;
+        for (let i = -4; i <= 4; i++) {
+          if (!i) continue;
+          g.beginPath(); g.arc(cx + i * md, cy, 2.2, 0, Math.PI * 2); g.fill();
+          g.beginPath(); g.arc(cx, cy + i * md, 2.2, 0, Math.PI * 2); g.fill();
+        }
+        g.fillStyle = "rgba(220,40,30,.85)"; g.beginPath(); g.arc(cx, cy, 1.8, 0, Math.PI * 2); g.fill();
+      }
+
+      function frame(now) {
+        if (!running) return;
+        /* случайные подёргивания */
+        if (now > nextTwitch) {
+          const m = easy() ? 2.5 : 8;
+          twitchT = { x: (Math.random() - 0.5) * 2 * m, y: (Math.random() - 0.5) * 2 * m };
+          nextTwitch = now + 500 + Math.random() * 900;
+        }
+        twitch.x += (twitchT.x - twitch.x) * 0.18; twitch.y += (twitchT.y - twitch.y) * 0.18;
+        kick.x *= 0.88; kick.y *= 0.88; shake *= 0.85;
+        if (!done && target && target.state === "pop" && now > target.start + target.upMs * 2 + target.hold) {
+          schedulePop(now, 700 + Math.random() * 900);
+        }
+        drawScope(now, viewPoint(now));
+        raf = requestAnimationFrame(frame);
+      }
+
+      function showMsg(text) {
+        msgEl.textContent = text;
+        msgEl.classList.add("show");
+        clearTimeout(msgTimer);
+        msgTimer = setTimeout(() => msgEl.classList.remove("show"), 1100);
+      }
+
+      let actx = null;
+      function bang() {
+        try {
+          actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+          const len = Math.floor(actx.sampleRate * 0.35);
+          const buf = actx.createBuffer(1, len, actx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+          const src = actx.createBufferSource(); src.buffer = buf;
+          const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1600;
+          const gn = actx.createGain(); gn.gain.value = 0.35;
+          src.connect(f); f.connect(gn); gn.connect(actx.destination); src.start();
+        } catch (e) { /* без звука — не страшно */ }
+      }
+
+      function shoot() {
+        if (!running || done) return null;
+        const now = performance.now();
+        const vp = viewPoint(now);
+        shots++;
+        bang();
+        flashEl.classList.remove("on"); void flashEl.offsetWidth; flashEl.classList.add("on");
+        let hit = false;
+        if (target && target.state === "pop") {
+          const hp = headPos(now);
+          const dd = Math.hypot(vp.x - hp.x, vp.y - (hp.y + 2));
+          hit = hp.f > 0.35 && dd <= hitRadius();
+        }
+        kick.y -= 34; kick.x += (Math.random() - 0.5) * 10; shake = 10;
+        if (hit) {
+          done = true;
+          target.state = "hit"; target.hitAt = now; target.fall = Math.random() < 0.5 ? -1 : 1;
+          hitMark = { t: now };
+          topEl.style.opacity = "0";
+          setTimeout(() => killEl.classList.add("show"), 250);
+          setTimeout(() => { if (resolveWin) resolveWin(); }, 2100);
+          return true;
+        }
+        misses++;
+        puffs.push({ x: vp.x, y: vp.y, t: now });
+        showMsg(misses >= 4 ? "Мимо! Ещё раз — теперь проще 💙" : "Мимо! Ещё раз");
+        if (target) target.state = "gone";
+        schedulePop(now, 650);
+        return false;
+      }
+
+      /* ---------- ввод ---------- */
+      function onMouseMove(e) {
+        if (touchMode) return;
+        /* позиция курсора по экрану → куда смотрим в мире */
+        aim.x = 300 + (e.clientX / W) * 650;
+        aim.y = 330 + (e.clientY / H) * 270;
+        clampAim();
+      }
+      function onPointerDown(e) {
+        if (e.pointerType === "touch") {
+          if (!touchMode) { touchMode = true; root.classList.add("touch"); }
+          drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() };
+          return;
+        }
+        if (e.button === 0) { onMouseMove(e); shoot(); }
+      }
+      function onPointerMove(e) {
+        if (e.pointerType !== "touch") { onMouseMove(e); return; }
+        if (!drag || e.pointerId !== drag.id) return;
+        const k = 1.25 / Z;
+        aim.x += (e.clientX - drag.x) * k; aim.y += (e.clientY - drag.y) * k;
+        drag.x = e.clientX; drag.y = e.clientY;
+        clampAim();
+      }
+      function onPointerUp(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        const moved = Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy);
+        const quick = performance.now() - drag.t < 260;
+        drag = null;
+        if (moved < 8 && quick) shoot(); /* короткий тап — тоже выстрел */
+      }
+
+      function start() {
+        return new Promise((resolve) => {
+          resolveWin = resolve;
+          resize();
+          touchMode = matchMedia("(hover: none) and (pointer: coarse)").matches;
+          root.classList.toggle("touch", touchMode);
+          done = false; misses = 0; shots = 0; puffs = []; hitMark = null;
+          killEl.classList.remove("show"); topEl.style.opacity = "";
+          topEl.innerHTML = touchMode
+            ? "Последний враг. <b>Води пальцем</b> и жми «ШОТ», когда каска в прицеле"
+            : "Последний враг. <b>Наведи мышку</b> на каску и кликни";
+          aim = { x: 640, y: 470 };
+          root.classList.add("show"); root.setAttribute("aria-hidden", "false");
+          running = true;
+          const now = performance.now();
+          t0 = now; nextTwitch = now + 600;
+          schedulePop(now, 1300);
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
+        });
+      }
+      function hide() {
+        running = false; cancelAnimationFrame(raf);
+        root.classList.remove("show"); root.setAttribute("aria-hidden", "true");
+      }
+
+      window.addEventListener("resize", () => { if (running) resize(); });
+      root.addEventListener("pointerdown", (e) => { if (e.target === shotBtn) return; onPointerDown(e); });
+      root.addEventListener("pointermove", onPointerMove);
+      root.addEventListener("pointerup", onPointerUp);
+      root.addEventListener("pointercancel", () => { drag = null; });
+      root.addEventListener("contextmenu", (e) => e.preventDefault());
+      shotBtn.addEventListener("click", (e) => { e.stopPropagation(); shoot(); });
+
+      return {
+        start, hide, shoot,
+        get state() {
+          const now = performance.now();
+          return {
+            running, done, misses, shots, easy: easy(), hitRadius: hitRadius(), sway: swayAmp(), touchMode,
+            aim: { ...aim }, view: viewPoint(now),
+            target: target ? { ...headPos(now), state: target.state, spot: target.spot } : null
+          };
+        },
+        /* для тестов: ждать, пока голова выглянет, и навестись точно на неё */
+        aimAtTarget() {
+          testNoSway = true; kick = { x: 0, y: 0 }; twitch = { x: 0, y: 0 }; twitchT = { x: 0, y: 0 };
+          const hp = headPos(performance.now()); aim = { x: hp.x, y: hp.y + 2 };
+        },
+        aimAway() { testNoSway = true; aim = { x: 330, y: 360 }; },
+        setSway(on) { testNoSway = !on; }
+      };
+    })();
+
+    async function runSniper() {
+      phase = "sniper";
+      panel.classList.add("hidden");
+      if (window.QuestHUD) QuestHUD.setStep("sniper");
+      document.body.classList.add("sniper-on");
+      await Sniper.start();
+      document.body.classList.remove("sniper-on");
+      if (window.QuestHUD && QuestHUD.layout) QuestHUD.layout();
+      appendKillLine({ tag: "[F4M]", name: "Marusabelle", action: "убила", enemy: "Enemy_2 · M24 · хедшот" }, false);
+      setAlive(2);
+      Sniper.hide();
+      showVictory();
+    }
+
+    /* Debug: zone.html?sniper=1 — сразу финальный выстрел (последний вопрос уже как бы отвечен). */
+    function jumpToSniper() {
+      aliveGen++;
+      clearCrate();
+      question = 8; finished = true; animating = false;
+      blue = { ...ZONES[7] }; white = { ...ZONES[7] }; whiteAlpha = 1;
+      pos = { ...LANDINGS[7] };
+      route = { points: buildRoute(LANDINGS[6], ROUTES[7], LANDINGS[7]), drawn: 1, alpha: 1 };
+      travelT = 1;
+      killFeed.innerHTML = "";
+      appendKillLine(FINALE_KILLS[0], true);
+      setAlive(FINALE_KILLS[0].to);
+      draw();
+      runSniper();
     }
 
     window.__zone = {
@@ -1220,6 +1718,8 @@
       jumpToPhase,
       jumpToVictory,
       runAirdrop,
+      jumpToSniper,
+      Sniper,
     };
 
     if (document.readyState === "complete") boot();
