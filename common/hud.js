@@ -27,17 +27,23 @@
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } }
   function lsDel(k) { try { localStorage.removeItem(k); } catch (e) { delete mem[k]; } }
 
-  var params = new URLSearchParams(location.search);
-  if (params.get("newgame") === "1") {
-    /* новая игра: стираем ВСЁ состояние квеста (примогемы, награды, гача — все версии ключей, ответы…), кроме входа по коду */
+  /* Новая игра: стираем ВСЁ состояние квеста (примогемы, награды «один раз за вопрос», гача — все версии ключей, ответы…),
+     кроме входа по коду (nov16_ok) и настроек звука (*_muted). Вызывается кнопкой «Да» на стартовом экране и по ?newgame=1.
+     15.11: раньше сброс был только по ?newgame=1 → при повторном прохождении награды не начислялись (id уже в списке),
+     а потраченные в гаче примогемы не возвращались. */
+  function newGame() {
     lsDel(KEY); lsDel(AKEY);
     [window.localStorage, window.sessionStorage].forEach(function (st) {
       try {
         var ks = []; for (var i = 0; i < st.length; i++) ks.push(st.key(i));
-        ks.forEach(function (k) { if (/^(nov16_|quest_)/.test(k) && k !== "nov16_ok") st.removeItem(k); });
+        ks.forEach(function (k) { if (/^(nov16_|quest_)/.test(k) && k !== "nov16_ok" && !/_muted$/.test(k)) st.removeItem(k); });
       } catch (e) {}
     });
     mem = {};
+  }
+  var params = new URLSearchParams(location.search);
+  if (params.get("newgame") === "1") {
+    newGame();
     try { params.delete("newgame"); history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash); } catch (e) {}
   }
 
@@ -295,6 +301,7 @@
     setStep: function (s) { step = s || ""; if (panel && !panel.hidden) panelText.textContent = hintText(); },
     getStep: function () { return step; },
     hintText: hintText, openHint: function () { build(); open(); }, closeHint: close,
+    newGame: function () { newGame(); render(null); },
     next: next, nextUrl: nextUrl, showNext: showNext, hideNext: hideNext,
     watchMap: watchMap, placeOutside: placeOutside, layout: layout,
     setVisible: function (v) { build(); root.style.display = v ? "" : "none"; if (!v) close(); render(null); if (v) layout(); },

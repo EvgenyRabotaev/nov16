@@ -179,9 +179,9 @@
   } catch (e) {}
 })();
 </script>
-<link rel="stylesheet" href="../common/hud.css?v=20261115c">
-<script src="../common/quest_config.js?v=20261115c"></script>
-<script src="../common/hud.js?v=20261115c" data-screen="start"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115d">
+<script src="../common/quest_config.js?v=20261115d"></script>
+<script src="../common/hud.js?v=20261115d" data-screen="start"></script>
 </head>
 <body>
   <div class="bg" aria-hidden="true"></div>
@@ -339,6 +339,7 @@
   requestAnimationFrame(frame);
 
   yes.addEventListener('click', function () {
+    if (window.QuestHUD && QuestHUD.newGame) QuestHUD.newGame();   /* каждое прохождение с начала — с нуля: примогемы, награды, гача */
     document.body.classList.add('started');
     setTimeout(function () { go.classList.add('show'); }, 280);
     setTimeout(function () { if (window.QuestHUD) QuestHUD.next(); }, 2300);
