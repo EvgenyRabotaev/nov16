@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Сегодня наш день</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #071018;
+    color: #fff;
+    font-family: Manrope, system-ui, sans-serif;
+  }
+
+  .bg {
+    position: fixed;
+    inset: 0;
+    background: #071018 url("collage.jpg") center / cover no-repeat;
+  }
+  @media (orientation: portrait) {
+    .bg { background-image: url("collage_portrait.jpg"); }
+  }
+  .bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 48%, rgba(6,10,24,.30) 0%, rgba(6,10,24,.48) 58%, rgba(4,8,16,.64) 100%);
+  }
+
+  .stage {
+    position: relative;
+    z-index: 1;
+    min-height: 100%;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .panel {
+    text-align: center;
+    max-width: 820px;
+    width: min(92vw, 820px);
+    padding: 40px 44px 34px;
+    background: rgba(8, 14, 32, 0.46);
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    border-radius: 28px;
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow: 0 24px 64px rgba(0,0,0,.42);
+    animation: rise .95s ease both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  h1 {
+    font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    font-weight: 600;
+    font-size: clamp(28px, 5.4vw, 54px);
+    line-height: 1.22;
+    margin: 0 0 14px;
+    letter-spacing: .01em;
+    text-shadow: 0 2px 22px rgba(0,0,0,.5);
+  }
+  .q {
+    font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(19px, 3.2vw, 30px);
+    line-height: 1.38;
+    margin: 0 0 32px;
+    color: rgba(255,248,240,.95);
+    text-shadow: 0 2px 16px rgba(0,0,0,.45);
+  }
+
+  .btns {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    min-height: 58px;
+  }
+
+  button {
+    font-family: Manrope, system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: .01em;
+    border-radius: 999px;
+    padding: 14px 36px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  #yes {
+    background: linear-gradient(180deg, #93d2ff 0%, #4aa0f0 48%, #2b78d6 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 8px 28px rgba(50,130,230,.48), inset 0 1px 0 rgba(255,255,255,.38);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  #yes:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 12px 32px rgba(50,130,230,.58), inset 0 1px 0 rgba(255,255,255,.38);
+  }
+  #yes:active { transform: translateY(0) scale(.98); }
+
+  #no {
+    background: rgba(255,255,255,0.09);
+    color: rgba(255,255,255,0.9);
+    border: 1.5px solid rgba(255,255,255,0.42);
+    box-shadow: 0 4px 16px rgba(0,0,0,.22);
+    pointer-events: none;
+    user-select: none;
+    z-index: 20;
+    will-change: left, top;
+  }
+  #no.fleeing {
+    position: fixed;
+    margin: 0;
+  }
+
+  body.started .panel {
+    opacity: 0;
+    transform: scale(.98);
+    transition: opacity .65s ease, transform .65s ease;
+    pointer-events: none;
+  }
+  body.started #no {
+    opacity: 0;
+    transition: opacity .4s ease;
+  }
+
+  #go {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6,10,22,.72);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .9s ease;
+    z-index: 50;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 600;
+    text-shadow: 0 2px 20px rgba(0,0,0,.5);
+    text-align: center;
+    padding: 20px;
+  }
+  #go.show { opacity: 1; pointer-events: auto; }
+
+  @media (max-width: 520px) {
+    .panel { padding: 28px 22px 26px; }
+    button { padding: 13px 26px; font-size: 16px; }
+  }
+</style>
+<script>
+(function () {
+  try {
+    if (sessionStorage.getItem('nov16_ok') !== '1') {
+      location.replace('../');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <main class="stage" id="start">
+    <div class="panel">
+      <h1>Сегодня наш день, булочка.</h1>
+      <p class="q">Ты готова вместе со мной отправиться в увлекательное путешествие?</p>
+      <div class="btns" id="btns">
+        <button type="button" id="yes">Да, конечно</button>
+        <button type="button" id="no" tabindex="-1" aria-hidden="true">Нет</button>
+      </div>
+    </div>
+  </main>
+  <div id="go">Путешествие начинается…</div>
+<script>
+(function () {
+  const no = document.getElementById('no');
+  const yes = document.getElementById('yes');
+  const go = document.getElementById('go');
+
+  let fleeing = false;
+  let px = -9999, py = -9999;
+  let cx = 0, cy = 0;
+  let vx = 0, vy = 0;
+  let hopUntil = 0;
+  const PAD = 14;
+  const DANGER = 170;
+
+  function size() {
+    return { w: no.offsetWidth, h: no.offsetHeight };
+  }
+
+  function makeFixed() {
+    if (fleeing) return;
+    fleeing = true;
+    const r = no.getBoundingClientRect();
+    no.classList.add('fleeing');
+    document.body.appendChild(no);
+    cx = r.left;
+    cy = r.top;
+    no.style.left = cx + 'px';
+    no.style.top = cy + 'px';
+  }
+
+  function randomFar(fromX, fromY) {
+    const { w, h } = size();
+    const maxX = window.innerWidth - w - PAD;
+    const maxY = window.innerHeight - h - PAD;
+    let best = [PAD, PAD], bestD = -1;
+    for (let i = 0; i < 14; i++) {
+      const x = PAD + Math.random() * Math.max(1, maxX - PAD);
+      const y = PAD + Math.random() * Math.max(1, maxY - PAD);
+      const d = Math.hypot(x + w / 2 - fromX, y + h / 2 - fromY);
+      // prefer far AND not on the same side as the pointer
+      const bonus = ((x + w / 2 - window.innerWidth / 2) * (fromX - window.innerWidth / 2) < 0 ? 80 : 0)
+                  + ((y + h / 2 - window.innerHeight / 2) * (fromY - window.innerHeight / 2) < 0 ? 80 : 0);
+      const score = d + bonus;
+      if (score > bestD) { bestD = score; best = [x, y]; }
+    }
+    return best;
+  }
+
+  document.addEventListener('pointermove', function (e) {
+    px = e.clientX;
+    py = e.clientY;
+  }, { passive: true });
+
+  document.addEventListener('pointerdown', function (e) {
+    px = e.clientX;
+    py = e.clientY;
+    const r = no.getBoundingClientRect();
+    const near = e.clientX >= r.left - 16 && e.clientX <= r.right + 16 &&
+                 e.clientY >= r.top - 16 && e.clientY <= r.bottom + 16;
+    if (near) {
+      e.preventDefault();
+      makeFixed();
+      const esc = randomFar(px, py);
+      cx = esc[0];
+      cy = esc[1];
+      vx = 0;
+      vy = 0;
+      hopUntil = performance.now() + 280;
+      no.style.left = cx + 'px';
+      no.style.top = cy + 'px';
+    }
+  }, { passive: false });
+
+  function frame(now) {
+    const { w, h } = size();
+    const left = fleeing ? cx : no.getBoundingClientRect().left;
+    const top  = fleeing ? cy : no.getBoundingClientRect().top;
+    const bx = left + w / 2;
+    const by = top + h / 2;
+    const dx = bx - px;
+    const dy = by - py;
+    const dist = Math.hypot(dx, dy) || 0.001;
+    const maxX = window.innerWidth - w - PAD;
+    const maxY = window.innerHeight - h - PAD;
+
+    if (now >= hopUntil && dist < DANGER) {
+      makeFixed();
+      const ux = dx / dist;
+      const uy = dy / dist;
+      const closeness = (DANGER - dist) / DANGER;
+      const accel = (0.9 + 3.4 * closeness * closeness) * 2.15;
+      vx += ux * accel;
+      vy += uy * accel;
+      if (dist < 80) {
+        const side = (vx * -uy + vy * ux) >= 0 ? 1 : -1;
+        vx += -uy * side * (10 + 16 * closeness);
+        vy +=  ux * side * (10 + 16 * closeness);
+      }
+    } else {
+      vx *= 0.88;
+      vy *= 0.88;
+    }
+
+    const spd = Math.hypot(vx, vy);
+    const maxSpd = 32;
+    if (spd > maxSpd) {
+      vx *= maxSpd / spd;
+      vy *= maxSpd / spd;
+    }
+
+    if (fleeing && now >= hopUntil) {
+      let nx = cx + vx;
+      let ny = cy + vy;
+      let hitX = false, hitY = false;
+      if (nx < PAD) { nx = PAD; vx = Math.abs(vx) * 0.55; hitX = true; }
+      if (nx > maxX) { nx = maxX; vx = -Math.abs(vx) * 0.55; hitX = true; }
+      if (ny < PAD) { ny = PAD; vy = Math.abs(vy) * 0.55; hitY = true; }
+      if (ny > maxY) { ny = maxY; vy = -Math.abs(vy) * 0.55; hitY = true; }
+
+      const cornered = hitX && hitY && dist < DANGER;
+      const trappedOnWall = (hitX || hitY) && dist < 70;
+      if (cornered || trappedOnWall) {
+        const esc = randomFar(px, py);
+        cx = esc[0];
+        cy = esc[1];
+        vx = 0;
+        vy = 0;
+        hopUntil = now + 260;
+      } else {
+        cx = nx;
+        cy = ny;
+      }
+      no.style.left = cx + 'px';
+      no.style.top = cy + 'px';
+    } else if (fleeing) {
+      no.style.left = cx + 'px';
+      no.style.top = cy + 'px';
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  yes.addEventListener('click', function () {
+    document.body.classList.add('started');
+    setTimeout(function () { go.classList.add('show'); }, 280);
+  });
+})();
+</script>
+</body>
+</html>
