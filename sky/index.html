@@ -33,6 +33,14 @@
   .tap-start { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 9; display: none; padding: 14px 26px; border-radius: 999px;
     font: 600 20px/1.2 "Segoe UI", system-ui, sans-serif; color: #7a4a5e; background: rgba(255, 250, 244, .85); box-shadow: 0 0 30px rgba(255, 200, 160, .8); cursor: pointer; }
   .tap-start.show { display: block; animation: tapPulse 1.8s ease-in-out infinite; }
+  /* «Пропустить» — над кнопкой подсказки HUD (правый низ), тихая, видна только в полёте */
+  .skip { position: fixed; z-index: 9; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    padding: 7px 14px; border: 1px solid rgba(255, 255, 255, .55); border-radius: 999px; background: rgba(255, 250, 244, .28); color: rgba(255, 255, 255, .92);
+    font: 500 14px/1.2 "Segoe UI", "Noto Sans", system-ui, sans-serif; letter-spacing: .03em; text-shadow: 0 1px 3px rgba(90, 40, 70, .55);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .8s ease, background .2s; touch-action: manipulation; }
+  .skip.show { opacity: .75; pointer-events: auto; }
+  .skip.show:hover { opacity: 1; background: rgba(255, 250, 244, .42); }
+  @media (max-width: 600px) { .skip { right: calc(10px + env(safe-area-inset-right, 0px)); bottom: calc(58px + env(safe-area-inset-bottom, 0px)); font-size: 13px; padding: 6px 12px; } }
   @keyframes tapPulse { 50% { box-shadow: 0 0 50px rgba(255, 190, 140, 1); } }
 </style>
 <link rel="stylesheet" href="../common/hud.css">
@@ -47,6 +55,7 @@
 <canvas id="fxFront"></canvas>
 <div class="caption" id="caption">Летим дальше — вместе</div>
 <div class="veil" id="veil"></div>
+<button type="button" class="skip" id="skipBtn">Пропустить ›</button>
 <div class="tap-start" id="tapStart">Коснись, чтобы полететь ✨</div>
 <script>
 (function () {
@@ -54,10 +63,12 @@
   const CFG = (window.QUEST_CONFIG && window.QUEST_CONFIG.SKY) || {};
   const FAST = /[?&]fast=1/.test(location.search);
   const SPEED = FAST ? 4 : 1;
-  const RISE = CFG.RISE_MS || 2600, LAND = CFG.LAND_MS || 2600, FADE = CFG.FADE_MS || 3000;
+  const RISE = CFG.RISE_MS || 2600, LAND = CFG.LAND_MS || 2600;
+  let FADE = CFG.FADE_MS || 3000, skipped = false;
   let FLIGHT = CFG.FLIGHT_MS || 30000;
   const T = {};
   function setTimeline() {
+    if (skipped) return;
     T.enter = RISE; T.flyEnd = RISE + FLIGHT; T.landEnd = T.flyEnd + LAND;
     T.islandStart = T.flyEnd - Math.min(4400, FLIGHT * 0.4);     /* остров виден ~4 с до посадки */
   }
@@ -89,7 +100,7 @@
   const steer = { target: 0, off: 0, vel: 0, lastInput: -1e9, enabled: false };
   function inputAt(x) { steer.target = Math.max(-1, Math.min(1, (x / W) * 2 - 1)); steer.lastInput = performance.now(); }
   addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" || e.buttons || e.pressure > 0) inputAt(e.clientX); }, { passive: true });
-  addEventListener("pointerdown", (e) => { if (!e.target.closest || !e.target.closest(".qhud-next, .qhud-btn, .qhud")) inputAt(e.clientX); }, { passive: true });
+  addEventListener("pointerdown", (e) => { if (!e.target.closest || !e.target.closest(".qhud-next, .qhud-btn, .qhud, .skip")) inputAt(e.clientX); }, { passive: true });
   addEventListener("touchmove", (e) => { if (e.touches[0]) inputAt(e.touches[0].clientX); }, { passive: true });
   document.documentElement.style.touchAction = "none";
 
@@ -190,13 +201,14 @@
     if (t0 == null) { t0 = now; last = now; }
     const rdt = Math.min(50, now - last); const dt = rdt * SPEED; last = now;
     /* время: по музыке, если играет; иначе по часам */
-    if (audio && !audio.paused && !audio.ended) clock = audio.currentTime * 1000; else clock += dt;
+    if (audio && !skipped && !audio.paused && !audio.ended) clock = audio.currentTime * 1000; else clock += dt;
     const t = clock;
-    if (audio && !audio.paused) { const left = T.landEnd - t; audio.volume = Math.max(0, Math.min(1, left / FADE)); }
+    if (audio && !audio.paused) { const left = T.landEnd - t; audio.volume = Math.max(0, Math.min(1, left / FADE)); if (left <= 0) audio.pause(); }
+    skipBtn.classList.toggle("show", !skipped && t > T.enter + 400 && t < T.islandStart);
     const flow = t < T.enter ? 0.4 + 0.6 * clamp(t / T.enter) : t < T.flyEnd ? 1 : 1 - 0.85 * clamp((t - T.flyEnd) / (T.landEnd - T.flyEnd));
 
     /* руление: только в полёте; в начале и при посадке — к центру */
-    const inFlight = t > T.enter + 300 && t < T.flyEnd;
+    const inFlight = !skipped && t > T.enter + 300 && t < T.flyEnd;
     steer.enabled = inFlight;
     const idle = performance.now() - steer.lastInput > 2500;
     let tgt = inFlight ? (idle ? Math.sin(t / 2600) * 0.35 + Math.sin(t / 1100) * 0.08 : steer.target) : 0;
@@ -248,7 +260,18 @@
     window.__sky.t = t; window.__sky.cx = cx; window.__sky.rot = rot;
     requestAnimationFrame(frame);
   }
-  window.__sky = { t: 0, done: false, T, speed: SPEED, steer, music: !!audio, audio };
+  window.__sky = { t: 0, done: false, T, speed: SPEED, steer, music: !!audio, audio, skipped: false };
+  /* «Пропустить»: остров быстро подлетает, пара к центру и садится, музыка гаснет — ~3.6 с, потом «Дальше» */
+  const skipBtn = document.getElementById("skipBtn");
+  function skip() {
+    const t = clock;
+    if (skipped || t < T.enter || t >= T.islandStart) return;
+    skipped = true; window.__sky.skipped = true; skipBtn.classList.remove("show");
+    T.islandStart = t; T.flyEnd = t + 1000; T.landEnd = T.flyEnd + LAND;
+    FADE = T.landEnd - t;
+  }
+  skipBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+  skipBtn.addEventListener("click", (e) => { e.stopPropagation(); skip(); });
   let started = false;
   const start = () => { if (started) return; started = true; tapStart.classList.remove("show"); veil.classList.add("off"); requestAnimationFrame(frame); };
   function begin() {
