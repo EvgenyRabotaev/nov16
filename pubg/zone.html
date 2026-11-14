@@ -303,6 +303,55 @@
       .kill-feed { top: 84px; right: 10px; }
       .kf-line { font-size: 14px; padding: 4px 8px 3px; }
     }
+    /* ===== События на переходах (PUBG_EVENTS) ===== */
+    #evRed { position: fixed; inset: 0; z-index: 9; pointer-events: none; opacity: 0; transition: opacity .8s ease;
+      background: radial-gradient(ellipse at center, rgba(200, 20, 10, .18) 0%, rgba(150, 0, 0, .5) 100%); }
+    #evRed.show { opacity: 1; animation: evRedPulse 1.6s ease-in-out infinite; }
+    @keyframes evRedPulse { 50% { filter: brightness(1.25); } }
+    #evCard {
+      position: fixed; left: 50%; top: 50%; z-index: 30;
+      width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 150px); overflow: auto;
+      transform: translate(-50%, -46%); opacity: 0; pointer-events: none;
+      transition: opacity .35s ease, transform .35s ease;
+      display: flex; gap: 18px; align-items: stretch;
+      background: rgba(14, 15, 13, .9); border: 1px solid rgba(255,255,255,.12); border-left: 3px solid #f5c542;
+      box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 16px; color: #ece8dc;
+      font-family: "Barlow Condensed", "Segoe UI", system-ui, sans-serif; backdrop-filter: blur(3px);
+    }
+    #evCard.show { opacity: 1; transform: translate(-50%, -50%); pointer-events: auto; }
+    #evCard.red { border-left-color: #e5483b; }
+    .ev-pic { flex: 0 0 42%; min-height: 180px; background: #222 center / cover no-repeat; border: 1px solid rgba(255,255,255,.1); }
+    .ev-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .ev-kicker { font-size: 12px; letter-spacing: .2em; color: #f5c542; text-transform: uppercase; }
+    #evCard.red .ev-kicker { color: #ff7a6e; }
+    .ev-title { font-size: 26px; font-weight: 600; letter-spacing: .03em; margin: 2px 0 8px; text-transform: uppercase; color: #fff; }
+    .ev-intro { font-size: 17px; color: rgba(236,232,220,.78); font-style: italic; margin: 0 0 8px; }
+    .ev-lines { margin: 0 0 6px; padding: 0; list-style: none; }
+    .ev-lines li { font-size: 18px; line-height: 1.3; margin: 3px 0; opacity: 0; transform: translateY(4px); transition: opacity .3s, transform .3s; }
+    .ev-lines li.on { opacity: 1; transform: none; }
+    .ev-who { font-weight: 600; margin-right: 6px; }
+    .ev-who.vika { color: #f5c542; } .ev-who.zhenya { color: #8fd0ff; }
+    .ev-stage { font-style: italic; color: rgba(236,232,220,.7); }
+    .ev-feed { display: inline-block; margin: 4px 0 6px; padding: 5px 10px; background: rgba(0,0,0,.55); border-left: 3px solid #ff6b5e;
+      font-size: 17px; font-weight: 600; color: #fff; opacity: 0; transition: opacity .3s; }
+    .ev-feed.on { opacity: 1; }
+    .ev-note { font-size: 15px; color: rgba(236,232,220,.66); border-top: 1px solid rgba(255,255,255,.1); padding-top: 7px; margin-top: 4px; }
+    .ev-actions { margin-top: auto; padding-top: 10px; display: flex; justify-content: flex-end; }
+    .ev-next {
+      appearance: none; border: 1px solid rgba(245,197,66,.8); background: rgba(245,197,66,.12); color: #f5c542;
+      font: 600 18px/1 "Barlow Condensed", "Segoe UI", sans-serif; letter-spacing: .14em; text-transform: uppercase;
+      padding: 11px 26px; cursor: pointer;
+    }
+    .ev-next:hover { background: rgba(245,197,66,.25); }
+    body.event-on .qhud { left: auto !important; top: auto !important; right: 12px !important; bottom: 12px !important; }
+    @media (max-width: 640px) {
+      #evCard { flex-direction: column; gap: 10px; padding: 12px; top: auto; bottom: 64px; transform: translate(-50%, 12px); max-height: calc(100vh - 150px); }
+      #evCard.show { transform: translate(-50%, 0); }
+      .ev-pic { flex: 0 0 auto; min-height: 0; aspect-ratio: 16 / 9; width: 100%; }
+      .ev-title { font-size: 22px; margin-bottom: 4px; }
+      .ev-intro { font-size: 15px; } .ev-lines li { font-size: 16px; } .ev-note { font-size: 14px; } .ev-feed { font-size: 15px; }
+      .ev-actions { justify-content: stretch; } .ev-next { width: 100%; }
+    }
     /* ===== Финальная мини-игра: снайпер (M24) ===== */
     #sniper {
       position: fixed; inset: 0; z-index: 22; background: #000;
@@ -398,6 +447,18 @@
     <button class="btn" id="answerBtn" type="button">Ответить</button>
   </aside>
 
+  <div id="evRed" aria-hidden="true"></div>
+  <div id="evCard" role="dialog" aria-hidden="true" aria-labelledby="evTitle">
+    <div class="ev-pic" id="evPic"></div>
+    <div class="ev-body">
+      <div class="ev-kicker" id="evKicker">Событие</div>
+      <div class="ev-title" id="evTitle"></div>
+      <p class="ev-intro" id="evIntro"></p>
+      <ul class="ev-lines" id="evLines"></ul>
+      <div class="ev-note" id="evNote"></div>
+      <div class="ev-actions"><button type="button" class="ev-next" id="evNext">Дальше</button></div>
+    </div>
+  </div>
   <div id="sniper" aria-hidden="true">
     <canvas id="sniperCanvas"></canvas>
     <div id="sniperFlash"></div>
@@ -1119,6 +1180,8 @@
       panel.classList.add("hidden");
 
       const k = question; /* 1..8 */
+      /* Событие на переходе: карточка появляется, пока рисуется маршрут и сужается зона. */
+      evPending = showEvent(k, 700);
       const targetBlue = { ...ZONES[k - 1] };
       const fromBlue = { ...blue };
       const toPos = { ...LANDINGS[k - 1] };
@@ -1177,6 +1240,8 @@
 
     async function onArrived(k) {
       if (window.QuestHUD) QuestHUD.award("pubg-q" + k);
+      await evPending; /* ждём «Дальше» в карточке события, если она есть */
+      evPending = Promise.resolve();
       /* Между вопросами 3 и 4 — самолёт сбрасывает аирдроп прямо на карте. */
       if (k === 3 && !AUTO) {
         runAirdrop();
@@ -1209,6 +1274,7 @@
     /* Test / screenshot helper: settle on a phase with no route animation. */
     function jumpToPhase(n) {
       const k = Math.max(1, Math.min(8, n | 0));
+      if (evOpen) hideEvent();
       aliveGen++;
       clearCrate();
       finished = false;
@@ -1267,10 +1333,80 @@
       renderQuestion();
       const startQ = parseInt(new URLSearchParams(location.search).get("q"), 10);
       const SNIPER_DEBUG = new URLSearchParams(location.search).get("sniper") === "1";
+      const EVENT_DEBUG = parseInt(new URLSearchParams(location.search).get("event"), 10);
       if (SNIPER_DEBUG) jumpToSniper();
+      else if (EVENT_DEBUG >= 1 && EVENT_DEBUG <= 7) jumpToEvent(EVENT_DEBUG);
       else if (startQ >= 2 && startQ <= 8) jumpToPhase(startQ);
       else if (window.QuestHUD) QuestHUD.setStep("q1");
       if (AUTO) setTimeout(autoTick, AUTO_FIRST_MS);
+    }
+
+    /* ===== События на переходах: тексты в common/quest_config.js → PUBG_EVENTS ===== */
+    const PUBG_EVENTS = ((window.QUEST_CONFIG && window.QUEST_CONFIG.PUBG_EVENTS) || []);
+    const evCard = document.getElementById("evCard");
+    const evRed = document.getElementById("evRed");
+    let evPending = Promise.resolve();
+    let evTimers = [];
+    let evOpen = null;
+    function eventFor(k) { return PUBG_EVENTS.find((e) => e.after === k) || null; }
+    function evLineHtml(l) {
+      if (!l.who) return '<span class="ev-stage">' + escHtml(l.text) + "</span>";
+      const cls = /вик/i.test(l.who) ? "vika" : "zhenya";
+      return '<span class="ev-who ' + cls + '">' + escHtml(l.who) + ':</span>«' + escHtml(l.text) + "»";
+    }
+    function hideEvent() {
+      evTimers.forEach(clearTimeout); evTimers = [];
+      evCard.classList.remove("show"); evCard.setAttribute("aria-hidden", "true");
+      evRed.classList.remove("show");
+      document.body.classList.remove("event-on");
+      if (window.QuestHUD && QuestHUD.layout) QuestHUD.layout();
+      const o = evOpen; evOpen = null;
+      if (o) o.resolve();
+    }
+    /* Показывает карточку; промис резолвится по «Дальше». */
+    function showEvent(k, delayMs) {
+      const ev = eventFor(k);
+      if (!ev || AUTO) return Promise.resolve();
+      return new Promise((resolve) => {
+        evTimers.forEach(clearTimeout); evTimers = [];
+        evOpen = { k, resolve };
+        document.getElementById("evPic").style.backgroundImage = "url('" + ev.image + "')";
+        document.getElementById("evKicker").textContent = "Событие · после вопроса " + k;
+        document.getElementById("evTitle").textContent = ev.title || "";
+        const intro = document.getElementById("evIntro");
+        intro.textContent = ev.intro || ""; intro.style.display = ev.intro ? "" : "none";
+        const ul = document.getElementById("evLines");
+        ul.innerHTML = "";
+        const items = [];
+        (ev.lines || []).forEach((l) => { const li = document.createElement("li"); li.innerHTML = evLineHtml(l); ul.appendChild(li); items.push(li); });
+        if (ev.feed) {
+          const li = document.createElement("li"); li.className = "ev-feed-li";
+          li.innerHTML = '<span class="ev-feed">' + escHtml(ev.feed) + "</span>"; ul.appendChild(li); items.push(li);
+        }
+        (ev.after_lines || []).forEach((l) => { const li = document.createElement("li"); li.innerHTML = evLineHtml(l); ul.appendChild(li); items.push(li); });
+        const note = document.getElementById("evNote");
+        note.textContent = ev.note || ""; note.style.display = ev.note ? "" : "none";
+        evCard.classList.toggle("red", !!ev.red);
+        evTimers.push(setTimeout(() => {
+          document.body.classList.add("event-on");
+          evCard.classList.add("show"); evCard.setAttribute("aria-hidden", "false");
+          if (ev.red) evRed.classList.add("show");
+          items.forEach((li, i) => evTimers.push(setTimeout(() => {
+            li.classList.add("on");
+            const f = li.querySelector(".ev-feed"); if (f) f.classList.add("on");
+          }, 250 + i * 650)));
+          evCard.scrollTop = 0;
+        }, delayMs || 0));
+      });
+    }
+    document.getElementById("evNext").addEventListener("click", hideEvent);
+
+    /* Debug: zone.html?event=N — сразу карточка события после вопроса N (затем вопрос N+1). */
+    function jumpToEvent(n) {
+      const k = Math.max(1, Math.min(7, n | 0));
+      jumpToPhase(Math.min(8, k + 1));
+      panel.classList.add("hidden");
+      showEvent(k, 0).then(() => { if (!finished) panel.classList.remove("hidden"); });
     }
 
     /* ===== Финальная мини-игра: снайпер =====
@@ -1719,6 +1855,9 @@
       jumpToVictory,
       runAirdrop,
       jumpToSniper,
+      jumpToEvent,
+      PUBG_EVENTS,
+      get eventOpen() { return evOpen ? evOpen.k : 0; },
       Sniper,
     };
 
