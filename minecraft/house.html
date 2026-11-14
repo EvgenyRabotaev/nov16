@@ -29,6 +29,12 @@
   .spark { position: absolute; width: 10px; height: 10px; background: #fffbe0; box-shadow: 0 0 8px #ffe680, 0 0 2px #fff; pointer-events: none; z-index: 5; image-rendering: pixelated; animation: spark 1s ease-out forwards; }
   .spark.pink { background: #ffd1ec; box-shadow: 0 0 8px #ff9bd2; }
   .spark.blue { background: #d6f0ff; box-shadow: 0 0 8px #8fd0ff; }
+  /* финал: пиксельное сердечко между Викой и Женей */
+  #mcHeart { position: absolute; left: 0; top: 0; z-index: 6; pointer-events: none; opacity: 0; transform-origin: 50% 100%; image-rendering: pixelated; }
+  #mcHeart svg { display: block; width: 100%; height: auto; shape-rendering: crispEdges; filter: drop-shadow(0 0 10px rgba(255, 90, 110, .7)) drop-shadow(0 3px 0 rgba(0, 0, 0, .25)); }
+  #mcHeart.on { opacity: 1; animation: heartPop .9s cubic-bezier(.2, 1.6, .4, 1) both, heartBob 2.4s ease-in-out .9s infinite; }
+  @keyframes heartPop { 0% { transform: translateY(20px) scale(0); opacity: 0; } 60% { opacity: 1; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+  @keyframes heartBob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.06); } }
   @keyframes spark { 0% { transform: translate(0, 0) scale(.4); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1.1) rotate(45deg); opacity: 0; } }
 
   .panel {
@@ -67,7 +73,7 @@
 <link rel="stylesheet" href="../common/hud.css?v=20261115a">
 <script src="../common/quest_config.js?v=20261115a"></script>
 <script src="../common/hud.js?v=20261115a" data-screen="minecraft"></script>
-<script src="craft.js"></script>
+<script src="craft.js?v=20261115a"></script>
 </head>
 <body>
 <div class="scene" id="scene">
@@ -184,13 +190,79 @@
     return { v: L.vStart + (L.vEnd - L.vStart) * t, z: L.zStart + (L.zEnd - L.zStart) * t };
   }
 
+  let together = 0;          /* 0…1 — финал: герои подходят друг к другу в центре */
+  const SC_T = 0.88;         /* в финале чуть «уходят вглубь» к дому: меньше и выше, чтобы не мешала кнопка «Дальше» */
+  function togetherX() {
+    const ov = Math.min(L.vw, L.zw) * 0.14 * SC_T;       /* чуть заходят друг за друга — плечом к плечу */
+    return { v: L.W / 2 + ov - L.vw * SC_T - L.vw * (1 - SC_T) / 2, z: L.W / 2 - ov - L.zw * (1 - SC_T) / 2 };
+  }
+  function liftPx() { return Math.max(0, (L.W < L.H ? 120 : 84) - L.bottom); }
   function place(p, hop) {
     const x = xs(p);
+    if (together > 0) { const g = togetherX(); x.v += (g.v - x.v) * together; x.z += (g.z - x.z) * together; }
     const y = -L.bottom;
     const hv = hop ? hop.y : 0, rot = hop ? hop.r : 0;
-    vika.style.transform = "translate(" + x.v + "px," + (y - hv) + "px) rotate(" + rot + "deg)";
-    zhenya.style.transform = "translate(" + x.z + "px," + (y - hv) + "px) rotate(" + (-rot) + "deg)";
-    window.__mcPos = { vika: [x.v, x.v + L.vw], zhenya: [x.z, x.z + L.zw], house: [L.houseL, L.houseR], h: L.h, W: L.W };
+    const lift = together ? liftPx() * together : 0, sc = 1 - (1 - SC_T) * together;
+    vika.style.transform = "translate(" + x.v + "px," + (y - hv - lift) + "px) rotate(" + rot + "deg)" + (together ? " scale(" + sc + ")" : "");
+    zhenya.style.transform = "translate(" + x.z + "px," + (y - hv - lift) + "px) rotate(" + (-rot) + "deg)" + (together ? " scale(" + sc + ")" : "");
+    x.sc = sc; x.lift = lift;
+    window.__mcPos = { vika: [x.v, x.v + L.vw], zhenya: [x.z, x.z + L.zw], house: [L.houseL, L.houseR], h: L.h, W: L.W, together };
+    placeHeart(x);
+  }
+
+  /* Пиксельное сердечко в стиле Minecraft — рисуется кодом (SVG). */
+  const HEART_MASK = [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."];
+  function heartSvg() {
+    const W0 = HEART_MASK[0].length + 2, H0 = HEART_MASK.length + 2;
+    const isB = (x, y) => y >= 0 && y < HEART_MASK.length && x >= 0 && x < HEART_MASK[0].length && HEART_MASK[y][x] === "#";
+    let r = "";
+    for (let y = -1; y <= HEART_MASK.length; y++) for (let x = -1; x <= HEART_MASK[0].length; x++) {
+      let c = null;
+      if (isB(x, y)) {
+        c = "#e3262b";
+        if ((y === 1 && (x === 1 || x === 4)) || (y === 2 && x === 1)) c = "#ff9a9a";         /* блик */
+        else if (!isB(x + 1, y + 1) || (y >= 3 && x >= 3 + (y - 3))) c = "#b0151b";           /* тень */
+      } else if (isB(x - 1, y) || isB(x + 1, y) || isB(x, y - 1) || isB(x, y + 1)) c = "#2a0508";   /* контур */
+      if (c) r += '<rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="1.02" height="1.02" fill="' + c + '"/>';
+    }
+    return '<svg viewBox="0 0 ' + W0 + ' ' + H0 + '" xmlns="http://www.w3.org/2000/svg">' + r + "</svg>";
+  }
+  const heartEl = document.createElement("div");
+  heartEl.id = "mcHeart"; heartEl.innerHTML = heartSvg();
+  document.getElementById("vika").parentNode.appendChild(heartEl);
+  function placeHeart(x) {
+    if (!L) return;
+    const hw = Math.max(44, Math.min(L.h * 0.3, 96));
+    const sc = x.sc || 1;
+    const midX = (x.v + L.vw * (1 + sc) / 2 + x.z + L.zw * (1 - sc) / 2) / 2;
+    const top = L.H - L.bottom - (x.lift || 0) - L.h * sc - hw * 1.05;
+    Object.assign(heartEl.style, { width: hw + "px", left: (midX - hw / 2) + "px", top: Math.max(4, top) + "px" });
+    window.__mcHeart = { x: midX - hw / 2, y: Math.max(4, top), w: hw };
+  }
+
+  /* Финал после голубого дома: пауза 5 с → подходят друг к другу → сердечко → «Дальше». */
+  async function finale() {
+    await new Promise((r) => setTimeout(r, 5000));
+    await new Promise((res) => {
+      const t0 = performance.now(), MS = 2600, hops = 5;
+      function f(now) {
+        const t = Math.min(1, (now - t0) / MS);
+        together = ease(t);
+        const ph = t * hops * Math.PI, amp = Math.min(18, L.h * 0.06);
+        place(shown, { y: Math.abs(Math.sin(ph)) * amp, r: Math.sin(ph * 2) * 2.5 * (1 - t) });
+        if (t < 1) requestAnimationFrame(f); else { together = 1; place(shown, 0); res(); }
+      }
+      requestAnimationFrame(f);
+    });
+    await new Promise((r) => setTimeout(r, 300));
+    heartEl.classList.add("on"); window.__mcHeartOn = true;
+    setTimeout(() => sparkle(heartEl, 16), 250);
+    setTimeout(() => sparkle(heartEl, 10), 900);
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  function finish() {
+    done = true;
+    finale().then(() => { busy = false; if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); } window.__mcDone = true; });
   }
 
   function ease(t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
@@ -316,12 +388,7 @@
     if (question === 0) await giveFlowers();
     await craftEvent(question + 1);
     question++;
-    if (question >= QUESTIONS.length) {
-      done = true; busy = false;
-      if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); }
-      window.__mcDone = true;
-      return;
-    }
+    if (question >= QUESTIONS.length) { finish(); return; }
     busy = false;
     await new Promise((r) => setTimeout(r, 350));
     render();
@@ -369,7 +436,7 @@
     setTimeout(async () => {
       await craftEvent(CRAFT_DEBUG);
       question = CRAFT_DEBUG;
-      if (question >= QUESTIONS.length) { done = true; busy = false; if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); } window.__mcDone = true; return; }
+      if (question >= QUESTIONS.length) { finish(); return; }
       busy = false; render();
     }, 500);
   } else {
