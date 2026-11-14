@@ -82,17 +82,18 @@ window.QUEST_CONFIG = {
 
   /* Майнкрафт: этапы дома (15.11). После ответа на вопрос after — крафт на верстаке (craft),
      затем появляется этап дома. Порядок = порядок постройки (слои накапливаются).
-     img: "" → этап рисуется кодом (пиксельный домик, minecraft/craft.js).
-     img: "house_foundation.png" → вместо кода показывается картинка (полный кадр 16:9, PNG с прозрачностью).
+     img: "bg_stageN.jpg" → весь фон-кадр 16:9 с этим этапом (плавная смена кадров). Рисунки 15.11 на основе bg_stage0.jpg,
+          меняется только дом в центре (полноразмерные исходники: minecraft/stages_full/).
+     img: "" → этап рисуется кодом (пиксельный домик из minecraft/craft.js) — запасной вариант.
      craft: planks | crafting_table | bed | blue_dye (рецепты — в minecraft/craft.js).
      Вопрос 1 (цветы) без крафта — Вика получает букет. */
   MINECRAFT: {
     BACKGROUND: "bg_stage0.jpg",
     HOUSE_STAGES: [
-      { after: 2, id: "foundation", craft: "planks",         hint: "Скрафти доски",            title: "Фундамент",            img: "" },
-      { after: 3, id: "walls_roof", craft: "crafting_table", hint: "Скрафти верстак",          title: "Стены и крыша",        img: "" },
-      { after: 4, id: "windows",    craft: "bed",            hint: "Скрафти кровать",          title: "Окна и свет",          img: "" },
-      { after: 5, id: "blue",       craft: "blue_dye",       hint: "Скрафти синий краситель",  title: "Голубые стены",        img: "", wallColor: "#9EC5E8" }
+      { after: 2, id: "foundation", craft: "planks",         hint: "Скрафти доски",            title: "Фундамент",            img: "bg_stage1.jpg" },
+      { after: 3, id: "walls_roof", craft: "crafting_table", hint: "Скрафти верстак",          title: "Стены и крыша",        img: "bg_stage2.jpg" },
+      { after: 4, id: "windows",    craft: "bed",            hint: "Скрафти кровать",          title: "Окна и свет",          img: "bg_stage3.jpg" },
+      { after: 5, id: "blue",       craft: "blue_dye",       hint: "Скрафти синий краситель",  title: "Голубые стены",        img: "bg_stage4.jpg", wallColor: "#9EC5E8" }
     ]
   },
 
