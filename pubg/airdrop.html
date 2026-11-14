@@ -329,7 +329,7 @@
   </style>
 <link rel="stylesheet" href="../common/hud.css">
 <script src="../common/quest_config.js"></script>
-<script src="../common/hud.js" data-screen="pubg-airdrop" data-avoid="#nextBtn"></script>
+<script src="../common/hud.js" data-screen="pubg-airdrop" data-theme="pubg" data-avoid="#nextBtn"></script>
 </head>
 <body>
   <div class="bg" aria-hidden="true">
@@ -681,7 +681,13 @@
       }));
     }
 
-    nextBtn.addEventListener("click", () => { if (window.QuestHUD) QuestHUD.next(); });
+    /* В квесте экран открывается поверх карты (zone.html, iframe ?embed=1) и по «Дальше» закрывается.
+       Отдельно (прямой заход) — ведёт на карту к вопросу 4. */
+    const EMBED = new URLSearchParams(location.search).get("embed") === "1";
+    nextBtn.addEventListener("click", () => {
+      if (EMBED && window.parent !== window) window.parent.postMessage({ quest: "airdrop-done" }, location.origin);
+      else location.href = "zone.html?q=4";
+    });
 
     (async function boot() {
       await waitImages();

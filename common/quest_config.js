@@ -12,9 +12,7 @@ window.QUEST_CONFIG = {
     { id: "pubg-skin",    path: "pubg/skin.html",         theme: "pubg",       title: "Выбор скина" },
     { id: "pubg-flight",  path: "pubg/flight.html",       theme: "pubg",       title: "Полёт" },
     { id: "pubg-landing", path: "pubg/landing.html",      theme: "pubg",       title: "Прыжок и приземление" },
-    { id: "pubg-zone-a",  path: "pubg/zone.html",         theme: "pubg",       title: "Зоны, вопросы 1–3" },
-    { id: "pubg-airdrop", path: "pubg/airdrop.html",      theme: "pubg",       title: "Аирдроп" },
-    { id: "pubg-zone-b",  path: "pubg/zone.html?q=4",     theme: "pubg",       title: "Зоны, вопросы 4–8 и победа" },
+    { id: "pubg-zone",    path: "pubg/zone.html",         theme: "pubg",       title: "Зоны: вопросы 1–8, аирдроп после 3-го, победа" },
     { id: "minecraft",    path: "minecraft/house.html",   theme: "minecraft",  title: "Наш дом" },
     { id: "subnautica",   path: "subnautica/transition.html", theme: "subnautica", title: "Подводный мир" },
     { id: "genshin",      path: "genshin/index.html",     theme: "genshin",    title: "Тейват" },
@@ -76,13 +74,14 @@ window.QUEST_CONFIG = {
      Ключ "экран" — подсказка на весь экран.
      Ключ "экран:шаг" — подсказка на конкретный вопрос/шаг
      (если её нет, берётся подсказка экрана, потом DEFAULT).
-     Шаги: pubg-zone-a / pubg-zone-b → q1…q8 (+ "victory"),
+     Шаги: pubg-zone → q1…q8, "airdrop" (самолёт/ящик на карте), "victory";
+           pubg-airdrop → экран лута (без шагов),
            minecraft → q1…q5 (+ "done"),
            subnautica → loc1…loc7. */
   HINTS: {
     DEFAULT: "Подсказка появится позже",
-    // "pubg-zone-a:q1": "…",
-    // "pubg-zone-b:q5": "Отправь Жене кружочек — и он подскажет голосом 💙",
+    // "pubg-zone:q1": "…",
+    // "pubg-zone:q5": "Отправь Жене кружочек — и он подскажет голосом 💙",
     // "minecraft:q1": "…",
     // "subnautica:loc2": "…",
   },

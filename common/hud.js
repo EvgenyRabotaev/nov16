@@ -289,6 +289,8 @@
     hintText: hintText, openHint: function () { build(); open(); }, closeHint: close,
     next: next, nextUrl: nextUrl, showNext: showNext, hideNext: hideNext,
     watchMap: watchMap, placeOutside: placeOutside, layout: layout,
+    setVisible: function (v) { build(); root.style.display = v ? "" : "none"; if (!v) close(); render(null); if (v) layout(); },
+    refresh: function (delta) { render(delta || null); },
     normalize: norm, checkPart: checkPart, checkAnswer: checkAnswer, getQuestion: getQuestion,
     answerText: function (k) { return (CFG.ANSWER_TEXT || {})[k] || ""; }
   };

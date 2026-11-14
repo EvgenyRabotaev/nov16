@@ -135,6 +135,47 @@
       .panel { left: 10px; right: 10px; width: auto; bottom: 62px; padding: 14px 14px 12px; }
       .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 12px; max-height: 34vh; }
     }
+
+    /* ---- Аирдроп на карте (после вопроса 3) ---- */
+    #dropPlane {
+      position: fixed; left: 0; top: 0; z-index: 6; pointer-events: none;
+      transform-origin: 50% 50%; opacity: 0; will-change: transform;
+      filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.35));
+    }
+    #crate {
+      position: fixed; left: 0; top: 0; z-index: 7; width: 64px; height: 120px;
+      display: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    #crate.on { display: block; }
+    #crate .chute { position: absolute; left: 50%; bottom: 30px; width: 74px; margin-left: -37px; transform-origin: 50% 100%; transition: opacity .6s ease, transform .6s ease; animation: chute-sway 1.6s ease-in-out infinite; }
+    @keyframes chute-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+    #crate.landed .chute { opacity: 0; transform: translateY(18px) scale(.6) rotate(25deg); animation: none; }
+    #crate .box { position: absolute; left: 50%; bottom: 0; width: 34px; margin-left: -17px; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .5)); }
+    #crate .ring { position: absolute; left: 50%; bottom: -10px; width: 56px; height: 56px; margin-left: -28px; border-radius: 50%; border: 3px solid #f2c230; opacity: 0; pointer-events: none; }
+    #crate.ready .ring { animation: crate-ring 1.3s ease-out infinite; }
+    #crate.ready .box { animation: crate-pulse 1.3s ease-in-out infinite; }
+    @keyframes crate-ring { 0% { transform: scale(.55); opacity: .95; } 100% { transform: scale(1.6); opacity: 0; } }
+    @keyframes crate-pulse { 0%, 100% { filter: drop-shadow(0 3px 3px rgba(0,0,0,.5)) drop-shadow(0 0 2px rgba(242,194,48,.4)); } 50% { filter: drop-shadow(0 3px 3px rgba(0,0,0,.5)) drop-shadow(0 0 12px rgba(242,194,48,1)); } }
+    #crate.gone { opacity: 0; transition: opacity .6s ease; pointer-events: none; }
+    #crate .smoke { position: absolute; left: 50%; bottom: 6px; width: 0; height: 0; opacity: 0; transition: opacity .8s ease; }
+    #crate.landed .smoke { opacity: 1; }
+    #crate.gone .smoke, #crate.looted .smoke { opacity: 0; }
+    #crate .smoke i { position: absolute; left: -9px; bottom: 0; width: 18px; height: 18px; border-radius: 50%; background: rgba(214, 40, 30, .55); filter: blur(4px); animation: smoke-up 2.6s ease-out infinite; }
+    #crate .smoke i:nth-child(2) { animation-delay: .65s; left: -4px; }
+    #crate .smoke i:nth-child(3) { animation-delay: 1.3s; left: -13px; }
+    #crate .smoke i:nth-child(4) { animation-delay: 1.95s; left: -7px; }
+    @keyframes smoke-up { 0% { transform: translate(0, 0) scale(.6); opacity: .9; } 100% { transform: translate(14px, -70px) scale(2.4); opacity: 0; } }
+    #crateTip {
+      position: fixed; left: 0; top: 0; z-index: 8; pointer-events: none;
+      font-family: var(--hud-font); font-weight: 600; font-size: 17px; letter-spacing: .12em; text-transform: uppercase;
+      color: #15130c; background: #f2c230; padding: 5px 10px 4px; border-radius: 2px; white-space: nowrap;
+      box-shadow: 0 3px 10px rgba(0,0,0,.45); opacity: 0; transition: opacity .35s ease;
+    }
+    #crateTip.show { opacity: 1; }
+    #dropOverlay { position: fixed; inset: 0; z-index: 8500; opacity: 0; pointer-events: none; transition: opacity .5s ease; background: #0b0d12; }
+    #dropOverlay.show { opacity: 1; pointer-events: auto; }
+    #dropOverlay iframe { width: 100%; height: 100%; border: 0; display: block; }
     .victory {
       position: fixed;
       inset: 0;
@@ -263,10 +304,9 @@
       .kf-line { font-size: 14px; padding: 4px 8px 3px; }
     }
   </style>
-<script>window.QUEST_SCREEN = (parseInt(new URLSearchParams(location.search).get("q"), 10) >= 4) ? "pubg-zone-b" : "pubg-zone-a";</script>
 <link rel="stylesheet" href="../common/hud.css">
 <script src="../common/quest_config.js"></script>
-<script src="../common/hud.js" data-screen="pubg-zone-a" data-avoid="#panel, #squadHud"></script>
+<script src="../common/hud.js" data-screen="pubg-zone" data-avoid="#panel, #squadHud"></script>
 </head>
 <body>
   <img id="map" data-hud-map src="../maps/island_fullscreen.jpg" alt="Карта острова">
@@ -277,6 +317,28 @@
     <div class="alive-label">В ЖИВЫХ</div>
   </div>
   <div class="kill-feed" id="killFeed" aria-live="polite"></div>
+
+  <img id="dropPlane" src="../maps/plane.png" alt="">
+  <div id="crate" role="button" tabindex="0" aria-label="Аирдроп">
+    <div class="smoke" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <svg class="chute" viewBox="0 0 74 70" aria-hidden="true">
+      <path d="M3 30 C 6 8, 68 8, 71 30 C 62 25, 54 25, 46 30 C 40 25, 34 25, 28 30 C 20 25, 12 25, 3 30 Z" fill="#e7e2d6" stroke="#5a1410" stroke-width="1.5"/>
+      <path d="M28 30 C 30 14, 44 14, 46 30 C 40 25, 34 25, 28 30 Z" fill="#c8281e"/>
+      <path d="M3 30 C 6 16, 14 11, 22 10 C 16 16, 12 23, 12 28 C 9 28, 6 29, 3 30 Z" fill="#c8281e"/>
+      <path d="M71 30 C 68 16, 60 11, 52 10 C 58 16, 62 23, 62 28 C 65 28, 68 29, 71 30 Z" fill="#c8281e"/>
+      <g stroke="#3a3a3a" stroke-width="0.9" fill="none"><path d="M4 30 L32 68"/><path d="M28 30 L34 68"/><path d="M46 30 L40 68"/><path d="M70 30 L42 68"/></g>
+    </svg>
+    <svg class="box" viewBox="0 0 34 30" aria-hidden="true">
+      <rect x="1" y="5" width="32" height="24" rx="2" fill="#4a5a6e" stroke="#1d242e" stroke-width="1.5"/>
+      <rect x="1" y="1" width="32" height="7" rx="2" fill="#5d6f86" stroke="#1d242e" stroke-width="1.5"/>
+      <rect x="1" y="13" width="32" height="5" fill="#c8281e"/>
+      <rect x="14" y="1" width="6" height="28" fill="#e6e1d4" opacity=".9"/>
+      <path d="M1 29 L33 5" stroke="#1d242e" stroke-width="1" opacity=".35"/>
+    </svg>
+    <div class="ring" aria-hidden="true"></div>
+  </div>
+  <div id="crateTip">Нажми на аирдроп</div>
+  <div id="dropOverlay" aria-hidden="true"></div>
 
   <aside class="panel" id="panel">
     <div class="q-num" id="qNum">Вопрос 1 из 8</div>
@@ -347,8 +409,9 @@
     const ROUTE_STROKE = "#e8742a";
     const ROUTE_OUTLINE = "#6b3210";
     const ROUTE_DRAW_MS = 1500;
-    const TRAVEL_MIN_MS = 2000;
-    const TRAVEL_MAX_MS = 3000;
+    /* Перемещение маркеров по маршруту (замедлено в 2 раза, 14.11). */
+    const TRAVEL_MIN_MS = 4000;
+    const TRAVEL_MAX_MS = 6000;
     const SHRINK_MS = 1600;
     const ROUTE_FADE_MS = 280;
     const WHITE_FADE_MS = 420;
@@ -570,6 +633,7 @@
     }
 
     function draw() {
+      placeCrate();
       ctx.clearRect(0, 0, viewW, viewH);
       const s = transform.scale;
       const [bx, by] = toScreen(blue.x, blue.y);
@@ -729,6 +793,162 @@
       return pts;
     }
 
+
+    /* ---- Аирдроп на карте: после вопроса 3, внутри зоны 3 (и зоны 4). ---- */
+    const CRATE = { x: 1406, y: 777 };
+    const CRATE_STAND = { x: 1386, y: 794 };      /* где встаёт отряд рядом с ящиком */
+    const CRATE_ROUTE_IN = [ { x: 1341.2, y: 811.5 }, { x: 1362, y: 806 }, CRATE_STAND ];
+    const CRATE_ROUTE_OUT = [ CRATE_STAND, { x: 1360, y: 760 }, { x: 1358, y: 715 }, { x: 1420, y: 650 }, { x: 1516, y: 616 }, { x: 1500.3, y: 612.9 } ];
+    const DROP_ALT = 260;   /* «высота» самолёта над ящиком, в координатах карты */
+    const DROP_PLANE_MS = 5200;
+    const DROP_FALL_MS = 2600;
+    const dropPlane = document.getElementById("dropPlane");
+    const crateEl = document.getElementById("crate");
+    const crateTip = document.getElementById("crateTip");
+    const dropOverlay = document.getElementById("dropOverlay");
+    let crateFall = null;   /* 0..1 высота падения (1 = в небе), null = нет ящика */
+    let afterCrate = false;
+
+    function placeCrate() {
+      if (crateFall == null) return;
+      const [sx, sy] = toScreen(CRATE.x, CRATE.y);
+      const k = Math.max(0.8, Math.min(1.25, transform.scale / 0.6));
+      const lift = crateFall * DROP_ALT * transform.scale;
+      crateEl.style.transform = "translate(" + (sx - 32) + "px, " + (sy - 112 - lift) + "px) scale(" + k + ")";
+      crateEl.style.transformOrigin = "50% 100%";
+      const tw = crateTip.offsetWidth || 160;
+      crateTip.style.transform = "translate(" + Math.max(8, Math.min(viewW - tw - 8, sx - tw / 2)) + "px, " + (sy - 150 * k) + "px)";
+    }
+
+    function flyPlaneAndDrop() {
+      return new Promise((resolve) => {
+        const s = transform.scale;
+        const w = 220 * (s / 0.75);
+        dropPlane.style.width = w + "px";
+        const t0 = performance.now();
+        let dropped = false, fallT0 = 0, done = false;
+        function frame(now) {
+          const [cx, cy] = toScreen(CRATE.x, CRATE.y - DROP_ALT);
+          const L = Math.hypot(viewW, viewH) * 0.75 + w;
+          const dx = 0.9, dy = -0.43, n = Math.hypot(dx, dy);
+          const ux = dx / n, uy = dy / n;
+          const t = Math.min(1, (now - t0) / DROP_PLANE_MS);
+          const px = cx + ux * L * (t * 2 - 1), py = cy + uy * L * (t * 2 - 1);
+          const deg = Math.atan2(ux, -uy) * 180 / Math.PI;
+          dropPlane.style.opacity = "1";
+          dropPlane.style.transform = "translate(" + (px - dropPlane.offsetWidth / 2) + "px, " + (py - dropPlane.offsetHeight / 2) + "px) rotate(" + deg + "deg)";
+          if (!dropped && t >= 0.5) {
+            dropped = true; fallT0 = now;
+            crateFall = 1; crateEl.className = "on"; placeCrate();
+          }
+          if (dropped && crateFall != null && crateFall > 0) {
+            const f = Math.min(1, (now - fallT0) / DROP_FALL_MS);
+            crateFall = 1 - (1 - Math.pow(1 - f, 2.2));
+            if (f >= 1) { crateFall = 0; crateEl.classList.add("landed"); }
+            placeCrate();
+          }
+          if (t >= 1) dropPlane.style.opacity = "0";
+          if (t >= 1 && crateFall === 0 && !done) { done = true; resolve(); return; }
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+
+    function waitCrateClick() {
+      return new Promise((resolve) => {
+        function go(e) {
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+          crateEl.removeEventListener("click", go);
+          crateEl.removeEventListener("keydown", key);
+          resolve();
+        }
+        function key(e) { if (e.key === "Enter" || e.key === " ") go(e); }
+        crateEl.addEventListener("click", go);
+        crateEl.addEventListener("keydown", key);
+      });
+    }
+
+    function openLoot() {
+      return new Promise((resolve) => {
+        const fr = document.createElement("iframe");
+        fr.title = "Аирдроп";
+        fr.src = "airdrop.html?embed=1";
+        dropOverlay.innerHTML = "";
+        dropOverlay.appendChild(fr);
+        const before = window.QuestHUD ? QuestHUD.getPrimos() : 0;
+        fr.addEventListener("load", () => {
+          dropOverlay.classList.add("show");
+          dropOverlay.setAttribute("aria-hidden", "false");
+          if (window.QuestHUD) QuestHUD.setVisible(false);
+        }, { once: true });
+        function onMsg(e) {
+          if (!e.data || e.data.quest !== "airdrop-done") return;
+          window.removeEventListener("message", onMsg);
+          dropOverlay.classList.remove("show");
+          dropOverlay.setAttribute("aria-hidden", "true");
+          if (window.QuestHUD) {
+            QuestHUD.setVisible(true);
+            const diff = QuestHUD.getPrimos() - before;
+            QuestHUD.refresh(diff > 0 ? diff : 0);
+          }
+          setTimeout(() => { dropOverlay.innerHTML = ""; resolve(); }, 550);
+        }
+        window.addEventListener("message", onMsg);
+      });
+    }
+
+    async function runAirdrop() {
+      phase = "airdrop-plane";
+      if (window.QuestHUD) QuestHUD.setStep("airdrop");
+      await wait(400);
+      await flyPlaneAndDrop();
+      if (route && route.alpha > 0) {
+        const fromA = route.alpha;
+        await animateValue(ROUTE_FADE_MS, (t) => { route.alpha = fromA * (1 - t); draw(); });
+      }
+      const pts = buildRoute(pos, CRATE_ROUTE_IN, CRATE_STAND);
+      route = { points: pts, drawn: 0, alpha: 1 };
+      phase = "airdrop-route";
+      await animateValue(ROUTE_DRAW_MS, (t) => { route.drawn = t; draw(); });
+      phase = "airdrop-wait";
+      crateEl.classList.add("ready");
+      crateTip.classList.add("show");
+      placeCrate();
+      await waitCrateClick();
+      crateEl.classList.remove("ready");
+      crateTip.classList.remove("show");
+      phase = "airdrop-travel";
+      await animateValue(travelDuration(pts), (t) => { travelT = t; pos = pointAlong(pts, t); draw(); }, easeInOutCubic);
+      pos = { ...CRATE_STAND };
+      draw();
+      phase = "airdrop-loot";
+      await wait(250);
+      await openLoot();
+      crateEl.classList.add("looted");
+      afterCrate = true;
+      if (route && route.alpha > 0) {
+        const fromA = route.alpha;
+        await animateValue(ROUTE_FADE_MS, (t) => { route.alpha = fromA * (1 - t); draw(); });
+      }
+      question = 4;
+      renderQuestion();
+      fadeInWhite(ZONES[3]);
+      animating = false;
+      phase = "idle";
+      panel.classList.remove("hidden");
+      answerBtn.disabled = false;
+      focusFirstInput();
+    }
+
+    function clearCrate() {
+      crateFall = null;
+      afterCrate = false;
+      crateEl.className = "";
+      crateTip.classList.remove("show");
+      dropPlane.style.opacity = "0";
+    }
+
     function setAlive(n) {
       const next = Math.max(0, Math.round(n));
       const changed = next !== alive;
@@ -838,7 +1058,10 @@
       const targetBlue = { ...ZONES[k - 1] };
       const fromBlue = { ...blue };
       const toPos = { ...LANDINGS[k - 1] };
-      const pts = buildRoute(pos, ROUTES[k - 1], toPos);
+      const pts = (k === 4 && afterCrate)
+        ? buildRoute(pos, CRATE_ROUTE_OUT, toPos)
+        : buildRoute(pos, ROUTES[k - 1], toPos);
+      if (k === 4 && afterCrate) crateEl.classList.add("gone");
 
       /* Countdown runs alongside the existing move; not used on the last answer
          (that one keeps 4 until the finale after arrival). */
@@ -890,10 +1113,9 @@
 
     async function onArrived(k) {
       if (window.QuestHUD) QuestHUD.award("pubg-q" + k);
-      /* Между вопросами 3 и 4 — аирдроп (отдельная страница), потом zone.html?q=4. */
-      if (k === 3 && !AUTO && window.QuestHUD && QuestHUD.screen === "pubg-zone-a") {
-        phase = "to-airdrop";
-        setTimeout(QuestHUD.next, 700);
+      /* Между вопросами 3 и 4 — самолёт сбрасывает аирдроп прямо на карте. */
+      if (k === 3 && !AUTO) {
+        runAirdrop();
         return;
       }
       if (k === 8) {
@@ -918,6 +1140,7 @@
     function jumpToPhase(n) {
       const k = Math.max(1, Math.min(8, n | 0));
       aliveGen++;
+      clearCrate();
       finished = false;
       animating = false;
       victory.classList.remove("show");
@@ -996,6 +1219,7 @@
       },
       jumpToPhase,
       jumpToVictory,
+      runAirdrop,
     };
 
     if (document.readyState === "complete") boot();
