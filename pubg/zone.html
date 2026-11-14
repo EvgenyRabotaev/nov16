@@ -144,11 +144,6 @@
       color: #fff8e8;
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
     }
-    .victory .victory-sub {
-      margin-top: 8px;
-      font-size: clamp(16px, 1.8vw, 26px);
-      color: #ffe9b0;
-    }
 
     /* PUBG-style alive counter, top-right */
     .alive-hud {
@@ -257,7 +252,6 @@
   <div class="victory" id="victory" aria-hidden="true">
     <h1>Winner winner chicken dinner!</h1>
     <p>Мы победили!</p>
-    <p class="victory-sub">Мы вдвоём</p>
   </div>
 
   <script>
@@ -293,9 +287,12 @@
       { x: 1574.5, y: 765.6 }
     ];
 
+    /* Same colors as the flight.html squad HUD:
+       --squad-yellow #c9b20c (Вика / [F4M] Marusabelle),
+       --squad-orange #c45a1c (Женя / [F4M] Rea_ction). */
     const MARKERS = [
-      { dx: -11, dy: -7, fill: "#ffd24a", glow: "rgba(255, 210, 70, 0.85)" },
-      { dx:  12, dy:  8, fill: "#5ec8ff", glow: "rgba(90, 200, 255, 0.85)" }
+      { dx: -11, dy: -7, fill: "#c9b20c", glow: "rgba(201, 178, 12, 0.85)" },
+      { dx:  12, dy:  8, fill: "#c45a1c", glow: "rgba(196, 90, 28, 0.85)" }
     ];
 
     /* Hand-authored routes in map-image coords: stay on land, cross
@@ -515,7 +512,7 @@
 
       drawRoute(s);
 
-      /* Two player markers (Женя — золотой, Вика — голубой). */
+      /* Two player markers (Вика — жёлтый, Женя — оранжевый), like PUBG map pins. */
       const radius = Math.max(6, 8.5 * s / 0.75);
       for (const m of MARKERS) {
         const [mx, my] = toScreen(pos.x + m.dx, pos.y + m.dy);
@@ -530,8 +527,8 @@
         ctx.beginPath();
         ctx.arc(mx, my, radius, 0, Math.PI * 2);
         ctx.fillStyle = m.fill;
-        ctx.strokeStyle = "rgba(255,255,255,0.9)";
-        ctx.lineWidth = Math.max(1.4, 1.8 * s / 0.75);
+        ctx.strokeStyle = "rgba(16, 12, 8, 0.95)";
+        ctx.lineWidth = Math.max(1.2, 1.45 * s / 0.75);
         ctx.fill();
         ctx.stroke();
       }
