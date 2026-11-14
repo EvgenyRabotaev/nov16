@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Subnautica — переход</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #02060c;
+      overflow: hidden;
+      color: #d7eef6;
+      font-family: "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+      user-select: none;
+    }
+    #stage {
+      position: fixed;
+      inset: 0;
+      background: #02060c;
+    }
+    .loc {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 100%;
+      height: 132%;
+      object-fit: cover;
+      object-position: center center;
+      transform: translate(-50%, -50%);
+      will-change: transform, opacity, filter;
+      pointer-events: none;
+    }
+    #layerNext { opacity: 0; }
+    #wash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(8, 30, 50, 0) 40%, rgba(1, 6, 14, 0.35) 100%),
+        linear-gradient(to bottom, rgba(0, 8, 16, 0.12), rgba(0, 4, 12, 0.28));
+      opacity: 1;
+      z-index: 2;
+    }
+    #washMid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 70%, rgba(2, 16, 32, 0.0), rgba(0, 6, 16, 0.85));
+      opacity: 0;
+      z-index: 3;
+      will-change: opacity;
+    }
+    #bubbles {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 4;
+      pointer-events: none;
+    }
+    #depth {
+      position: absolute;
+      top: 3.4%;
+      left: 3.2%;
+      z-index: 6;
+      letter-spacing: 0.18em;
+      text-shadow: 0 1px 8px rgba(0, 10, 20, 0.7);
+      pointer-events: none;
+    }
+    #depth .label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0.62;
+      margin-bottom: 3px;
+    }
+    #depth .value {
+      font-size: 22px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.08em;
+      color: rgba(210, 236, 245, 0.88);
+    }
+    #deeper {
+      position: absolute;
+      left: 50%;
+      bottom: 6.2%;
+      transform: translateX(-50%);
+      z-index: 6;
+      appearance: none;
+      border: 1px solid rgba(160, 220, 240, 0.42);
+      background: rgba(8, 28, 44, 0.52);
+      color: #e7f7ff;
+      font: 600 16px/1 "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: none;
+      padding: 13px 30px 13px 32px;
+      border-radius: 999px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 8px 24px rgba(0, 10, 20, 0.35);
+      transition: opacity 0.4s ease, transform 0.35s ease, background 0.25s ease, border-color 0.25s ease;
+    }
+    #deeper:hover:not(:disabled) {
+      background: rgba(16, 48, 70, 0.7);
+      border-color: rgba(190, 235, 255, 0.7);
+    }
+    #deeper:active:not(:disabled) {
+      transform: translateX(-50%) scale(0.97);
+    }
+    #deeper:disabled,
+    #deeper.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(8px);
+    }
+    #deeper .arrow {
+      display: inline-block;
+      margin-left: 8px;
+      font-weight: 400;
+      opacity: 0.85;
+    }
+    #boot {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: #02060c;
+      transition: opacity 0.5s ease;
+    }
+    #boot.gone {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <img id="layerCurrent" class="loc" alt="" />
+    <img id="layerNext" class="loc" alt="" />
+    <div id="wash"></div>
+    <div id="washMid"></div>
+    <canvas id="bubbles"></canvas>
+    <div id="depth">
+      <span class="label">ГЛУБИНА</span>
+      <span class="value"><span id="depthVal">10</span> м</span>
+    </div>
+    <button id="deeper" type="button">Глубже <span class="arrow">↓</span></button>
+    <div id="boot"></div>
+  </div>
+  <script>
+    const LOCS = [
+      { src: "loc1.jpg", depth: 10 },
+      { src: "loc2.jpg", depth: 40 },
+      { src: "loc3.jpg", depth: 150 },
+      { src: "loc4.jpg", depth: 300 },
+      { src: "loc5.jpg", depth: 500 },
+      { src: "loc6.jpg", depth: 900 },
+      { src: "loc7.jpg", depth: 1200 },
+    ];
+    const TRANSITION_MS = 3200;
+    const PAUSE_MS = 2000;
+
+    const layerCurrent = document.getElementById("layerCurrent");
+    const layerNext = document.getElementById("layerNext");
+    const washMid = document.getElementById("washMid");
+    const canvas = document.getElementById("bubbles");
+    const ctx = canvas.getContext("2d", { alpha: true });
+    const deeper = document.getElementById("deeper");
+    const depthVal = document.getElementById("depthVal");
+    const boot = document.getElementById("boot");
+
+    const params = new URLSearchParams(location.search);
+    const AUTO = params.get("auto") === "1";
+
+    let index = 0;
+    let busy = false;
+    let images = [];
+    let bubbles = [];
+    let vents = [];
+    let anim = null;
+    let lastTs = 0;
+    let cssW = 1, cssH = 1;
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+    function easeInOutQuart(t) {
+      return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+    }
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cssW = window.innerWidth;
+      cssH = window.innerHeight;
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      canvas.style.width = cssW + "px";
+      canvas.style.height = cssH + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener("resize", resize);
+
+    function applyLayer(el, yPct, blur, brightness, opacity, scale) {
+      el.style.transform = `translate(-50%, calc(-50% + ${yPct}%)) scale(${scale})`;
+      el.style.filter = `blur(${blur}px) brightness(${brightness})`;
+      el.style.opacity = String(opacity);
+    }
+
+    function setDepth(n) {
+      depthVal.textContent = String(Math.round(n));
+    }
+
+    function makeBubble(opts = {}) {
+      const near = opts.near ?? (Math.random() < 0.22);
+      const far = !near && (opts.far ?? Math.random() < 0.4);
+      let r;
+      if (opts.r != null) r = opts.r;
+      else if (near) r = rand(14, 36) * (cssW / 1280);
+      else if (far) r = rand(2.2, 7) * (cssW / 1280);
+      else r = rand(6, 16) * (cssW / 1280);
+
+      const speedMul = near ? rand(0.95, 1.35) : far ? rand(0.35, 0.6) : rand(0.55, 0.95);
+      return {
+        x: opts.x ?? rand(-20, cssW + 20),
+        y: opts.y ?? cssH + rand(8, 80),
+        r,
+        baseR: r,
+        vy: -rand(140, 230) * speedMul * (cssH / 720),
+        wobbleAmp: r * (near ? rand(0.7, 1.6) : rand(0.4, 1.1)),
+        wobbleFreq: rand(1.1, 2.6),
+        wobblePhase: rand(0, Math.PI * 2),
+        wobble2Amp: r * rand(0.15, 0.45),
+        wobble2Freq: rand(2.2, 4.4),
+        wobble2Phase: rand(0, Math.PI * 2),
+        alpha: near ? rand(0.55, 0.9) : far ? rand(0.22, 0.45) : rand(0.4, 0.75),
+        born: opts.born ?? performance.now(),
+        life: rand(2200, 3600),
+        pop: false,
+        popT: 0,
+        near,
+      };
+    }
+
+    function spawnVentBurst(vent, count, now) {
+      for (let i = 0; i < count; i++) {
+        bubbles.push(makeBubble({
+          x: vent.x + rand(-vent.spread, vent.spread),
+          y: cssH + rand(4, 90) + (i % 5) * 10,
+          born: now,
+        }));
+      }
+    }
+
+    function startBurst(now) {
+      bubbles = [];
+      vents = [];
+      const nVents = 5;
+      for (let i = 0; i < nVents; i++) {
+        vents.push({
+          x: cssW * (0.1 + (0.8 * (i + 0.5 + rand(-0.15, 0.15)) / nVents)),
+          spread: rand(28, 70) * (cssW / 1280),
+          rate: rand(9, 16),
+          acc: rand(0, 1),
+        });
+      }
+      // Opening volley already in flight at different heights
+      const opening = 70;
+      for (let i = 0; i < opening; i++) {
+        const y = rand(cssH * 0.35, cssH + 60);
+        bubbles.push(makeBubble({
+          y,
+          born: now - rand(0, 400),
+        }));
+      }
+      // A few large hero bubbles
+      for (let i = 0; i < 8; i++) {
+        bubbles.push(makeBubble({
+          x: rand(cssW * 0.08, cssW * 0.92),
+          y: cssH + rand(20, 160),
+          r: rand(22, 44) * (cssW / 1280),
+          near: true,
+          born: now,
+        }));
+      }
+    }
+
+    function spawnDuring(dt, p, now) {
+      // High rate early, then taper off so the field thins
+      const gate = p < 0.55 ? 1 : p < 0.78 ? lerp(1, 0.15, (p - 0.55) / 0.23) : 0;
+      if (gate <= 0) return;
+      for (const vent of vents) {
+        vent.acc += vent.rate * gate * dt;
+        while (vent.acc >= 1) {
+          vent.acc -= 1;
+          const cluster = Math.random() < 0.28 ? (2 + (Math.random() < 0.4 ? 2 : 0)) : 1;
+          for (let k = 0; k < cluster; k++) {
+            bubbles.push(makeBubble({
+              x: vent.x + rand(-vent.spread, vent.spread),
+              y: cssH + rand(6, 50) + k * 8,
+              born: now,
+              r: cluster > 1 ? rand(3, 9) * (cssW / 1280) : undefined,
+            }));
+          }
+        }
+      }
+      // Scattered extras
+      const extra = 18 * gate * dt;
+      if (Math.random() < extra) {
+        bubbles.push(makeBubble({ y: cssH + rand(0, 40), born: now }));
+      }
+    }
+
+    function drawBubble(b, x, y, r, a) {
+      if (r < 0.6 || a <= 0.01) return;
+      ctx.save();
+      ctx.globalAlpha = a;
+
+      if (r < 4.5) {
+        const g = ctx.createRadialGradient(x - r * 0.25, y - r * 0.3, 0, x, y, r);
+        g.addColorStop(0, "rgba(230, 248, 255, 0.7)");
+        g.addColorStop(0.55, "rgba(150, 210, 230, 0.18)");
+        g.addColorStop(1, "rgba(190, 230, 250, 0.55)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        return;
+      }
+
+      const g = ctx.createRadialGradient(
+        x - r * 0.32, y - r * 0.38, r * 0.05,
+        x, y + r * 0.08, r
+      );
+      g.addColorStop(0, "rgba(230, 248, 255, 0.42)");
+      g.addColorStop(0.28, "rgba(170, 220, 240, 0.10)");
+      g.addColorStop(0.72, "rgba(40, 110, 150, 0.06)");
+      g.addColorStop(0.92, "rgba(160, 215, 240, 0.22)");
+      g.addColorStop(1, "rgba(210, 240, 255, 0.55)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Glass rim
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
+      ctx.lineWidth = Math.max(0.8, r * 0.045);
+      ctx.stroke();
+
+      // Lower dark crescent — volume
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(20, 50, 80, 0.22)";
+      ctx.lineWidth = Math.max(0.6, r * 0.04);
+      ctx.arc(x, y, r * 0.92, Math.PI * 0.15, Math.PI * 0.85);
+      ctx.stroke();
+
+      // Primary highlight
+      ctx.fillStyle = "rgba(255, 255, 255, 0.78)";
+      ctx.beginPath();
+      ctx.ellipse(
+        x - r * 0.28, y - r * 0.34,
+        r * 0.22, r * 0.13,
+        -0.55, 0, Math.PI * 2
+      );
+      ctx.fill();
+
+      // Soft highlight bloom
+      const hg = ctx.createRadialGradient(
+        x - r * 0.28, y - r * 0.34, 0,
+        x - r * 0.28, y - r * 0.34, r * 0.38
+      );
+      hg.addColorStop(0, "rgba(255, 255, 255, 0.28)");
+      hg.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = hg;
+      ctx.beginPath();
+      ctx.arc(x - r * 0.22, y - r * 0.28, r * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tiny secondary glint
+      if (r > 10) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.beginPath();
+        ctx.arc(x + r * 0.22, y + r * 0.2, r * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function updateBubbles(dt, now, p) {
+      spawnDuring(dt, p, now);
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      // Draw far bubbles first for simple parallax layering
+      bubbles.sort((a, b) => a.r - b.r);
+
+      const next = [];
+      for (const b of bubbles) {
+        if (!b.pop) {
+          b.y += b.vy * dt;
+          const wob =
+            Math.sin(now * 0.001 * b.wobbleFreq + b.wobblePhase) * b.wobbleAmp +
+            Math.sin(now * 0.001 * b.wobble2Freq + b.wobble2Phase) * b.wobble2Amp;
+          b._x = b.x + wob;
+          // Slight breathe
+          b.r = b.baseR * (1 + 0.04 * Math.sin(now * 0.004 + b.wobblePhase));
+
+          const age = now - b.born;
+          if (b.y < cssH * 0.06 || age > b.life) {
+            b.pop = true;
+            b.popT = 0;
+          }
+        } else {
+          b.popT += dt;
+          b.r = b.baseR * (1 + b.popT * 1.8);
+        }
+
+        const fadeIn = clamp((now - b.born) / 180, 0, 1);
+        const topFade = clamp((b.y + 20) / (cssH * 0.18), 0, 1);
+        const popFade = b.pop ? clamp(1 - b.popT / 0.22, 0, 1) : 1;
+        const a = b.alpha * fadeIn * topFade * popFade;
+        const x = b._x ?? b.x;
+
+        if (!b.pop || b.popT < 0.22) {
+          if (b.y < cssH + b.r * 2 && b.y > -b.r * 3) {
+            drawBubble(b, x, b.y, b.r, a);
+          }
+        }
+
+        const gone = b.y < -80 || (b.pop && b.popT >= 0.22);
+        if (!gone) next.push(b);
+      }
+      bubbles = next;
+    }
+
+    function applyTransitionFrame(p, fromDepth, toDepth) {
+      const e = easeInOutCubic(p);
+      const eQ = easeInOutQuart(p);
+
+      // Current scene lifts away (camera descending), blurs and darkens
+      const curY = lerp(0, -13, e);
+      const curBlur = lerp(0, 9, easeOutCubic(p));
+      const curBright = lerp(1, 0.42, e);
+      const curOp = p < 0.48 ? 1 : lerp(1, 0, (p - 0.48) / 0.52);
+      const curScale = lerp(1, 1.06, e);
+
+      // Next scene rises in from below
+      const nextY = lerp(16, 0, eQ);
+      const nextBlur = lerp(8, 0, easeOutCubic(clamp((p - 0.12) / 0.7, 0, 1)));
+      const nextBright = lerp(0.55, 1, easeOutCubic(clamp((p - 0.08) / 0.7, 0, 1)));
+      const nextOp = easeInOutCubic(clamp((p - 0.04) / 0.62, 0, 1));
+      const nextScale = lerp(1.04, 1, e);
+
+      applyLayer(layerCurrent, curY, curBlur, curBright, curOp, curScale);
+      applyLayer(layerNext, nextY, nextBlur, nextBright, nextOp, nextScale);
+
+      // Mid-dive darkening, peaks around 40%
+      const wash =
+        p < 0.4 ? easeOutCubic(p / 0.4) * 0.55 :
+        p < 0.85 ? lerp(0.55, 0.08, (p - 0.4) / 0.45) :
+        lerp(0.08, 0, (p - 0.85) / 0.15);
+      washMid.style.opacity = String(wash);
+
+      setDepth(lerp(fromDepth, toDepth, e));
+      document.documentElement.dataset.progress = p.toFixed(3);
+      window.__progress = p;
+    }
+
+    function finishTo(nextIndex) {
+      index = nextIndex;
+      layerCurrent.src = images[index].src;
+      applyLayer(layerCurrent, 0, 0, 1, 1, 1);
+      applyLayer(layerNext, 16, 0, 1, 0, 1);
+      washMid.style.opacity = "0";
+      ctx.clearRect(0, 0, cssW, cssH);
+      bubbles = [];
+      setDepth(LOCS[index].depth);
+      busy = false;
+      document.documentElement.dataset.busy = "0";
+      document.documentElement.dataset.progress = "0";
+      window.__progress = 0;
+      document.documentElement.dataset.index = String(index);
+      if (index >= LOCS.length - 1) {
+        deeper.classList.add("hidden");
+        deeper.disabled = true;
+      } else {
+        deeper.classList.remove("hidden");
+        deeper.disabled = false;
+      }
+    }
+
+    function goNext() {
+      if (busy) return false;
+      if (index >= LOCS.length - 1) return false;
+      busy = true;
+      document.documentElement.dataset.busy = "1";
+      document.documentElement.dataset.progress = "0";
+      window.__progress = 0;
+      deeper.classList.add("hidden");
+      deeper.disabled = true;
+
+      const from = index;
+      const to = index + 1;
+      const fromDepth = LOCS[from].depth;
+      const toDepth = LOCS[to].depth;
+      layerNext.src = images[to].src;
+      applyLayer(layerNext, 16, 8, 0.55, 0, 1.04);
+
+      const t0 = performance.now();
+      startBurst(t0);
+      lastTs = t0;
+
+      function frame(now) {
+        const raw = (now - t0) / TRANSITION_MS;
+        const p = clamp(raw, 0, 1);
+        const dt = Math.min(0.05, (now - lastTs) / 1000);
+        lastTs = now;
+        applyTransitionFrame(p, fromDepth, toDepth);
+        updateBubbles(dt, now, p);
+        if (p < 1) {
+          anim = requestAnimationFrame(frame);
+        } else {
+          anim = null;
+          finishTo(to);
+        }
+      }
+      anim = requestAnimationFrame(frame);
+      return true;
+    }
+
+    deeper.addEventListener("click", () => goNext());
+
+    async function preload() {
+      images = await Promise.all(LOCS.map((loc) => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("fail " + loc.src));
+        img.src = loc.src;
+      })));
+    }
+
+    async function main() {
+      resize();
+      await preload();
+      layerCurrent.src = images[0].src;
+      applyLayer(layerCurrent, 0, 0, 1, 1, 1);
+      applyLayer(layerNext, 16, 0, 1, 0, 1);
+      setDepth(LOCS[0].depth);
+      boot.classList.add("gone");
+      setTimeout(() => boot.remove(), 600);
+      document.documentElement.dataset.ready = "1";
+      document.documentElement.dataset.index = "0";
+      document.documentElement.dataset.busy = "0";
+      window.__ready = true;
+      window.__goNext = goNext;
+
+      if (AUTO) {
+        const run = async () => {
+          while (index < LOCS.length - 1) {
+            await new Promise((r) => setTimeout(r, PAUSE_MS));
+            if (!goNext()) break;
+            await new Promise((r) => {
+              const iv = setInterval(() => {
+                if (!busy) { clearInterval(iv); r(); }
+              }, 40);
+            });
+          }
+          document.documentElement.dataset.autoDone = "1";
+        };
+        run();
+      }
+    }
+
+    main().catch((err) => {
+      console.error(err);
+      boot.style.background = "#02060c";
+    });
+  </script>
+</body>
+</html>

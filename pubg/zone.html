@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Зона — PUBG</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #d4c4a3;
+      font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", Roboto, system-ui, sans-serif;
+      color: #f4efe4;
+      user-select: none;
+    }
+    #map {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      pointer-events: none;
+    }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .panel {
+      position: fixed;
+      left: 28px;
+      bottom: 28px;
+      width: min(420px, 36vw);
+      background: linear-gradient(180deg, rgba(14, 18, 28, 0.90), rgba(8, 10, 18, 0.94));
+      border: 1px solid rgba(212, 175, 85, 0.5);
+      border-radius: 14px;
+      padding: 18px 20px 16px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .panel.hidden {
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+    }
+    .q-num {
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      color: #d4af55;
+      font-weight: 600;
+    }
+    .q-text {
+      margin: 10px 0 16px;
+      font-size: 18px;
+      line-height: 1.45;
+      color: #f6f1e6;
+    }
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 148px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font: 600 15px/1 "Segoe UI", "Noto Sans", sans-serif;
+      color: #1a1408;
+      background: linear-gradient(180deg, #f0d078, #c9a24a);
+      box-shadow: 0 2px 0 #8a6a22, 0 4px 12px rgba(0, 0, 0, 0.35);
+      transition: filter 0.15s, transform 0.15s, opacity 0.2s;
+    }
+    .btn:hover:not(:disabled) { filter: brightness(1.08); }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+      filter: grayscale(0.2);
+    }
+    .victory {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 16vh;
+      background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.52) 100%);
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.7s ease;
+      text-align: center;
+      padding: 24px;
+    }
+    .victory.show { opacity: 1; }
+    .victory h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+      font-size: clamp(32px, 5.4vw, 84px);
+      font-weight: 700;
+      color: #ffd56a;
+      letter-spacing: 0.01em;
+      text-shadow:
+        0 0 28px rgba(255, 200, 60, 0.75),
+        0 4px 18px rgba(0, 0, 0, 0.85),
+        0 1px 0 #7a5a10;
+    }
+    .victory p {
+      margin: 16px 0 0;
+      font-size: clamp(20px, 2.2vw, 34px);
+      color: #fff8e8;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+    }
+  </style>
+</head>
+<body>
+  <img id="map" src="../maps/island_fullscreen.jpg" alt="Карта острова">
+  <canvas id="overlay"></canvas>
+
+  <aside class="panel" id="panel">
+    <div class="q-num" id="qNum">Вопрос 1 из 8</div>
+    <div class="q-text" id="qText">(текст вопроса)</div>
+    <button class="btn" id="answerBtn" type="button">Ответить</button>
+  </aside>
+
+  <div class="victory" id="victory" aria-hidden="true">
+    <h1>Winner winner chicken dinner!</h1>
+    <p>Мы победили!</p>
+  </div>
+
+  <script>
+    const IMG = { w: 2560, h: 1440 };
+
+    /* Safe circles in map-image coordinates. Nested, all on the island. */
+    const ZONES = [
+      { x: 1355.0, y: 665.0, r: 450 },
+      { x: 1452.5, y: 679.6, r: 330 },
+      { x: 1478.6, y: 746.9, r: 240 },
+      { x: 1524.0, y: 725.5, r: 175 },
+      { x: 1531.6, y: 761.7, r: 125 },
+      { x: 1556.5, y: 756.1, r:  88 },
+      { x: 1559.7, y: 775.2, r:  58 },
+      { x: 1570.5, y: 767.6, r:  35 }
+    ];
+
+    /* Large circle covering the map — no visible blue at the start. */
+    const INITIAL = { x: 1280, y: 720, r: 1800 };
+
+    /* Midpoint of the pair, on the western beach, outside zone 1. */
+    const START = { x: 738, y: 672 };
+
+    /* Landing after each answer: inside zone k, outside zone k+1 (last: inside final). */
+    const LANDINGS = [
+      { x: 1079.1, y: 623.6 },
+      { x: 1378.3, y: 488.9 },
+      { x: 1341.2, y: 811.5 },
+      { x: 1500.3, y: 612.9 },
+      { x: 1444.3, y: 781.1 },
+      { x: 1546.5, y: 696.0 },
+      { x: 1534.5, y: 793.3 },
+      { x: 1574.5, y: 765.6 }
+    ];
+
+    const MARKERS = [
+      { dx: -11, dy: -7, fill: "#ffd24a", glow: "rgba(255, 210, 70, 0.85)" },
+      { dx:  12, dy:  8, fill: "#5ec8ff", glow: "rgba(90, 200, 255, 0.85)" }
+    ];
+
+    /* Hand-authored routes in map-image coords: stay on land, cross
+       the river only at the central junction or the city bridge. */
+    const ROUTES = [
+      [ {x:738,y:672}, {x:842,y:658}, {x:948,y:642}, {x:1028,y:598}, {x:1079.1,y:623.6} ],
+      [ {x:1079.1,y:623.6}, {x:1165,y:675}, {x:1235,y:712}, {x:1358,y:715}, {x:1400,y:575}, {x:1378.3,y:488.9} ],
+      [ {x:1378.3,y:488.9}, {x:1320,y:550}, {x:1368,y:655}, {x:1358,y:715}, {x:1390,y:765}, {x:1341.2,y:811.5} ],
+      [ {x:1341.2,y:811.5}, {x:1360,y:760}, {x:1358,y:715}, {x:1420,y:650}, {x:1516,y:616}, {x:1500.3,y:612.9} ],
+      [ {x:1500.3,y:612.9}, {x:1516,y:616}, {x:1368,y:655}, {x:1358,y:715}, {x:1410,y:750}, {x:1444.3,y:781.1} ],
+      [ {x:1444.3,y:781.1}, {x:1525,y:785}, {x:1702,y:788}, {x:1671,y:717}, {x:1580,y:678}, {x:1546.5,y:696.0} ],
+      [ {x:1546.5,y:696.0}, {x:1580,y:678}, {x:1671,y:717}, {x:1702,y:788}, {x:1600,y:785}, {x:1534.5,y:793.3} ],
+      [ {x:1534.5,y:793.3}, {x:1544,y:778}, {x:1562,y:772}, {x:1574.5,y:765.6} ]
+    ];
+
+    const ROUTE_STROKE = "#e8742a";
+    const ROUTE_OUTLINE = "#6b3210";
+    const ROUTE_DRAW_MS = 1500;
+    const TRAVEL_MIN_MS = 2000;
+    const TRAVEL_MAX_MS = 3000;
+    const SHRINK_MS = 1600;
+    const ROUTE_FADE_MS = 280;
+    const WHITE_FADE_MS = 420;
+    const AUTO_FIRST_MS = 1500;
+    const AUTO_PAUSE_MS = 1200;
+
+    const canvas = document.getElementById("overlay");
+    const ctx = canvas.getContext("2d");
+    const panel = document.getElementById("panel");
+    const qNum = document.getElementById("qNum");
+    const answerBtn = document.getElementById("answerBtn");
+    const victory = document.getElementById("victory");
+
+    const AUTO = new URLSearchParams(location.search).get("auto") === "1";
+
+    let viewW = 0, viewH = 0, dpr = 1;
+    let transform = { scale: 1, ox: 0, oy: 0 };
+
+    let question = 1;
+    let blue = { ...INITIAL };
+    let white = { ...ZONES[0] };
+    let pos = { ...START };
+    let whiteAlpha = 1;
+    let animating = false;
+    let finished = false;
+    let rafId = 0;
+    let phase = "idle";
+    let route = null;
+    let travelT = 0;
+
+    function coverTransform(vw, vh) {
+      const scale = Math.max(vw / IMG.w, vh / IMG.h);
+      const dw = IMG.w * scale;
+      const dh = IMG.h * scale;
+      return { scale, ox: (vw - dw) / 2, oy: (vh - dh) / 2 };
+    }
+
+    function toScreen(x, y) {
+      return [x * transform.scale + transform.ox, y * transform.scale + transform.oy];
+    }
+
+    function resize() {
+      viewW = window.innerWidth;
+      viewH = window.innerHeight;
+      dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2.5));
+      canvas.width = Math.round(viewW * dpr);
+      canvas.height = Math.round(viewH * dpr);
+      canvas.style.width = viewW + "px";
+      canvas.style.height = viewH + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      transform = coverTransform(viewW, viewH);
+      draw();
+    }
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function dist(a, b) {
+      return Math.hypot(b.x - a.x, b.y - a.y);
+    }
+
+    function pathLength(pts) {
+      let len = 0;
+      for (let i = 1; i < pts.length; i++) len += dist(pts[i - 1], pts[i]);
+      return len;
+    }
+
+    function pointAlong(pts, t) {
+      if (!pts.length) return { x: 0, y: 0 };
+      if (t <= 0) return { ...pts[0] };
+      const total = pathLength(pts);
+      if (total <= 0 || t >= 1) return { ...pts[pts.length - 1] };
+      let d = t * total;
+      for (let i = 1; i < pts.length; i++) {
+        const seg = dist(pts[i - 1], pts[i]);
+        if (d <= seg) {
+          const u = seg === 0 ? 0 : d / seg;
+          return lerpPt(pts[i - 1], pts[i], u);
+        }
+        d -= seg;
+      }
+      return { ...pts[pts.length - 1] };
+    }
+
+    function vertexDistances(pts) {
+      const ds = [0];
+      for (let i = 1; i < pts.length; i++) ds.push(ds[i - 1] + dist(pts[i - 1], pts[i]));
+      return ds;
+    }
+
+    function travelDuration(pts) {
+      const len = pathLength(pts);
+      const t = Math.min(1, Math.max(0, (len - 80) / 820));
+      return TRAVEL_MIN_MS + t * (TRAVEL_MAX_MS - TRAVEL_MIN_MS);
+    }
+
+    function animateValue(ms, onTick, ease) {
+      const easing = ease || ((x) => x);
+      return new Promise((resolve) => {
+        const t0 = performance.now();
+        function step(now) {
+          const raw = Math.min(1, (now - t0) / ms);
+          onTick(easing(raw), raw);
+          if (raw < 1) rafId = requestAnimationFrame(step);
+          else resolve();
+        }
+        rafId = requestAnimationFrame(step);
+      });
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function lerpPt(a, b, t) {
+      return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) };
+    }
+
+    function lerpCircle(a, b, t) {
+      return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), r: lerp(a.r, b.r, t) };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, viewW, viewH);
+      const s = transform.scale;
+      const [bx, by] = toScreen(blue.x, blue.y);
+      const bR = blue.r * s;
+
+      /* Blue zone: tint everything outside the current blue boundary. */
+      ctx.save();
+      ctx.fillStyle = "rgba(22, 78, 210, 0.42)";
+      ctx.fillRect(0, 0, viewW, viewH);
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = "#000"; // opaque, otherwise residual veil remains
+      ctx.beginPath();
+      ctx.arc(bx, by, Math.max(0, bR), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      /* Blue boundary (skip when it is still the off-map initial circle). */
+      const coversMap = blue.r >= 1470;
+      if (!coversMap) {
+        ctx.save();
+        ctx.lineWidth = Math.max(2.5, 3.2 * s / 0.75);
+        ctx.strokeStyle = "rgba(80, 170, 255, 0.95)";
+        ctx.shadowColor = "rgba(40, 120, 255, 0.55)";
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(bx, by, bR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      /* Current white safe circle. */
+      if (white && whiteAlpha > 0) {
+        const [wx, wy] = toScreen(white.x, white.y);
+        const wR = white.r * s;
+        ctx.save();
+        ctx.globalAlpha = whiteAlpha;
+        ctx.lineWidth = Math.max(2.8, 3.6 * s / 0.75);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.98)";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(wx, wy, wR, 0, Math.PI * 2);
+        ctx.stroke();
+        /* Thin inner highlight so the ring stays visible on light fields. */
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = Math.max(1, 1.2 * s / 0.75);
+        ctx.strokeStyle = "rgba(20, 30, 50, 0.35)";
+        ctx.beginPath();
+        ctx.arc(wx, wy, wR - ctx.lineWidth, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      drawRoute(s);
+
+      /* Two player markers (Женя — золотой, Вика — голубой). */
+      const radius = Math.max(6, 8.5 * s / 0.75);
+      for (const m of MARKERS) {
+        const [mx, my] = toScreen(pos.x + m.dx, pos.y + m.dy);
+        const grd = ctx.createRadialGradient(mx, my, 0, mx, my, radius * 3.2);
+        grd.addColorStop(0, m.glow);
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.arc(mx, my, radius * 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(mx, my, radius, 0, Math.PI * 2);
+        ctx.fillStyle = m.fill;
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.lineWidth = Math.max(1.4, 1.8 * s / 0.75);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+
+    function drawPartialPath(ctx, pts, t) {
+      if (pts.length < 2 || t <= 0) return;
+      const total = pathLength(pts);
+      const target = Math.min(total, t * total);
+      const [x0, y0] = toScreen(pts[0].x, pts[0].y);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      let acc = 0;
+      for (let i = 1; i < pts.length; i++) {
+        const seg = dist(pts[i - 1], pts[i]);
+        if (acc + seg <= target + 0.01) {
+          const [x, y] = toScreen(pts[i].x, pts[i].y);
+          ctx.lineTo(x, y);
+          acc += seg;
+        } else {
+          const u = seg === 0 ? 0 : (target - acc) / seg;
+          const p = lerpPt(pts[i - 1], pts[i], u);
+          const [x, y] = toScreen(p.x, p.y);
+          ctx.lineTo(x, y);
+          break;
+        }
+      }
+      ctx.stroke();
+    }
+
+    function drawRoute(s) {
+      if (!route || !route.points || route.alpha <= 0) return;
+      const pts = route.points;
+      const drawn = route.drawn;
+      if (drawn <= 0) return;
+
+      ctx.save();
+      ctx.globalAlpha = route.alpha;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+
+      ctx.lineWidth = Math.max(3.2, 3.8 * s / 0.75);
+      ctx.strokeStyle = ROUTE_OUTLINE;
+      drawPartialPath(ctx, pts, drawn);
+
+      ctx.lineWidth = Math.max(2.0, 2.4 * s / 0.75);
+      ctx.strokeStyle = ROUTE_STROKE;
+      drawPartialPath(ctx, pts, drawn);
+
+      const total = pathLength(pts);
+      const target = drawn * total;
+      const ds = vertexDistances(pts);
+      const dotR = Math.max(3.1, 3.6 * s / 0.75);
+      ctx.lineWidth = Math.max(1, 1.15 * s / 0.75);
+      for (let i = 1; i < pts.length; i++) {
+        if (ds[i] > target + 0.5) break;
+        const [x, y] = toScreen(pts[i].x, pts[i].y);
+        ctx.beginPath();
+        ctx.arc(x, y, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = ROUTE_STROKE;
+        ctx.strokeStyle = ROUTE_OUTLINE;
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function fadeInWhite(fromCircle) {
+      white = { ...fromCircle };
+      whiteAlpha = 0;
+      const t0 = performance.now();
+      function step(now) {
+        const t = Math.min(1, (now - t0) / WHITE_FADE_MS);
+        whiteAlpha = t;
+        draw();
+        if (t < 1) rafId = requestAnimationFrame(step);
+      }
+      rafId = requestAnimationFrame(step);
+    }
+
+    function buildRoute(from, preset, to) {
+      const pts = preset.map((p) => ({ x: p.x, y: p.y }));
+      pts[0] = { x: from.x, y: from.y };
+      pts[pts.length - 1] = { x: to.x, y: to.y };
+      return pts;
+    }
+
+    async function animateAnswer() {
+      if (animating || finished) return;
+      animating = true;
+      answerBtn.disabled = true;
+      panel.classList.add("hidden");
+
+      const k = question; /* 1..8 */
+      const targetBlue = { ...ZONES[k - 1] };
+      const fromBlue = { ...blue };
+      const toPos = { ...LANDINGS[k - 1] };
+      const pts = buildRoute(pos, ROUTES[k - 1], toPos);
+
+      if (route && route.alpha > 0) {
+        phase = "route-fade";
+        const fromA = route.alpha;
+        await animateValue(ROUTE_FADE_MS, (t) => {
+          route.alpha = fromA * (1 - t);
+          draw();
+        });
+      }
+
+      route = { points: pts, drawn: 0, alpha: 1 };
+      travelT = 0;
+      phase = "route-draw";
+      await animateValue(ROUTE_DRAW_MS, (t) => {
+        route.drawn = t;
+        draw();
+      });
+
+      phase = "travel";
+      const dur = travelDuration(pts);
+      await animateValue(dur, (t) => {
+        travelT = t;
+        pos = pointAlong(pts, t);
+        draw();
+      }, easeInOutCubic);
+
+      pos = { ...toPos };
+      travelT = 1;
+      phase = "shrink";
+      await animateValue(SHRINK_MS, (t) => {
+        blue = lerpCircle(fromBlue, targetBlue, t);
+        draw();
+      }, easeInOutCubic);
+
+      blue = { ...targetBlue };
+      draw();
+      onArrived(k);
+    }
+
+    function onArrived(k) {
+      if (k === 8) {
+        finished = true;
+        animating = false;
+        phase = "done";
+        panel.classList.add("hidden");
+        victory.classList.add("show");
+        victory.setAttribute("aria-hidden", "false");
+        draw();
+        return;
+      }
+      question = k + 1;
+      qNum.textContent = "Вопрос " + question + " из 8";
+      fadeInWhite(ZONES[question - 1]);
+      animating = false;
+      phase = "idle";
+      panel.classList.remove("hidden");
+      answerBtn.disabled = false;
+      if (AUTO) setTimeout(autoTick, AUTO_PAUSE_MS);
+    }
+
+    function autoTick() {
+      if (finished || animating) return;
+      animateAnswer();
+    }
+
+    function boot() {
+      resize();
+      window.addEventListener("resize", resize);
+      answerBtn.addEventListener("click", animateAnswer);
+      if (AUTO) setTimeout(autoTick, AUTO_FIRST_MS);
+    }
+
+    window.__zone = {
+      get state() {
+        return {
+          question,
+          animating,
+          finished,
+          phase,
+          routeDrawn: route ? route.drawn : 0,
+          routeAlpha: route ? route.alpha : 0,
+          travelT,
+          pos: { ...pos },
+          blue: { ...blue },
+        };
+      }
+    };
+
+    if (document.readyState === "complete") boot();
+    else window.addEventListener("load", boot);
+  </script>
+</body>
+</html>

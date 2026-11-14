@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Аирдроп — PUBG</title>
+  <style>
+    :root {
+      --gold: #d4af55;
+      --gold-soft: rgba(212, 175, 85, 0.45);
+      --gold-hi: #f0d078;
+      --ink: #f4efe4;
+      --muted: #c8c0b0;
+      --panel: linear-gradient(180deg, rgba(14, 18, 26, 0.90), rgba(7, 9, 14, 0.94));
+      --row-bg: rgba(6, 8, 12, 0.72);
+      --gap: clamp(8px, 1.4vh, 14px);
+      --pad: clamp(10px, 2.2vmin, 26px);
+      --aspect: 2560 / 624;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #07080c;
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", Roboto, system-ui, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background: #0a0c10;
+      pointer-events: none;
+    }
+    .bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      filter: blur(12px) brightness(0.36) saturate(0.7);
+      transform: scale(1.08);
+    }
+    .bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at center, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.55) 100%),
+        rgba(0, 0, 0, 0.28);
+    }
+    .ui {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(0, 1.22fr) minmax(0, 0.92fr);
+      gap: clamp(10px, 1.5vw, 22px);
+      padding: var(--pad);
+      padding-top: calc(var(--pad) + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom, 0px));
+      padding-left: calc(var(--pad) + env(safe-area-inset-left, 0px));
+      padding-right: calc(var(--pad) + env(safe-area-inset-right, 0px));
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+    }
+    .panel {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--gold-soft);
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 230, 170, 0.06);
+      backdrop-filter: blur(10px);
+      padding: clamp(10px, 1.6vmin, 16px);
+      overflow: hidden;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .panel.drop-target {
+      border-color: var(--gold-hi);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(240, 208, 120, 0.35), 0 0 28px rgba(212, 175, 85, 0.22);
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+      margin-bottom: clamp(8px, 1.2vh, 12px);
+      min-height: 28px;
+    }
+    .panel-head h1 {
+      margin: 0;
+      font-size: clamp(13px, 1.7vw, 16px);
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: var(--gold-hi);
+      text-transform: uppercase;
+    }
+    .panel-head .hint {
+      margin-left: auto;
+      font-size: clamp(11px, 1.3vw, 13px);
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+    .pack-icon {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 auto;
+      color: var(--gold);
+    }
+    .list {
+      flex: 1 1 auto;
+      min-height: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: var(--gap);
+      container-type: size;
+      position: relative;
+    }
+    #slotList { justify-content: center; }
+    .loot-row, .slot {
+      position: relative;
+      flex: 0 0 auto;
+      width: min(100%, calc((100cqh - var(--gap)) / 2 * 2560 / 624));
+      aspect-ratio: var(--aspect);
+      margin-inline: auto;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .loot-row {
+      background: var(--row-bg);
+      border: 1px solid rgba(212, 175, 85, 0.38);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      cursor: grab;
+      touch-action: none;
+      -webkit-user-drag: none;
+    }
+    .loot-row:hover, .loot-row:focus-visible {
+      border-color: rgba(240, 208, 120, 0.85);
+      box-shadow: 0 0 0 1px rgba(240, 208, 120, 0.25), 0 6px 18px rgba(0, 0, 0, 0.35);
+    }
+    .loot-row.is-ghost {
+      opacity: 0.28;
+      cursor: grabbing;
+    }
+    .loot-row.is-placed {
+      cursor: default;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: auto;
+      margin: 0;
+    }
+    .loot-row img, .loot-fallback {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+    .loot-fallback {
+      background: radial-gradient(ellipse at 50% 55%, #1c2430 0%, #0b0d12 70%);
+      position: relative;
+    }
+    .loot-fallback svg {
+      position: absolute;
+      inset: 8% 10%;
+      width: 80%;
+      height: 84%;
+    }
+    .loot-meta {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px;
+      padding: clamp(6px, 1.1vh, 10px) clamp(8px, 1.2vw, 12px);
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.78) 100%);
+      pointer-events: none;
+    }
+    .loot-name {
+      font-weight: 700;
+      font-size: clamp(12px, 1.5vw, 16px);
+      color: #fff6de;
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    }
+    .loot-sub {
+      font-weight: 600;
+      font-size: clamp(11px, 1.3vw, 14px);
+      color: var(--gold-hi);
+      letter-spacing: 0.02em;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      white-space: nowrap;
+    }
+    .slot {
+      border: 0;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.18)),
+        rgba(0, 0, 0, 0.28);
+      box-shadow: inset 0 0 0 1px rgba(212, 175, 85, 0.28);
+      background-image: repeating-linear-gradient(-45deg, transparent, transparent 7px, rgba(212,175,85,0.03) 7px, rgba(212,175,85,0.03) 8px), linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.18));
+      transition: box-shadow 0.2s, background 0.2s;
+    }
+    .slot.is-hot {
+      background: rgba(212, 175, 85, 0.10);
+      box-shadow: inset 0 0 0 1px var(--gold-hi), inset 0 0 18px rgba(212, 175, 85, 0.12);
+    }
+    .slot.is-filled {
+      background: transparent;
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .empty-note {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(200, 192, 176, 0.35);
+      font-size: clamp(12px, 1.4vw, 14px);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+    .drop-empty {
+      display: none;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      color: rgba(200, 192, 176, 0.45);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: clamp(13px, 1.5vw, 15px);
+    }
+    .drop-empty.show { display: flex; }
+    .next-wrap {
+      flex: 0 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: clamp(40px, 7vh, 52px);
+      margin-top: clamp(8px, 1.2vh, 12px);
+    }
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 148px;
+      padding: 10px 26px;
+      border-radius: 8px;
+      font: 600 15px/1 "Segoe UI", "Noto Sans", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #1a1408;
+      background: linear-gradient(180deg, #f0d078, #c9a24a);
+      box-shadow: 0 2px 0 #8a6a22, 0 4px 12px rgba(0, 0, 0, 0.35);
+      transition: filter 0.15s, transform 0.15s, opacity 0.35s, visibility 0.35s;
+    }
+    .btn[hidden] {
+      display: inline-flex;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .btn.show {
+      visibility: visible;
+      opacity: 1;
+    }
+    .btn:hover:not(:disabled) { filter: brightness(1.08); }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .drag-clone {
+      position: fixed;
+      z-index: 80;
+      pointer-events: none;
+      margin: 0;
+      will-change: left, top, width, height, transform;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(240, 208, 120, 0.55);
+      border-color: var(--gold-hi);
+    }
+    @media (orientation: portrait) {
+      .ui {
+        grid-template-columns: 1fr;
+        grid-template-rows: max-content minmax(0, 1fr);
+      }
+      .panel-drop {
+        flex: 0 0 auto;
+        height: max-content;
+        min-height: max-content;
+        max-height: none;
+        overflow: hidden;
+      }
+      .panel-drop .list {
+        container-type: normal;
+        flex: 0 0 auto;
+        height: max-content;
+        min-height: max-content;
+      }
+      .panel-drop .loot-row {
+        width: 100%;
+        height: auto;
+      }
+    }
+
+    @media (max-height: 420px) {
+      .panel-head { margin-bottom: 6px; min-height: 22px; }
+      .next-wrap { min-height: 38px; margin-top: 6px; }
+      .btn { padding: 8px 20px; min-width: 124px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true">
+    <img src="../maps/island_fullscreen.jpg" alt="">
+  </div>
+
+  <div class="ui">
+    <section class="panel panel-drop" id="dropPanel">
+      <div class="panel-head">
+        <h1>Аирдроп</h1>
+        <span class="hint" id="dropHint">перетащи в рюкзак</span>
+      </div>
+      <div class="list" id="dropList">
+        <article class="loot-row" data-id="awm" tabindex="0">
+          <img class="loot-img" src="loot/awm_loot.jpg" alt="AWM" draggable="false">
+          <div class="loot-meta">
+            <span class="loot-name">AWM</span>
+            <span class="loot-sub">.300 Magnum × 20</span>
+          </div>
+        </article>
+        <article class="loot-row" data-id="primo" tabindex="0">
+          <img class="loot-img" src="loot/primo_loot.jpg" alt="Примогемы" draggable="false">
+          <div class="loot-fallback" hidden aria-hidden="true">
+            <svg viewBox="0 0 2560 624" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <linearGradient id="gemFace" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#f7fbff"/>
+                  <stop offset="0.45" stop-color="#cfe7ff"/>
+                  <stop offset="1" stop-color="#8ec2f0"/>
+                </linearGradient>
+                <linearGradient id="gemGold" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#ffe9a8"/>
+                  <stop offset="1" stop-color="#c9a24a"/>
+                </linearGradient>
+                <filter id="gemGlow" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="8" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <g filter="url(#gemGlow)" fill="url(#gemFace)" stroke="url(#gemGold)" stroke-width="8" transform="translate(1280 312)">
+                <g transform="translate(-280 0) scale(1.05)"><polygon points="0,-92 28,-28 92,0 28,28 0,92 -28,28 -92,0 -28,-28"/></g>
+                <g transform="translate(-90 -18) scale(1.25)"><polygon points="0,-92 28,-28 92,0 28,28 0,92 -28,28 -92,0 -28,-28"/></g>
+                <g transform="translate(110 10) scale(1.15)"><polygon points="0,-92 28,-28 92,0 28,28 0,92 -28,28 -92,0 -28,-28"/></g>
+                <g transform="translate(300 -8) scale(0.95)"><polygon points="0,-92 28,-28 92,0 28,28 0,92 -28,28 -92,0 -28,-28"/></g>
+              </g>
+            </svg>
+          </div>
+          <div class="loot-meta">
+            <span class="loot-name">Примогемы</span>
+            <span class="loot-sub" id="primoLabel">Примогемы × 0</span>
+          </div>
+        </article>
+      </div>
+      <div class="drop-empty" id="dropEmpty">Пусто</div>
+    </section>
+
+    <section class="panel panel-pack" id="packPanel">
+      <div class="panel-head">
+        <svg class="pack-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M8.2 8.2V5.6A2.6 2.6 0 0 1 10.8 3h2.4A2.6 2.6 0 0 1 15.8 5.6v2.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <rect x="4.2" y="7.2" width="15.6" height="14.2" rx="2.3" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M4.2 11.2h15.6" stroke="currentColor" stroke-width="1.7"/>
+          <rect x="9.2" y="14.2" width="5.6" height="4.2" rx="0.8" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        <h1>Рюкзак</h1>
+        <span class="hint" id="packCount">0 / 2</span>
+      </div>
+      <div class="list" id="slotList">
+<div class="slot" data-slot="0"><span class="empty-note">пусто</span></div>
+        <div class="slot" data-slot="1"><span class="empty-note">пусто</span></div>
+      </div>
+      <div class="next-wrap">
+        <button class="btn" id="nextBtn" type="button" hidden>Дальше</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /* Количество бонусных примогемов в аирдропе. Подставить нужное число позже. */
+    const PRIMO_COUNT = 160;
+
+    const AUTO = new URLSearchParams(location.search).get("auto") === "1";
+    const TAP_PX = 10;
+    const SNAP_MS = 340;
+
+    const dropList = document.getElementById("dropList");
+    const dropEmpty = document.getElementById("dropEmpty");
+    const dropHint = document.getElementById("dropHint");
+    const packPanel = document.getElementById("packPanel");
+    const slotList = document.getElementById("slotList");
+    const packCount = document.getElementById("packCount");
+    const nextBtn = document.getElementById("nextBtn");
+    const primoLabel = document.getElementById("primoLabel");
+    const slots = [...document.querySelectorAll(".slot")];
+
+    primoLabel.textContent = "× " + PRIMO_COUNT;
+
+    const placed = new Set();
+    let dragging = null;
+    let busy = false;
+
+    const primoImg = document.querySelector('[data-id="primo"] .loot-img');
+    const primoFallback = document.querySelector(".loot-fallback");
+    function showPrimoFallback() {
+      if (primoFallback) primoFallback.hidden = false;
+      if (primoImg) primoImg.style.display = "none";
+    }
+    if (primoImg) {
+      primoImg.addEventListener("error", showPrimoFallback);
+      if (primoImg.complete && primoImg.naturalWidth === 0) showPrimoFallback();
+    }
+
+    function nextFreeSlot() {
+      return slots.find((s) => !s.classList.contains("is-filled"));
+    }
+
+    function updateChrome() {
+      const n = placed.size;
+      packCount.textContent = n + " / 2";
+      slotList.classList.toggle("has-items", n > 0);
+      const empty = n >= 2;
+      dropEmpty.classList.toggle("show", empty);
+      dropList.style.display = empty ? "none" : "";
+      dropHint.textContent = empty ? "лут собран" : "перетащи в рюкзак";
+      if (n >= 2) {
+        nextBtn.hidden = false;
+        requestAnimationFrame(() => nextBtn.classList.add("show"));
+      }
+    }
+
+    function rectCenter(r) {
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+
+    function makeClone(row, rect) {
+      const clone = row.cloneNode(true);
+      clone.classList.add("drag-clone");
+      clone.classList.remove("is-ghost");
+      clone.style.cssText = [
+        "left:" + rect.left + "px",
+        "top:" + rect.top + "px",
+        "width:" + rect.width + "px",
+        "height:" + rect.height + "px",
+        "aspect-ratio:auto",
+        "margin:0",
+        "transform:none",
+      ].join(";");
+      document.body.appendChild(clone);
+      return clone;
+    }
+
+    function placeClone(clone, left, top, w, h, scale) {
+      clone.style.left = left + "px";
+      clone.style.top = top + "px";
+      if (w) clone.style.width = w + "px";
+      if (h) clone.style.height = h + "px";
+      clone.style.transform = scale && scale !== 1 ? "scale(" + scale + ")" : "none";
+    }
+
+    function animateTo(clone, from, to, duration, ease) {
+      return new Promise((resolve) => {
+        const t0 = performance.now();
+        const lift = Math.min(80, Math.abs(to.cy - from.cy) * 0.3 + 40);
+        let cpx = (from.cx + to.cx) / 2;
+        let cpy = Math.min(from.cy, to.cy) - lift;
+        if (cpy < 8) cpy = Math.max(8, (from.cy + to.cy) / 2);
+        function frame(now) {
+          const p = Math.min(1, (now - t0) / duration);
+          const e = ease ? ease(p) : (1 - Math.pow(1 - p, 3));
+          const u = 1 - e;
+          const cx = u * u * from.cx + 2 * u * e * cpx + e * e * to.cx;
+          const cy = u * u * from.cy + 2 * u * e * cpy + e * e * to.cy;
+          const w = from.w + (to.w - from.w) * e;
+          const h = from.h + (to.h - from.h) * e;
+          placeClone(clone, cx - w / 2, cy - h / 2, w, h, 1);
+          if (p < 1) requestAnimationFrame(frame);
+          else resolve();
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+
+    function easeOutBack(t) {
+      const c = 1.15;
+      return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
+    }
+
+    async function commitToSlot(row, slot, clone) {
+      const target = {
+        ...(() => {
+          const r = slot.getBoundingClientRect();
+          return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
+        })(),
+      };
+      const r = clone.getBoundingClientRect();
+      const from = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
+      await animateTo(clone, from, target, SNAP_MS, easeOutBack);
+      slot.innerHTML = "";
+      slot.classList.add("is-filled");
+      slot.classList.remove("is-hot");
+      row.classList.remove("is-ghost");
+      row.classList.add("is-placed");
+      slot.appendChild(row);
+      clone.remove();
+      placed.add(row.dataset.id);
+      updateChrome();
+    }
+
+    async function returnHome(row, home, clone) {
+      const r = clone.getBoundingClientRect();
+      const from = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
+      const to = { cx: home.left + home.width / 2, cy: home.top + home.height / 2, w: home.width, h: home.height };
+      await animateTo(clone, from, to, 260);
+      clone.remove();
+      row.classList.remove("is-ghost");
+    }
+
+    function overPack(x, y) {
+      const r = packPanel.getBoundingClientRect();
+      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    }
+
+    function startDrag(row, ev) {
+      if (busy || placed.has(row.dataset.id) || row.classList.contains("is-placed")) return;
+      const rect = row.getBoundingClientRect();
+      const clone = makeClone(row, rect);
+      row.classList.add("is-ghost");
+      const pid = ev && ev.pointerId != null ? ev.pointerId : null;
+      if (ev && ev.target && pid != null && ev.target.setPointerCapture) {
+        try { ev.target.setPointerCapture(pid); } catch (e) {}
+      }
+      dragging = {
+        row,
+        clone,
+        home: rect,
+        pointerId: pid,
+        x: ev ? ev.clientX : rect.left + rect.width / 2,
+        y: ev ? ev.clientY : rect.top + rect.height / 2,
+        ox: (ev ? ev.clientX : rect.left + rect.width / 2) - rect.left,
+        oy: (ev ? ev.clientY : rect.top + rect.height / 2) - rect.top,
+        moved: false,
+      };
+      moveDrag(dragging.x, dragging.y, true);
+    }
+
+    function moveDrag(x, y, first) {
+      if (!dragging) return;
+      const dx = x - dragging.x;
+      const dy = y - dragging.y;
+      if (!first && (Math.abs(dx) > TAP_PX || Math.abs(dy) > TAP_PX)) dragging.moved = true;
+      const w = dragging.home.width;
+      const h = dragging.home.height;
+      placeClone(dragging.clone, x - dragging.ox, y - dragging.oy, w, h, dragging.moved ? 1.04 : 1);
+      const hot = overPack(x, y);
+      packPanel.classList.toggle("drop-target", hot);
+      const free = nextFreeSlot();
+      slots.forEach((s) => s.classList.toggle("is-hot", hot && s === free));
+    }
+
+    async function endDrag(x, y) {
+      if (!dragging || busy) return;
+      const { row, clone, home, moved } = dragging;
+      const accept = overPack(x, y) || !moved;
+      const slot = nextFreeSlot();
+      packPanel.classList.remove("drop-target");
+      slots.forEach((s) => s.classList.remove("is-hot"));
+      dragging = null;
+      busy = true;
+      try {
+        if (accept && slot) await commitToSlot(row, slot, clone);
+        else await returnHome(row, home, clone);
+      } finally {
+        busy = false;
+      }
+    }
+
+    function bindRow(row) {
+      row.addEventListener("pointerdown", (ev) => {
+        if (ev.button != null && ev.button !== 0) return;
+        ev.preventDefault();
+        startDrag(row, ev);
+      });
+    }
+
+    document.querySelectorAll("#dropList .loot-row").forEach(bindRow);
+
+    window.addEventListener("pointermove", (ev) => {
+      if (!dragging) return;
+      ev.preventDefault();
+      moveDrag(ev.clientX, ev.clientY, false);
+    }, { passive: false });
+
+    window.addEventListener("pointerup", (ev) => {
+      if (!dragging) return;
+      ev.preventDefault();
+      endDrag(ev.clientX, ev.clientY);
+    });
+    window.addEventListener("pointercancel", (ev) => {
+      if (!dragging) return;
+      endDrag(ev.clientX, ev.clientY);
+    });
+
+    nextBtn.addEventListener("click", () => {
+      nextBtn.dispatchEvent(new CustomEvent("quest:next", { bubbles: true }));
+    });
+
+    async function autoDragRow(row, delayBefore) {
+      if (delayBefore) await new Promise((r) => setTimeout(r, delayBefore));
+      const slot = nextFreeSlot();
+      if (!slot) return;
+      const fromR = row.getBoundingClientRect();
+      const toR = slot.getBoundingClientRect();
+      const clone = makeClone(row, fromR);
+      row.classList.add("is-ghost");
+      const from = { cx: fromR.left + fromR.width / 2, cy: fromR.top + fromR.height / 2, w: fromR.width, h: fromR.height };
+      const mid = {
+        cx: from.cx + (toR.left + toR.width / 2 - from.cx) * 0.42,
+        cy: from.cy - Math.min(70, Math.max(36, Math.abs(toR.top - fromR.top) * 0.25)),
+        w: from.w * 1.05,
+        h: from.h * 1.05,
+      };
+      const to = { cx: toR.left + toR.width / 2, cy: toR.top + toR.height / 2, w: toR.width, h: toR.height };
+      packPanel.classList.add("drop-target");
+      slot.classList.add("is-hot");
+      await animateTo(clone, from, mid, 420);
+      await animateTo(clone, mid, to, 620, easeOutBack);
+      packPanel.classList.remove("drop-target");
+      slot.classList.remove("is-hot");
+      slot.innerHTML = "";
+      slot.classList.add("is-filled");
+      row.classList.remove("is-ghost");
+      row.classList.add("is-placed");
+      slot.appendChild(row);
+      clone.remove();
+      placed.add(row.dataset.id);
+      updateChrome();
+    }
+
+    async function waitImages() {
+      const imgs = [...document.querySelectorAll("img")];
+      await Promise.all(imgs.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((res) => {
+          img.addEventListener("load", res, { once: true });
+          img.addEventListener("error", res, { once: true });
+        });
+      }));
+    }
+
+    (async function boot() {
+      await waitImages();
+      updateChrome();
+      if (!AUTO) return;
+      document.body.dataset.auto = "1";
+      const awm = document.querySelector('[data-id="awm"]');
+      const primo = document.querySelector('[data-id="primo"]');
+      await new Promise((r) => setTimeout(r, 1200));
+      await autoDragRow(awm);
+      await new Promise((r) => setTimeout(r, 520));
+      await autoDragRow(primo);
+    })();
+  </script>
+</body>
+</html>

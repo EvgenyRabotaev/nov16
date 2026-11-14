@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Крутка</title>
+<style>
+
+  :root {
+    --bg0: #050714;
+    --bg1: #0b1230;
+    --text: #eef4ff;
+    --muted: #9ab0d0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg0);
+    color: var(--text);
+    font-family: "Noto Serif", "Liberation Serif", Georgia, serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #fx, #aurora, #vignette {
+    position: fixed; inset: 0;
+    pointer-events: none;
+  }
+  #fx { z-index: 4; }
+  #aurora {
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.8s ease, background 0.8s ease;
+    background: radial-gradient(ellipse at 50% 0%, transparent 0%, transparent 70%);
+  }
+  body.r3 #aurora { opacity: .85; background: radial-gradient(ellipse at 50% 18%, rgba(60,140,255,.45) 0%, rgba(20,50,120,.18) 42%, transparent 70%); }
+  body.r4 #aurora { opacity: .9; background: radial-gradient(ellipse at 50% 18%, rgba(170,80,255,.5) 0%, rgba(70,20,130,.22) 42%, transparent 70%); }
+  body.r5 #aurora { opacity: .95; background: radial-gradient(ellipse at 50% 18%, rgba(255,200,70,.5) 0%, rgba(140,90,10,.2) 45%, transparent 72%); }
+  body.r6 #aurora { opacity: 1; background: radial-gradient(ellipse at 50% 18%, rgba(255,120,20,.58) 0%, rgba(160,40,0,.25) 45%, transparent 72%); }
+  #vignette {
+    z-index: 5;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.45) 100%);
+  }
+  #ground {
+    position: fixed; left: 50%; top: 58%;
+    width: min(46vw, 340px); height: 70px;
+    transform: translate(-50%, 0);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+    background: radial-gradient(ellipse at center, var(--glow, rgba(120,180,255,.55)) 0%, transparent 70%);
+    filter: blur(6px);
+    transition: opacity .5s;
+  }
+  body.falling #ground { opacity: 1; }
+
+  #hud {
+    position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 16px;
+    z-index: 10;
+    background: rgba(8,14,36,.72);
+    border: 1px solid rgba(130,180,255,.4);
+    border-radius: 22px;
+    padding: 7px 16px;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: .02em;
+    box-shadow: 0 0 18px rgba(70,140,255,.25);
+  }
+  #hud b { color: #cfe6ff; }
+
+  .screen {
+    position: fixed; inset: 0;
+    z-index: 8;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    padding: 24px 20px calc(28px + env(safe-area-inset-bottom));
+    transition: opacity .45s ease, visibility .45s;
+  }
+  .screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  #home { justify-content: center; }
+  .title {
+    font-size: clamp(36px, 8vw, 64px);
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    text-shadow: 0 0 28px rgba(120,180,255,.55);
+    margin-bottom: 6px;
+  }
+  .sub {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 42px;
+  }
+  .btn-main {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 18px; font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #10203a;
+    background: linear-gradient(180deg, #f4fbff, #9cc8ff 55%, #6ea6f0);
+    border: none;
+    border-radius: 28px;
+    padding: 14px 48px;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.4), 0 8px 28px rgba(80,150,255,.45), 0 0 40px rgba(80,150,255,.25);
+    transition: transform .15s, filter .15s;
+  }
+  .btn-main:hover { transform: translateY(-1px) scale(1.03); filter: brightness(1.06); }
+  .btn-main:active { transform: scale(.98); }
+  .btn-main[disabled] { opacity: .45; cursor: default; transform: none; }
+  .preview-row {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    justify-content: center;
+    margin-top: 36px;
+    max-width: 560px;
+  }
+  .btn-r {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: .04em;
+    border-radius: 20px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    color: #fff;
+    background: rgba(255,255,255,.06);
+    transition: transform .15s, box-shadow .15s, background .15s;
+  }
+  .btn-r:hover { transform: translateY(-1px); }
+  .btn-r.r3 { border-color: #5aa8ff; color: #cfe8ff; box-shadow: 0 0 14px rgba(80,160,255,.3); }
+  .btn-r.r4 { border-color: #c070ff; color: #f0d8ff; box-shadow: 0 0 14px rgba(180,90,255,.3); }
+  .btn-r.r5 { border-color: #ffc44a; color: #ffe9b0; box-shadow: 0 0 14px rgba(255,196,70,.3); }
+  .btn-r.r6 { border-color: #ff8a1e; color: #ffd2a8; box-shadow: 0 0 14px rgba(255,130,30,.35); }
+  .btn-r[disabled] { opacity: .4; cursor: default; transform: none; pointer-events: none; box-shadow: none; }
+  #poolStatus {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 14px;
+    min-height: 1.3em;
+    text-align: center;
+    max-width: 520px;
+  }
+  #poolStatus.empty {
+    color: #ffd2a8;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .hint {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 12px;
+    color: #6e86aa;
+    margin-top: 16px;
+  }
+
+  #reveal { justify-content: center; z-index: 9; }
+  .card-stage {
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .card-glow {
+    position: absolute; left: 50%; top: 50%;
+    width: 140%; height: 120%;
+    transform: translate(-50%,-50%);
+    border-radius: 40%;
+    filter: blur(28px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .card-enter {
+    position: relative;
+    z-index: 1;
+    width: min(300px, 68vw);
+    aspect-ratio: 3 / 4;
+    perspective: 1400px;
+    opacity: 0;
+    transform: scale(.42) translateY(36px);
+  }
+  .card-enter.show {
+    animation: cardIn .85s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  @keyframes cardIn {
+    0%   { transform: scale(.42) translateY(36px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  .card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform .95s cubic-bezier(.2,.7,.2,1);
+  }
+  .card.flip {
+    transform: rotateY(180deg);
+  }
+  .face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 16px 50px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.15);
+  }
+  .face.front {
+    transform: rotateY(180deg);
+    background: #0a0a12;
+  }
+  .face.front img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .face.back {
+    background:
+      radial-gradient(circle at 50% 42%, rgba(255,255,255,.18), transparent 42%),
+      linear-gradient(160deg, var(--back1, #1a3a70) 0%, var(--back0, #0a152c) 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .face.back::after {
+    content: "✦";
+    font-size: 74px;
+    color: var(--backStar, #9fd0ff);
+    text-shadow: 0 0 24px var(--backStar, #9fd0ff);
+    opacity: .9;
+  }
+  .meta {
+    text-align: center;
+    min-height: 92px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .45s ease, transform .45s ease;
+    position: relative;
+    z-index: 4;
+    text-shadow: 0 2px 12px rgba(0,0,0,.85), 0 0 18px rgba(0,0,0,.5);
+  }
+  .meta.on { opacity: 1; transform: none; }
+  .stars-ui {
+    font-size: 22px;
+    letter-spacing: .18em;
+    margin-bottom: 4px;
+    filter: drop-shadow(0 0 8px var(--glow, #8ec4ff));
+  }
+  .rarity-ui {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--glow, #8ec4ff);
+    margin-bottom: 4px;
+  }
+  .cname {
+    font-size: 26px;
+    font-weight: 600;
+  }
+  .cnote {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  #btnClose {
+    margin-top: 22px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .4s;
+  }
+  #btnClose.on { opacity: 1; pointer-events: auto; }
+
+  body.shake-4 { animation: shake4 .4s linear; }
+  body.shake-5 { animation: shake5 .55s linear; }
+  body.shake-6 { animation: shake6 .75s linear; }
+  @keyframes shake4 {
+    0%,100%{transform:translate(0,0)}
+    20%{transform:translate(-3px,2px)}
+    40%{transform:translate(3px,-1px)}
+    60%{transform:translate(-2px,1px)}
+    80%{transform:translate(2px,-2px)}
+  }
+  @keyframes shake5 {
+    0%,100%{transform:translate(0,0)}
+    15%{transform:translate(-5px,3px)}
+    30%{transform:translate(6px,-3px)}
+    45%{transform:translate(-4px,2px)}
+    60%{transform:translate(5px,-2px)}
+    75%{transform:translate(-3px,3px)}
+  }
+  @keyframes shake6 {
+    0%,100%{transform:translate(0,0)}
+    10%{transform:translate(-8px,4px)}
+    20%{transform:translate(8px,-4px)}
+    30%{transform:translate(-6px,5px)}
+    40%{transform:translate(7px,-3px)}
+    50%{transform:translate(-5px,3px)}
+    65%{transform:translate(6px,-4px)}
+    80%{transform:translate(-3px,2px)}
+  }
+
+  body.flying #home { pointer-events: none; }
+  body.approach #ground { opacity: 1; }
+
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div id="aurora"></div>
+<div id="ground"></div>
+<div id="vignette"></div>
+<div id="hud">✦ Примогемы: <b id="pg">1800</b></div>
+
+<div id="home" class="screen">
+  <div class="title">Крутка</div>
+  <p class="sub">Открытие за примогемы</p>
+  <button class="btn-main" id="btnPull">Крутить · 100</button>
+  <div class="preview-row">
+    <button class="btn-r r3" data-r="3">Синяя · 3★</button>
+    <button class="btn-r r4" data-r="4">Фиолетовая · 4★</button>
+    <button class="btn-r r5" data-r="5">Золотая · 5★</button>
+    <button class="btn-r r6" data-r="6">Оранжевая · 6★</button>
+  </div>
+  <p class="hint">Нажми цвет, чтобы посмотреть падение звезды и открытие карточки. «Крутить» сразу запускает случайную крутку.</p>
+  <p id="poolStatus" aria-live="polite"></p>
+</div>
+
+<div id="reveal" class="screen hidden">
+  <div class="card-stage">
+    <div class="card-glow" id="cardGlow"></div>
+    <div class="card-enter" id="cardEnter">
+      <div class="card" id="card">
+        <div class="face back" id="cardBack"></div>
+        <div class="face front"><img id="cardImg" alt=""></div>
+      </div>
+    </div>
+  </div>
+  <div class="meta" id="meta">
+    <div class="stars-ui" id="starsUi"></div>
+    <div class="rarity-ui" id="rarityUi"></div>
+    <div class="cname" id="cardName"></div>
+    <div class="cnote" id="cardNote"></div>
+  </div>
+  <button class="btn-main" id="btnClose">Дальше</button>
+</div>
+
+<script>
+
+(function () {
+  'use strict';
+
+  const COST = 100;
+  const GRAY = { c1: '#8b93a8', c2: '#eef2f8', c3: '#4a5160' };
+  const GRAY_MS = 2000;
+  const COLOR_MS = 2000;
+  const STOP_MS = 550;
+  const HANG_MS = 420;
+  const COLOR_FADE_MS = 650;
+  const CRUISE = 0.68; // warp units per second
+
+  function approachMs(r) { return 1200 + (r - 3) * 220; }
+  function totalMs(r) { return GRAY_MS + COLOR_MS + STOP_MS + approachMs(r) + HANG_MS; }
+
+  const FX = {
+    3: {
+      label: '3★', stars: 3,
+      c1: '#4ea8ff', c2: '#d6efff', c3: '#1a5fb8',
+      trail: 10, starR: 8, burst: 95, sparks: 1, hearts: 0, shake: 0
+    },
+    4: {
+      label: '4★', stars: 4,
+      c1: '#c26bff', c2: '#f0d4ff', c3: '#6a1fb8',
+      trail: 15, starR: 11, burst: 150, sparks: 3, hearts: 0, shake: 4
+    },
+    5: {
+      label: '5★', stars: 5,
+      c1: '#ffc44a', c2: '#fff1c2', c3: '#c47a08',
+      trail: 20, starR: 15, burst: 230, sparks: 6, hearts: 4, shake: 5
+    },
+    6: {
+      label: '6★', stars: 6,
+      c1: '#ff8418', c2: '#ffd9a6', c3: '#c44a00',
+      trail: 26, starR: 19, burst: 340, sparks: 10, hearts: 12, shake: 6
+    }
+  };
+
+  // Превью-пул: только карточки, уже прописанные в этой странице.
+  // Полный набор из QUEST.md сюда пока не добавляем.
+  const CARDS = [
+    { id: 'pizza', rarity: 3, title: 'Пицца', note: '', img: '../cards/pizza_3star.jpg' },
+    { id: 'cooking', rarity: 4, title: 'Совместная готовка', note: '', img: '../cards/cooking_4star.jpg' },
+    { id: 'travel', rarity: 5, title: 'Путешествие', note: '', img: '../cards/travel_5star.jpg' },
+    { id: 'zhenya', rarity: 6, title: 'Женя', note: 'Карточку нарисуем отдельно', img: './star6_placeholder.jpg' }
+  ];
+
+  const RARITY_WEIGHT = { 3: 55, 4: 30, 5: 12, 6: 3 };
+  const STORAGE_KEY = 'quest_gacha_pulled_v1';
+  const EMPTY_MSG = 'Все карточки из этого набора уже собраны';
+
+  function cardView(card) {
+    return Object.assign({}, FX[card.rarity], card);
+  }
+
+  function loadPulled() {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(arr)) return [];
+      const known = new Set(CARDS.map(c => c.id));
+      return arr.filter(id => known.has(id));
+    } catch (e) {
+      return [];
+    }
+  }
+
+  let pulledIds = loadPulled();
+
+  function savePulled() {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(pulledIds)); } catch (e) {}
+  }
+
+  function remainingCards() {
+    return CARDS.filter(c => pulledIds.indexOf(c.id) === -1);
+  }
+
+  function remainingOf(rarity) {
+    return remainingCards().filter(c => c.rarity === rarity);
+  }
+
+  function markPulled(card) {
+    if (!card || pulledIds.indexOf(card.id) !== -1) return;
+    pulledIds = pulledIds.concat([card.id]);
+    savePulled();
+  }
+
+  function resetPool() {
+    pulledIds = [];
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    updatePoolUI();
+  }
+
+  // Берёт до n уникальных карт из оставшегося пула, без повторов внутри одной крутки.
+  // Если осталось меньше, чем n, возвращает только оставшиеся.
+  function drawFromPool(n, preferredRarity) {
+    const countWanted = Math.max(0, n | 0);
+    if (countWanted <= 0) return [];
+    const taken = new Set(pulledIds);
+    const out = [];
+
+    function poolNow() {
+      let list = CARDS.filter(c => !taken.has(c.id));
+      if (preferredRarity != null) list = list.filter(c => c.rarity === preferredRarity);
+      return list;
+    }
+
+    function pickOne(list) {
+      if (!list.length) return null;
+      if (preferredRarity != null) {
+        return list[Math.floor(Math.random() * list.length)];
+      }
+      const byR = {};
+      for (const c of list) (byR[c.rarity] || (byR[c.rarity] = [])).push(c);
+      const rarities = Object.keys(byR).map(Number);
+      const totalW = rarities.reduce((s, r) => s + (RARITY_WEIGHT[r] || 1), 0);
+      let roll = Math.random() * totalW;
+      let chosenR = rarities[rarities.length - 1];
+      for (const r of rarities) {
+        roll -= (RARITY_WEIGHT[r] || 1);
+        if (roll <= 0) { chosenR = r; break; }
+      }
+      const group = byR[chosenR];
+      return group[Math.floor(Math.random() * group.length)];
+    }
+
+    const available = preferredRarity != null ? remainingOf(preferredRarity).length : remainingCards().length;
+    const count = Math.min(countWanted, available);
+    for (let i = 0; i < count; i++) {
+      const card = pickOne(poolNow());
+      if (!card) break;
+      taken.add(card.id);
+      out.push(card);
+    }
+    return out;
+  }
+
+  function updatePoolUI() {
+    const left = remainingCards();
+    const empty = left.length === 0;
+    const btn = document.getElementById('btnPull');
+    const status = document.getElementById('poolStatus');
+    if (btn) btn.disabled = empty || gems < COST;
+    document.querySelectorAll('.btn-r').forEach(b => {
+      b.disabled = remainingOf(+b.dataset.r).length === 0;
+    });
+    if (status) {
+      if (empty) {
+        status.textContent = EMPTY_MSG;
+        status.classList.add('empty');
+      } else {
+        status.textContent = 'Осталось карточек: ' + left.length;
+        status.classList.remove('empty');
+      }
+    }
+  }
+
+  const cvs = document.getElementById('fx');
+  const ctx = cvs.getContext('2d');
+  let W = 0, H = 0, dpr = 1;
+  const bgStars = [];
+  const warp = [];
+  const particles = [];
+  const shockwaves = [];
+  let flashes = [];
+  let falling = null;
+  let flightSpeed = 0;
+  let flightTarget = 0;
+  let gems = 1800;
+  let busy = false;
+  let resolveWait = null;
+  let gen = 0;
+  let lastT = performance.now();
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    cvs.width = Math.floor(W * dpr);
+    cvs.height = Math.floor(H * dpr);
+    cvs.style.width = W + 'px';
+    cvs.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  for (let i = 0; i < 160; i++) {
+    bgStars.push({
+      x: Math.random(), y: Math.random(),
+      r: Math.random() * 1.4 + 0.3,
+      a: Math.random(), s: 0.4 + Math.random() * 1.6
+    });
+  }
+
+  function seedWarp() {
+    warp.length = 0;
+    for (let i = 0; i < 420; i++) {
+      warp.push({
+        x: (Math.random() - 0.5) * 2.6,
+        y: (Math.random() - 0.5) * 2.6,
+        z: 0.06 + Math.random() * 0.94,
+        pz: 0,
+        r: 0.45 + Math.random() * 1.7,
+        a: 0.35 + Math.random() * 0.65,
+        tw: Math.random() * Math.PI * 2
+      });
+      warp[i].pz = warp[i].z;
+    }
+  }
+  seedWarp();
+
+  function hexToRgb(hex) {
+    const h = hex.replace('#', '');
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  function rgba(hex, a) {
+    const [r, g, b] = hexToRgb(hex);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+  function lerpHex(a, b, t) {
+    const A = hexToRgb(a), B = hexToRgb(b);
+    const r = Math.round(A[0] + (B[0] - A[0]) * t);
+    const g = Math.round(A[1] + (B[1] - A[1]) * t);
+    const bl = Math.round(A[2] + (B[2] - A[2]) * t);
+    return '#' + [r, g, bl].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+  function easeInOut(u) {
+    return u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+  }
+  function easeOut(u) { return 1 - (1 - u) * (1 - u); }
+
+  function spawn(x, y, opt) {
+    particles.push(Object.assign({
+      x, y, vx: 0, vy: 0, life: 1, decay: 0.02,
+      size: 2, color: '#fff', type: 'spark', g: 0, rot: 0, vr: 0
+    }, opt));
+  }
+
+  function heartPath(ctx, x, y, s) {
+    ctx.beginPath();
+    for (let t = 0; t <= Math.PI * 2 + 0.1; t += 0.2) {
+      const px = 16 * Math.pow(Math.sin(t), 3);
+      const py = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+      if (t === 0) ctx.moveTo(x + px * s, y + py * s);
+      else ctx.lineTo(x + px * s, y + py * s);
+    }
+    ctx.closePath();
+  }
+
+  function drawSparkle(ctx, x, y, r, rot, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.beginPath();
+    ctx.moveTo(0, -r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.quadraticCurveTo(0, 0, 0, r);
+    ctx.quadraticCurveTo(0, 0, -r, 0);
+    ctx.quadraticCurveTo(0, 0, 0, -r);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function colorsAt(elapsed, rarity) {
+    const c = FX[rarity];
+    let t = 0;
+    if (elapsed > GRAY_MS) {
+      t = Math.min(1, (elapsed - GRAY_MS) / COLOR_FADE_MS);
+      t = t * t * (3 - 2 * t);
+    }
+    return {
+      c1: lerpHex(GRAY.c1, c.c1, t),
+      c2: lerpHex(GRAY.c2, c.c2, t),
+      c3: lerpHex(GRAY.c3, c.c3, t),
+      t
+    };
+  }
+
+  function drawCalmBg(t) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#070b1c');
+    g.addColorStop(0.55, '#0a1028');
+    g.addColorStop(1, '#05060f');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    for (const s of bgStars) {
+      const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * 0.001 * s.s + s.a * 8));
+      ctx.fillStyle = 'rgba(220,230,255,' + (tw * 0.85) + ')';
+      ctx.beginPath();
+      ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawFlightBg(now, dt) {
+    const col = falling ? colorsAt(now - falling.t0, falling.r) : { c1: GRAY.c1, c2: GRAY.c2, t: 0 };
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#050714');
+    g.addColorStop(0.5, '#080d22');
+    g.addColorStop(1, '#04040c');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // subtle color wash after reveal
+    if (col.t > 0.02) {
+      const wash = ctx.createRadialGradient(W * 0.5, H * 0.38, 0, W * 0.5, H * 0.4, Math.max(W, H) * 0.7);
+      wash.addColorStop(0, rgba(col.c1, 0.16 * col.t));
+      wash.addColorStop(0.5, rgba(col.c3, 0.08 * col.t));
+      wash.addColorStop(1, rgba(col.c3, 0));
+      ctx.fillStyle = wash;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    const vpX = W * 0.5;
+    const vpY = H * (falling ? 0.36 : 0.42);
+    const spd = flightSpeed; // units / sec
+    const dz = spd * (dt / 1000);
+
+    ctx.lineCap = 'round';
+    const moving = spd > 0.05;
+    const lookback = moving ? Math.min(0.42, 0.12 + spd * 0.42) : 0;
+    for (const s of warp) {
+      if (dz > 0) {
+        s.z -= dz * (0.7 + s.a * 0.5);
+        if (s.z <= 0.045) {
+          s.x = (Math.random() - 0.5) * 2.6;
+          s.y = (Math.random() - 0.5) * 2.6;
+          s.z = 0.92 + Math.random() * 0.2;
+        }
+      }
+      const z = Math.max(0.045, s.z);
+      const zBack = Math.min(1.15, z + lookback * (0.7 + s.a * 0.5));
+      const sc = 0.62 / z;
+      const scb = 0.62 / zBack;
+      const sx = vpX + s.x * W * sc * 0.72;
+      const sy = vpY + s.y * H * sc * 0.72;
+      const sxb = vpX + s.x * W * scb * 0.72;
+      const syb = vpY + s.y * H * scb * 0.72;
+      const near = Math.min(1, (1 - z) * 1.45);
+      const a = s.a * near * (moving ? 0.75 : 0.7);
+      const size = s.r * (0.8 + 1.8 * (1 - z));
+      const tint = col.t > 0.35 && Math.hypot(sx - vpX, sy - vpY) < 120 ? col.c2 : '#e8eefc';
+      if (moving) {
+        ctx.strokeStyle = rgba(tint, Math.min(1, a * 1.15));
+        ctx.lineWidth = Math.max(0.9, size * 0.95);
+        ctx.beginPath();
+        ctx.moveTo(sxb, syb);
+        ctx.lineTo(sx, sy);
+        ctx.stroke();
+        ctx.fillStyle = rgba('#ffffff', Math.min(1, a));
+        ctx.beginPath();
+        ctx.arc(sx, sy, Math.max(0.7, size * 0.45), 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = rgba('#e8eefc', a);
+        ctx.beginPath();
+        ctx.arc(sx, sy, Math.max(0.7, size * 0.55), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawBg(now, dt) {
+    // ease flight speed toward target
+    const tau = flightTarget < flightSpeed ? 140 : 240;
+    const k = 1 - Math.exp(-(dt || 16) / tau);
+    flightSpeed += (flightTarget - flightSpeed) * k;
+    if (falling) drawFlightBg(now, dt);
+    else {
+      flightSpeed = 0;
+      flightTarget = 0;
+      drawCalmBg(now);
+    }
+  }
+
+  function startFlight(rarity) {
+    const c = FX[rarity];
+    seedWarp();
+    const xCruise0 = W * 0.58;
+    const yCruise0 = H * 0.22;
+    const xCruise1 = W * 0.54;
+    const yCruise1 = H * 0.34;
+    const x1 = W * 0.50;
+    const y1 = H * 0.50;
+    falling = {
+      r: rarity,
+      t0: performance.now(),
+      xCruise0, yCruise0, xCruise1, yCruise1,
+      ax: xCruise1, ay: yCruise1, // approach start, set when stopping ends
+      x1, y1,
+      path: [],
+      x: xCruise0, y: yCruise0,
+      px: xCruise0, py: yCruise0,
+      companions: [],
+      revealed: false,
+      approaching: false,
+      done: false,
+      dirX: 0, dirY: 1
+    };
+    const cdx = xCruise1 - xCruise0, cdy = yCruise1 - yCruise0;
+    const clen = Math.hypot(cdx, cdy) || 1;
+    falling.dirX = cdx / clen;
+    falling.dirY = cdy / clen;
+    for (let i = 0; i < c.sparks; i++) {
+      falling.companions.push({
+        ang: (Math.PI * 2 * i) / Math.max(c.sparks, 1) + Math.random(),
+        rad: 16 + Math.random() * (rarity * 6),
+        spd: 0.002 + Math.random() * 0.004,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+    flightSpeed = CRUISE * 0.35;
+    flightTarget = CRUISE;
+    document.body.classList.add('flying', 'falling');
+    document.getElementById('ground').style.setProperty('--glow', rgba(GRAY.c1, 0.35));
+  }
+
+  function revealColor(rarity) {
+    if (!falling || falling.revealed) return;
+    falling.revealed = true;
+    const c = FX[rarity];
+    document.body.classList.add('r' + rarity);
+    document.getElementById('ground').style.setProperty('--glow', rgba(c.c1, 0.7));
+    const x = falling.x, y = falling.y;
+    // color ignition pulse
+    flashes.push({ a: rarity >= 5 ? 0.38 : 0.22, color: c.c2, decay: 0.038, x: x, y: y, rad: Math.max(W, H) * 0.45 });
+    shockwaves.push({ x, y, r: 10, max: 200 + rarity * 36, a: 0.85, w: 2.5 + rarity * 0.4, color: c.c2, decay: 0.014 });
+    shockwaves.push({ x, y, r: 4, max: 120 + rarity * 16, a: 0.7, w: 2, color: c.c1, decay: 0.02 });
+    for (let i = 0; i < 18 + rarity * 6; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 0.8 + Math.random() * (2 + rarity * 0.4);
+      spawn(x, y, {
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        size: 2 + Math.random() * 4,
+        color: Math.random() < 0.4 ? c.c2 : c.c1,
+        decay: 0.014 + Math.random() * 0.016,
+        type: Math.random() < 0.4 ? 'glow' : 'spark',
+        rot: Math.random(), vr: (Math.random() - 0.5) * 0.2
+      });
+    }
+  }
+
+  function burst(x, y, rarity) {
+    const c = FX[rarity];
+    const n = c.burst;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 1.2 + Math.random() * (3 + rarity * 1.1);
+      spawn(x, y, {
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1.2, g: 0.035,
+        size: 1.2 + Math.random() * 3.2,
+        color: Math.random() < 0.35 ? c.c2 : c.c1,
+        decay: 0.008 + Math.random() * 0.012,
+        type: 'spark', rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.25
+      });
+    }
+    for (let i = 0; i < 18 + rarity * 3; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 0.3 + Math.random() * 1.4;
+      spawn(x, y, {
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        size: 8 + Math.random() * 16, color: c.c1, decay: 0.018, type: 'glow'
+      });
+    }
+    for (let i = 0; i < c.hearts; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.8;
+      spawn(x, y, {
+        vx: Math.cos(a) * (0.8 + Math.random() * 1.6),
+        vy: Math.sin(a) * (1.2 + Math.random() * 2.2),
+        g: -0.008, size: 0.35 + Math.random() * 0.45,
+        color: i % 2 ? '#4ea8ff' : c.c1, decay: 0.006, type: 'heart',
+        rot: (Math.random() - 0.5) * 0.5
+      });
+    }
+    shockwaves.push({ x, y, r: 8, max: 220 + rarity * 40, a: 0.9, w: 3 + rarity * 0.5, color: c.c2, decay: 0.012 });
+    shockwaves.push({ x, y, r: 4, max: 140 + rarity * 20, a: 0.7, w: 2, color: c.c1, decay: 0.016 });
+    flashes.push({ a: rarity >= 5 ? 0.42 : 0.28, color: c.c2, decay: 0.04, x: x, y: y, rad: Math.max(W, H) * 0.55 });
+    if (c.shake) {
+      document.body.classList.remove('shake-4', 'shake-5', 'shake-6');
+      void document.body.offsetWidth;
+      document.body.classList.add('shake-' + c.shake);
+    }
+  }
+
+  function stepFall(now) {
+    if (!falling) return false;
+    const rarity = falling.r;
+    const elapsed = now - falling.t0;
+    const ap = approachMs(rarity);
+    const tStop = GRAY_MS + COLOR_MS;
+    const tApproach = tStop + STOP_MS;
+    const tHang = tApproach + ap;
+    const tEnd = tHang + HANG_MS;
+
+    if (elapsed >= GRAY_MS) revealColor(rarity);
+
+    if (elapsed < tStop) {
+      flightTarget = CRUISE;
+      const u = easeOut(Math.min(1, elapsed / tStop));
+      falling.x = falling.xCruise0 + (falling.xCruise1 - falling.xCruise0) * u;
+      falling.y = falling.yCruise0 + (falling.yCruise1 - falling.yCruise0) * u;
+    } else if (elapsed < tApproach) {
+      flightTarget = 0;
+      // hold near cruise end while the field settles
+      falling.x = falling.xCruise1;
+      falling.y = falling.yCruise1;
+    } else if (elapsed < tHang) {
+      flightTarget = 0;
+      if (!falling.approaching) {
+        falling.approaching = true;
+        falling.ax = falling.x;
+        falling.ay = falling.y;
+        document.body.classList.add('approach');
+      }
+      const u = easeInOut(Math.min(1, (elapsed - tApproach) / ap));
+      falling.x = falling.ax + (falling.x1 - falling.ax) * u;
+      falling.y = falling.ay + (falling.y1 - falling.ay) * u;
+    } else {
+      flightTarget = 0;
+      falling.approaching = true;
+      falling.x = falling.x1;
+      falling.y = falling.y1;
+    }
+
+    if (falling.px != null) {
+      const mdx = falling.x - falling.px, mdy = falling.y - falling.py;
+      const mlen = Math.hypot(mdx, mdy);
+      if (mlen > 0.85) {
+        const nx = mdx / mlen, ny = mdy / mlen;
+        const a = Math.min(0.28, 0.06 + mlen * 0.03);
+        let lx = falling.dirX + (nx - falling.dirX) * a;
+        let ly = falling.dirY + (ny - falling.dirY) * a;
+        const ll = Math.hypot(lx, ly) || 1;
+        falling.dirX = lx / ll;
+        falling.dirY = ly / ll;
+      }
+    }
+    falling.px = falling.x;
+    falling.py = falling.y;
+    falling.path.push({ x: falling.x, y: falling.y });
+    if (falling.path.length > 48) falling.path.shift();
+
+    const col = colorsAt(elapsed, rarity);
+    const density = col.t > 0.4 ? (1 + Math.floor(rarity / 2)) : 1;
+    for (let i = 0; i < density; i++) {
+      spawn(falling.x + (Math.random() - 0.5) * 8, falling.y + (Math.random() - 0.5) * 8, {
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: -0.4 - Math.random() * 0.8,
+        size: 1.5 + Math.random() * 3,
+        color: Math.random() < 0.3 ? col.c2 : col.c1,
+        decay: 0.02 + Math.random() * 0.03,
+        type: Math.random() < 0.2 ? 'glow' : 'spark'
+      });
+    }
+
+    if (elapsed >= tEnd) {
+      burst(falling.x, falling.y, rarity);
+      const fin = { x: falling.x, y: falling.y, r: rarity };
+      falling = null;
+      document.body.classList.remove('falling', 'flying', 'approach');
+      return fin;
+    }
+    return false;
+  }
+
+  function drawFalling() {
+    if (!falling) return;
+    const c = FX[falling.r];
+    const elapsed = performance.now() - falling.t0;
+    const col = colorsAt(elapsed, falling.r);
+    const path = falling.path;
+    const grow = falling.approaching
+      ? 1 + 0.45 * easeOut(Math.min(1, (elapsed - (GRAY_MS + COLOR_MS + STOP_MS)) / approachMs(falling.r)))
+      : 1 + 0.15 * col.t;
+    const R = c.starR * grow;
+    const tailLen = (160 + col.t * (80 + falling.r * 40)) * (falling.approaching ? 0.75 : 1);
+    // always behind the star, along the smoothed flight direction — never snap to a fallback
+    const ux = falling.dirX, uy = falling.dirY;
+    const tx = falling.x - ux * tailLen;
+    const ty = falling.y - uy * tailLen;
+    const hw = (6 + falling.r * 1.3 + col.t * 3) * grow;
+    const px = -uy, py = ux;
+
+    const g = ctx.createLinearGradient(falling.x, falling.y, tx, ty);
+    g.addColorStop(0, rgba(col.c2, 0.95));
+    g.addColorStop(0.18, rgba(col.c1, 0.7));
+    g.addColorStop(0.55, rgba(col.c1, 0.22));
+    g.addColorStop(1, rgba(col.c1, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(falling.x + px * hw * 0.6, falling.y + py * hw * 0.6);
+    ctx.lineTo(falling.x - px * hw * 0.6, falling.y - py * hw * 0.6);
+    ctx.lineTo(tx - px * hw * 3.2, ty - py * hw * 3.2);
+    ctx.lineTo(tx + px * hw * 3.2, ty + py * hw * 3.2);
+    ctx.closePath();
+    ctx.fill();
+
+    const g2 = ctx.createLinearGradient(falling.x, falling.y, falling.x - ux * tailLen * 0.55, falling.y - uy * tailLen * 0.55);
+    g2.addColorStop(0, rgba('#ffffff', 0.95));
+    g2.addColorStop(0.2, rgba(col.c2, 0.85));
+    g2.addColorStop(1, rgba(col.c1, 0));
+    ctx.fillStyle = g2;
+    ctx.beginPath();
+    const hw2 = hw * 0.38;
+    const tx2 = falling.x - ux * tailLen * 0.55;
+    const ty2 = falling.y - uy * tailLen * 0.55;
+    ctx.moveTo(falling.x + px * hw2, falling.y + py * hw2);
+    ctx.lineTo(falling.x - px * hw2, falling.y - py * hw2);
+    ctx.lineTo(tx2, ty2);
+    ctx.closePath();
+    ctx.fill();
+
+    const x = falling.x, y = falling.y;
+    const bloomR = R * (7 + col.t * 4);
+    const bloom = ctx.createRadialGradient(x, y, 0, x, y, bloomR);
+    bloom.addColorStop(0, rgba('#ffffff', 1));
+    bloom.addColorStop(0.12, rgba(col.c2, 0.95));
+    bloom.addColorStop(0.35, rgba(col.c1, 0.5 + 0.15 * col.t));
+    bloom.addColorStop(1, rgba(col.c1, 0));
+    ctx.fillStyle = bloom;
+    ctx.beginPath();
+    ctx.arc(x, y, bloomR, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawSparkle(ctx, x, y, R * 3.4, performance.now() * 0.002, rgba('#ffffff', 0.95));
+    drawSparkle(ctx, x, y, R * 2.1, performance.now() * 0.002 + Math.PI / 4, rgba(col.c2, 0.9));
+
+    if (col.t > 0.25) {
+      for (const p of falling.companions) {
+        p.ang += p.spd * 16;
+        const cx = x + Math.cos(p.ang) * p.rad * (0.7 + col.t);
+        const cy = y + Math.sin(p.ang) * p.rad * 0.7 * (0.7 + col.t);
+        ctx.fillStyle = rgba(col.c2, 0.85 * col.t);
+        ctx.beginPath();
+        ctx.arc(cx, cy, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life -= p.decay;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.g || 0;
+      p.rot += p.vr || 0;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      const a = Math.max(0, p.life);
+      if (p.type === 'glow') {
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+        g.addColorStop(0, rgba(p.color, 0.35 * a));
+        g.addColorStop(1, rgba(p.color, 0));
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'heart') {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = rgba(p.color, 0.9 * a);
+        heartPath(ctx, 0, 0, p.size);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        drawSparkle(ctx, p.x, p.y, p.size, p.rot, rgba(p.color, 0.95 * a));
+      }
+    }
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+      const s = shockwaves[i];
+      s.r += 6 + s.r * 0.03;
+      s.a -= s.decay;
+      if (s.a <= 0 || s.r > s.max) { shockwaves.splice(i, 1); continue; }
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.strokeStyle = rgba(s.color, s.a);
+      ctx.lineWidth = s.w;
+      ctx.stroke();
+    }
+    for (let i = flashes.length - 1; i >= 0; i--) {
+      const f = flashes[i];
+      f.a -= f.decay;
+      if (f.a <= 0) { flashes.splice(i, 1); continue; }
+      const fx = f.x != null ? f.x : W / 2;
+      const fy = f.y != null ? f.y : H / 2;
+      const fr = f.rad || Math.max(W, H) * 0.5;
+      const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr);
+      fg.addColorStop(0, rgba(f.color, f.a));
+      fg.addColorStop(0.45, rgba(f.color, f.a * 0.35));
+      fg.addColorStop(1, rgba(f.color, 0));
+      ctx.fillStyle = fg;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  function showCard(card) {
+    const c = cardView(card);
+    const reveal = document.getElementById('reveal');
+    const cardEl = document.getElementById('card');
+    const img = document.getElementById('cardImg');
+    const meta = document.getElementById('meta');
+    const glow = document.getElementById('cardGlow');
+    const close = document.getElementById('btnClose');
+    img.src = c.img;
+    document.getElementById('cardName').textContent = c.title;
+    document.getElementById('cardNote').textContent = c.note || '';
+    document.getElementById('rarityUi').textContent = c.label;
+    document.getElementById('starsUi').textContent = '★'.repeat(c.stars);
+    document.getElementById('starsUi').style.color = c.c1;
+    document.getElementById('rarityUi').style.color = c.c1;
+    glow.style.background = c.c1;
+    glow.style.opacity = '0.85';
+    document.documentElement.style.setProperty('--glow', c.c1);
+    document.documentElement.style.setProperty('--back0', c.c3);
+    document.documentElement.style.setProperty('--back1', c.c1);
+    document.documentElement.style.setProperty('--backStar', c.c2);
+
+    const enter = document.getElementById('cardEnter');
+    cardEl.className = 'card';
+    enter.className = 'card-enter';
+    meta.className = 'meta';
+    close.className = 'btn-main';
+    reveal.classList.remove('hidden');
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => enter.classList.add('show'));
+    });
+    setTimeout(() => { cardEl.classList.add('flip'); }, 900);
+    setTimeout(() => { meta.classList.add('on'); close.classList.add('on'); }, 1200);
+  }
+
+  function hideReveal() {
+    document.getElementById('reveal').classList.add('hidden');
+    document.getElementById('card').className = 'card';
+    document.getElementById('cardEnter').className = 'card-enter';
+    document.getElementById('meta').className = 'meta';
+    document.getElementById('btnClose').className = 'btn-main';
+    document.getElementById('cardGlow').style.opacity = '0';
+    document.body.classList.remove('r3', 'r4', 'r5', 'r6', 'shake-4', 'shake-5', 'shake-6', 'falling', 'flying', 'approach');
+    falling = null;
+    flightTarget = 0;
+    particles.length = 0;
+    shockwaves.length = 0;
+    flashes.length = 0;
+  }
+
+  function setGems(n) {
+    gems = Math.max(0, n);
+    document.getElementById('pg').textContent = gems;
+  }
+
+  function wait(ms) {
+    return new Promise(res => setTimeout(res, ms));
+  }
+
+  function waitUntil(pred, timeout) {
+    return new Promise(res => {
+      const t0 = performance.now();
+      (function check() {
+        const r = pred();
+        if (r || performance.now() - t0 > (timeout || 12000)) res(r);
+        else requestAnimationFrame(check);
+      })();
+    });
+  }
+
+  let impactResult = null;
+
+  async function play(cardOrRarity, spend) {
+    if (busy && !window.__forcePlay) return;
+    let card = null;
+    if (cardOrRarity && typeof cardOrRarity === 'object' && cardOrRarity.id) {
+      card = cardOrRarity;
+    } else if (typeof cardOrRarity === 'number') {
+      const drawn = drawFromPool(1, cardOrRarity);
+      card = drawn[0] || null;
+    } else {
+      const drawn = drawFromPool(1);
+      card = drawn[0] || null;
+    }
+    if (!card || pulledIds.indexOf(card.id) !== -1) {
+      updatePoolUI();
+      return;
+    }
+    const my = ++gen;
+    busy = true;
+    impactResult = null;
+    markPulled(card);
+    updatePoolUI();
+    document.getElementById('home').classList.add('hidden');
+    hideReveal();
+    if (spend) setGems(gems - COST);
+    startFlight(card.rarity);
+    const fin = await waitUntil(() => impactResult || my !== gen, totalMs(card.rarity) + 2000);
+    if (my !== gen) return;
+    await wait(280);
+    if (my !== gen) return;
+    showCard(card);
+    if (window.__autoClose) {
+      await wait(window.__autoClose);
+      if (my === gen) finishPull();
+    }
+  }
+
+  // Последовательная крутка нескольких уникальных карт (для будущей 10×).
+  // Если в пуле меньше, чем n, крутит только оставшиеся, без дублей.
+  async function playMany(n, spend) {
+    const batch = drawFromPool(n);
+    for (const card of batch) {
+      await play(card, spend);
+      await waitUntil(() => !busy, 25000);
+    }
+    updatePoolUI();
+    return batch;
+  }
+
+  function finishPull() {
+    gen++;
+    hideReveal();
+    document.getElementById('home').classList.remove('hidden');
+    busy = false;
+    updatePoolUI();
+    if (resolveWait) { resolveWait(); resolveWait = null; }
+  }
+
+  document.getElementById('btnClose').addEventListener('click', finishPull);
+  document.getElementById('btnPull').addEventListener('click', () => {
+    if (busy) return;
+    if (remainingCards().length === 0) { updatePoolUI(); return; }
+    if (gems < COST) return;
+    play(null, true);
+  });
+  document.querySelectorAll('.btn-r').forEach(b => {
+    b.addEventListener('click', () => {
+      if (busy) return;
+      if (remainingOf(+b.dataset.r).length === 0) { updatePoolUI(); return; }
+      play(+b.dataset.r, false);
+    });
+  });
+
+  function loop(now) {
+    const dt = Math.min(48, now - lastT);
+    lastT = now;
+    drawBg(now, dt);
+    const fin = stepFall(now);
+    if (fin) impactResult = fin;
+    drawFalling();
+    drawParticles();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  window.GACHA = {
+    play,
+    playMany,
+    finishPull,
+    isBusy: () => busy,
+    setAutoClose: (ms) => { window.__autoClose = ms; },
+    remaining: remainingCards,
+    pulled: () => pulledIds.slice(),
+    cards: () => CARDS.slice(),
+    drawFromPool,
+    resetPool,
+    updatePoolUI,
+    ready: true
+  };
+
+  updatePoolUI();
+
+  if (/[?&]reset=1/.test(location.search)) resetPool();
+
+  if (/[?&]demo=1/.test(location.search)) {
+    window.__autoClose = 3200;
+    (async () => {
+      await wait(900);
+      resetPool();
+      for (const r of [3, 4, 5, 6]) {
+        await play(r, false);
+        await waitUntil(() => !busy, 25000);
+        await wait(500);
+      }
+    })();
+  }
+})();
+
+</script>
+</body>
+</html>
