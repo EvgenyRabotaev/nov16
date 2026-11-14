@@ -60,6 +60,7 @@
 <link rel="stylesheet" href="../common/hud.css">
 <script src="../common/quest_config.js"></script>
 <script src="../common/hud.js" data-screen="minecraft"></script>
+<script src="craft.js"></script>
 </head>
 <body>
 <div class="scene" id="scene">
@@ -129,6 +130,15 @@
     };
     vika.style.width = vw + "px";
     zhenya.style.width = zw + "px";
+    /* Домик: в альбомной ориентации — между героями на земле; на телефоне (портрет) — чуть дальше, над их головами. */
+    if (window.MCCraft) {
+      const R = MCCraft.House.ratio;
+      let hw, hb;
+      if (W < H) { hw = Math.min(W * 0.66, 340); hb = bottom + h * 0.8; }
+      else { hw = Math.min(W * HOUSE_FRAC * 0.94, h * 1.25 / R); hb = bottom - 4; }
+      MCCraft.House.place({ x: W / 2 - hw / 2, w: hw, bottom: hb });
+      window.__mcHouse = { x: W / 2 - hw / 2, w: hw, h: hw * R, bottom: hb };
+    }
     place(shown, 0);
   }
 
@@ -194,14 +204,34 @@
     });
   }
 
-  function showHouseStage(i) {
-    const list = MC.HOUSE_STAGES || [];
-    const src = list[i];
-    if (!src) return;
-    const im = document.createElement("img");
-    im.className = "layer"; im.src = src; im.alt = "";
-    houseStages.appendChild(im);
-    requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add("on")));
+  /* Этапы дома: MINECRAFT.HOUSE_STAGES = [{ after, id, craft, hint, title, img, wallColor }].
+     img задан → полноэкранная картинка-слой; пусто → домик рисуется кодом (craft.js), уровни накапливаются. */
+  const STAGES = MC.HOUSE_STAGES || [];
+  let houseLevel = 0;
+  if (window.MCCraft) MCCraft.House.mount(houseStages);
+  function stageAfter(qNum) { return STAGES.find((st) => st.after === qNum) || null; }
+  function applyStage(st, instant) {
+    const idx = STAGES.indexOf(st);
+    houseLevel = Math.max(houseLevel, idx + 1);
+    if (st.img) {
+      const im = document.createElement("img");
+      im.className = "layer"; im.src = st.img; im.alt = "";
+      houseStages.appendChild(im);
+      if (instant) im.classList.add("on"); else requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add("on")));
+    } else if (window.MCCraft) {
+      MCCraft.House.set(houseLevel, st.wallColor, instant);
+    }
+    window.__mcLevel = houseLevel;
+  }
+  async function craftEvent(qNum) {
+    const st = stageAfter(qNum);
+    if (!st) return;
+    if (window.QuestHUD) QuestHUD.setStep("craft" + qNum);
+    if (st.craft && window.MCCraft) await MCCraft.open(st);
+    applyStage(st, false);
+    const hb = MCCraft && MCCraft.House.el;
+    if (hb) sparkle(hb, 22);
+    await new Promise((r) => setTimeout(r, 1200));
   }
 
   function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
@@ -231,13 +261,13 @@
 
   async function onCorrect() {
     const q = QUESTIONS[question];
-    if (window.QuestHUD && q) QuestHUD.award(q.id || ("mc-q" + (question + 1)));
+    if (window.QuestHUD && q) QuestHUD.award(q.id || ("mc-q" + (question + 1)), q.placeholder ? 0 : undefined); /* заглушки — без примогемов */
     await new Promise((r) => setTimeout(r, 650));
     panel.classList.add("hidden");
     step = question + 1;
     await walkTo(step);
-    showHouseStage(question);
     if (question === 0) await giveFlowers();
+    await craftEvent(question + 1);
     question++;
     if (question >= QUESTIONS.length) {
       done = true; busy = false;
@@ -280,8 +310,24 @@
   answerBtn.addEventListener("click", submit);
   window.addEventListener("resize", layout);
   layout();
-  window.__mc = { get state() { return { question, step, shown, busy, done, n: QUESTIONS.length }; }, layout };
-  setTimeout(render, 500);
+  window.__mc = { get state() { return { question, step, shown, busy, done, n: QUESTIONS.length, houseLevel }; }, layout };
+
+  /* Отладка: house.html?craft=N (N = 2…5) — сразу крафт после вопроса N (предыдущие этапы дома уже стоят). */
+  const CRAFT_DEBUG = +((location.search.match(/[?&]craft=(\d)/) || [])[1] || 0);
+  if (CRAFT_DEBUG >= 2 && stageAfter(CRAFT_DEBUG)) {
+    question = CRAFT_DEBUG - 1; step = shown = CRAFT_DEBUG;
+    vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
+    STAGES.filter((st) => st.after < CRAFT_DEBUG).forEach((st) => applyStage(st, true));
+    layout(); busy = true;
+    setTimeout(async () => {
+      await craftEvent(CRAFT_DEBUG);
+      question = CRAFT_DEBUG;
+      if (question >= QUESTIONS.length) { done = true; busy = false; if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); } window.__mcDone = true; return; }
+      busy = false; render();
+    }, 500);
+  } else {
+    setTimeout(render, 500);
+  }
 })();
 </script>
 </body>
