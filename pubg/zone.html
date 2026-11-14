@@ -173,6 +173,7 @@
       box-shadow: 0 3px 10px rgba(0,0,0,.45); opacity: 0; transition: opacity .35s ease;
     }
     #crateTip.show { opacity: 1; }
+    #crateTip { display: none !important; }
     #dropOverlay { position: fixed; inset: 0; z-index: 8500; opacity: 0; pointer-events: none; transition: opacity .5s ease; background: #0b0d12; }
     #dropOverlay.show { opacity: 1; pointer-events: auto; }
     #dropOverlay iframe { width: 100%; height: 100%; border: 0; display: block; }
@@ -436,7 +437,7 @@
     </svg>
     <div class="ring" aria-hidden="true"></div>
   </div>
-  <div id="crateTip">Нажми на аирдроп</div>
+  <div id="crateTip" aria-hidden="true"></div><!-- подсказку над ящиком убрали (14.11): ящик просто светится -->
   <div id="dropOverlay" aria-hidden="true"></div>
 
   <aside class="panel" id="panel">
@@ -1180,8 +1181,11 @@
       panel.classList.add("hidden");
 
       const k = question; /* 1..8 */
-      /* Событие на переходе: карточка появляется, пока рисуется маршрут и сужается зона. */
-      evPending = showEvent(k, 700);
+      /* Событие на переходе: сначала карточка (карта стоит на месте),
+         и только после «Дальше» — маршрут, переход, сужение зоны, счётчик. */
+      phase = "event";
+      await showEvent(k, 350);
+      phase = "idle-anim";
       const targetBlue = { ...ZONES[k - 1] };
       const fromBlue = { ...blue };
       const toPos = { ...LANDINGS[k - 1] };
@@ -1240,8 +1244,6 @@
 
     async function onArrived(k) {
       if (window.QuestHUD) QuestHUD.award("pubg-q" + k);
-      await evPending; /* ждём «Дальше» в карточке события, если она есть */
-      evPending = Promise.resolve();
       /* Между вопросами 3 и 4 — самолёт сбрасывает аирдроп прямо на карте. */
       if (k === 3 && !AUTO) {
         runAirdrop();
