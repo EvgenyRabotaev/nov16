@@ -29,8 +29,16 @@
 
   var params = new URLSearchParams(location.search);
   if (params.get("newgame") === "1") {
+    /* новая игра: стираем ВСЁ состояние квеста (примогемы, награды, гача — все версии ключей, ответы…), кроме входа по коду */
     lsDel(KEY); lsDel(AKEY);
-    try { localStorage.removeItem("quest_gacha_pulled_v1"); localStorage.removeItem("nov16_trust_answer"); sessionStorage.removeItem("quest_gacha_pulled_v1"); } catch (e) {}
+    [window.localStorage, window.sessionStorage].forEach(function (st) {
+      try {
+        var ks = []; for (var i = 0; i < st.length; i++) ks.push(st.key(i));
+        ks.forEach(function (k) { if (/^(nov16_|quest_)/.test(k) && k !== "nov16_ok") st.removeItem(k); });
+      } catch (e) {}
+    });
+    mem = {};
+    try { params.delete("newgame"); history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash); } catch (e) {}
   }
 
   function getPrimos() {

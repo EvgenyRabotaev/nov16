@@ -305,9 +305,9 @@
   body.approach #ground { opacity: 1; }
 
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115a">
-<script src="../common/quest_config.js?v=20261115a"></script>
-<script src="../common/hud.js?v=20261115a" data-screen="gacha" data-counter="off"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115b">
+<script src="../common/quest_config.js?v=20261115b"></script>
+<script src="../common/hud.js?v=20261115b" data-screen="gacha" data-counter="off"></script>
 </head>
 <body>
 <canvas id="fx"></canvas>
@@ -433,7 +433,15 @@
     { id: 'secret_687', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_687.jpg' }
   ];
 
-    const STORAGE_KEY = 'quest_gacha_pulled_v1';
+    /* v2: набор из 43 карточек (39 + 4 секретные). Старые ключи (v1) игнорируются.
+     Сброс для теста: gacha/?resetgacha=1 (только гача) или start/?newgame=1 (весь квест). */
+    const STORAGE_KEY = 'nov16_gacha_pulled_v2_43';
+    (function () {
+      const q = new URLSearchParams(location.search);
+      if (q.get('resetgacha') !== '1') return;
+      [localStorage, sessionStorage].forEach(st => { try { const ks = []; for (let i = 0; i < st.length; i++) ks.push(st.key(i)); ks.filter(k => /gacha/.test(k)).forEach(k => st.removeItem(k)); } catch (e) {} });
+      try { q.delete('resetgacha'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (e) {}
+    })();
   const EMPTY_MSG = 'Все карточки из этого набора уже собраны';
 
   function cardView(card) {
@@ -444,8 +452,7 @@
 
   function loadPulled() {
     try {
-      let raw = localStorage.getItem(STORAGE_KEY);
-      if (raw == null) raw = sessionStorage.getItem(STORAGE_KEY); // перенос со старой версии
+      const raw = localStorage.getItem(STORAGE_KEY);
       const arr = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(arr)) return [];
       const known = new Set(CARDS.map(c => c.id));
