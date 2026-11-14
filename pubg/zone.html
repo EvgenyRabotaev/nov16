@@ -109,6 +109,32 @@
       cursor: default;
       filter: grayscale(0.2);
     }
+    .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; }
+    .ans-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(212, 175, 85, 0.45);
+      background: rgba(255, 255, 255, 0.07);
+      color: #f6f1e6;
+      font: 16px/1.3 "Segoe UI", "Noto Sans", sans-serif;
+      outline: none;
+      user-select: text;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .ans-input::placeholder { color: rgba(246, 241, 230, 0.45); }
+    .ans-input:focus { border-color: #f0d078; box-shadow: 0 0 0 3px rgba(240, 208, 120, 0.18); }
+    .ans-input.ok { border-color: #7fd18b; background: rgba(127, 209, 139, 0.12); }
+    .ans-input.bad { animation: ans-shake .38s ease; }
+    @keyframes ans-shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+    .ans-msg { min-height: 20px; margin: 0 0 10px; font-size: 14px; color: #ffd9a0; }
+    .ans-msg.ok { color: #9fe3a9; }
+    .q-text b { color: #ffd56a; }
+    .q-text { max-height: 40vh; overflow-y: auto; }
+    @media (max-width: 700px) {
+      .panel { left: 10px; right: 10px; width: auto; bottom: 62px; padding: 14px 14px 12px; }
+      .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 12px; max-height: 34vh; }
+    }
     .victory {
       position: fixed;
       inset: 0;
@@ -255,6 +281,8 @@
   <aside class="panel" id="panel">
     <div class="q-num" id="qNum">Вопрос 1 из 8</div>
     <div class="q-text" id="qText">(текст вопроса)</div>
+    <div class="ans-inputs" id="answerInputs"></div>
+    <div class="ans-msg" id="ansMsg" aria-live="polite"></div>
     <button class="btn" id="answerBtn" type="button">Ответить</button>
   </aside>
 
@@ -343,6 +371,83 @@
     const panel = document.getElementById("panel");
     const qNum = document.getElementById("qNum");
     const answerBtn = document.getElementById("answerBtn");
+    const qText = document.getElementById("qText");
+    const answerInputs = document.getElementById("answerInputs");
+    const ansMsg = document.getElementById("ansMsg");
+    const FINE_POINTER = window.matchMedia && matchMedia("(pointer: fine)").matches;
+    let currentQ = null;
+    let answering = false;
+
+    function escHtml(t) {
+      return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+
+    /* Вопросы берутся из common/quest_config.js → QUESTIONS.pubg */
+    function renderQuestion() {
+      qNum.textContent = "Вопрос " + question + " из 8";
+      currentQ = window.QuestHUD ? QuestHUD.getQuestion("pubg", question - 1) : null;
+      answerInputs.innerHTML = "";
+      ansMsg.textContent = "";
+      ansMsg.className = "ans-msg";
+      answering = false;
+      if (!currentQ) {
+        qText.textContent = "(вопрос " + question + " — заглушка, текста пока нет)";
+        return;
+      }
+      qText.innerHTML = escHtml(currentQ.text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+      qText.scrollTop = 0;
+      (currentQ.parts || []).forEach((part) => {
+        const inp = document.createElement("input");
+        inp.className = "ans-input";
+        inp.type = "text";
+        inp.autocomplete = "off";
+        inp.setAttribute("autocapitalize", "off");
+        inp.setAttribute("autocorrect", "off");
+        inp.spellcheck = false;
+        inp.setAttribute("enterkeyhint", "done");
+        inp.placeholder = part.placeholder || QuestHUD.answerText("placeholder") || "Твой ответ";
+        inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); submitAnswer(); } });
+        inp.addEventListener("input", () => { inp.classList.remove("bad"); });
+        answerInputs.appendChild(inp);
+      });
+      focusFirstInput();
+    }
+
+    function focusFirstInput() {
+      if (!FINE_POINTER) return;
+      const first = answerInputs.querySelector(".ans-input");
+      if (first) setTimeout(() => { if (!panel.classList.contains("hidden")) first.focus({ preventScroll: true }); }, 500);
+    }
+
+    function submitAnswer() {
+      if (animating || finished || answering) return;
+      if (!currentQ) { animateAnswer(); return; }
+      const inputs = [...answerInputs.querySelectorAll(".ans-input")];
+      const r = QuestHUD.checkAnswer(currentQ, inputs.map((i) => i.value));
+      window.__lastAnswer = r;
+      inputs.forEach((inp, i) => {
+        const ok = r.parts[i] === "correct";
+        inp.classList.toggle("ok", ok);
+        inp.classList.remove("bad");
+        if (!ok) { void inp.offsetWidth; inp.classList.add("bad"); }
+      });
+      if (r.ok) {
+        answering = true;
+        ansMsg.textContent = QuestHUD.answerText("correct");
+        ansMsg.className = "ans-msg ok";
+        inputs.forEach((i) => i.blur());
+        answerBtn.disabled = true;
+        setTimeout(animateAnswer, 750);
+        return;
+      }
+      let key = "wrong";
+      if (inputs.length > 1 && r.parts.some((x) => x === "correct")) key = "partial";
+      else if (r.parts.some((x) => x === "almost")) key = "almost";
+      ansMsg.textContent = QuestHUD.answerText(key);
+      ansMsg.className = "ans-msg";
+      const bad = inputs.find((i) => !i.classList.contains("ok"));
+      if (bad && FINE_POINTER) bad.focus({ preventScroll: true });
+    }
     const victory = document.getElementById("victory");
     const aliveHud = document.getElementById("aliveHud");
     const aliveNumEl = document.getElementById("aliveNum");
@@ -799,7 +904,7 @@
         return;
       }
       question = k + 1;
-      qNum.textContent = "Вопрос " + question + " из 8";
+      renderQuestion();
       if (window.QuestHUD) QuestHUD.setStep("q" + question);
       fadeInWhite(ZONES[question - 1]);
       animating = false;
@@ -819,7 +924,7 @@
       victory.setAttribute("aria-hidden", "true");
       killFeed.innerHTML = "";
       question = k;
-      qNum.textContent = "Вопрос " + question + " из 8";
+      renderQuestion();
       if (window.QuestHUD) QuestHUD.setStep("q" + question);
       setAlive(ALIVE_BY_PHASE[k - 1]);
       if (k === 1) {
@@ -865,7 +970,8 @@
     function boot() {
       resize();
       window.addEventListener("resize", resize);
-      answerBtn.addEventListener("click", animateAnswer);
+      answerBtn.addEventListener("click", submitAnswer);
+      renderQuestion();
       const startQ = parseInt(new URLSearchParams(location.search).get("q"), 10);
       if (startQ >= 2 && startQ <= 8) jumpToPhase(startQ);
       else if (window.QuestHUD) QuestHUD.setStep("q1");

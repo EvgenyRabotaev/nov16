@@ -79,6 +79,53 @@
     if (u) location.href = u;
   }
 
+
+  /* ---------- проверка ответов ---------- */
+  function norm(t) {
+    return String(t || "").toLowerCase().replace(/ё/g, "е")
+      .replace(/[^a-zа-я0-9]+/g, " ")
+      .replace(/\b0+(\d)/g, "$1")
+      .replace(/\s+/g, " ").trim();
+  }
+  function hasStem(n, stem) {
+    stem = norm(stem);
+    if (!stem) return false;
+    if (stem.indexOf(" ") !== -1) return (" " + n + " ").indexOf(" " + stem) !== -1;
+    var words = n.split(" ");
+    for (var i = 0; i < words.length; i++) if (words[i].indexOf(stem) === 0) return true;
+    return false;
+  }
+  /* -> "correct" | "almost" | "wrong" */
+  function checkPart(part, value) {
+    var n = norm(value);
+    if (!n) return "wrong";
+    var acc = part.accept || [];
+    for (var i = 0; i < acc.length; i++) if (norm(acc[i]) === n) return "correct";
+    var groups = part.keywords || [];
+    if (groups.length) {
+      var all = true;
+      for (var g = 0; g < groups.length; g++) {
+        var any = false;
+        for (var k = 0; k < groups[g].length; k++) if (hasStem(n, groups[g][k])) { any = true; break; }
+        if (!any) { all = false; break; }
+      }
+      if (all) return "correct";
+    }
+    var al = part.almost || [];
+    for (var a = 0; a < al.length; a++) if (hasStem(n, al[a])) return "almost";
+    return "wrong";
+  }
+  function checkAnswer(question, values) {
+    var parts = (question && question.parts) || [];
+    var res = parts.map(function (p, i) { return checkPart(p, values[i]); });
+    var ok = res.length > 0 && res.every(function (r) { return r === "correct"; });
+    return { ok: ok, parts: res };
+  }
+  function getQuestion(world, i) {
+    var list = (CFG.QUESTIONS || {})[world] || [];
+    return list[i] || null;
+  }
+
   /* ---------- DOM ---------- */
   var GEM = '<svg class="qhud-gem" viewBox="0 0 24 24" aria-hidden="true"><defs>' +
     '<linearGradient id="qhudGemF" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#cfe7ff"/><stop offset="1" stop-color="#7fb6ea"/></linearGradient>' +
@@ -241,7 +288,9 @@
     getStep: function () { return step; },
     hintText: hintText, openHint: function () { build(); open(); }, closeHint: close,
     next: next, nextUrl: nextUrl, showNext: showNext, hideNext: hideNext,
-    watchMap: watchMap, placeOutside: placeOutside, layout: layout
+    watchMap: watchMap, placeOutside: placeOutside, layout: layout,
+    normalize: norm, checkPart: checkPart, checkAnswer: checkAnswer, getQuestion: getQuestion,
+    answerText: function (k) { return (CFG.ANSWER_TEXT || {})[k] || ""; }
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () {
