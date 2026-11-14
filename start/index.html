@@ -205,7 +205,7 @@
   let vx = 0, vy = 0;
   let hopUntil = 0;
   const PAD = 14;
-  const DANGER = 170;
+  const DANGER = 95;
 
   function size() {
     return { w: no.offsetWidth, h: no.offsetHeight };
@@ -286,7 +286,7 @@
       const accel = (0.9 + 3.4 * closeness * closeness) * 2.15;
       vx += ux * accel;
       vy += uy * accel;
-      if (dist < 80) {
+      if (dist < 60) {
         const side = (vx * -uy + vy * ux) >= 0 ? 1 : -1;
         vx += -uy * side * (10 + 16 * closeness);
         vy +=  ux * side * (10 + 16 * closeness);
@@ -313,7 +313,7 @@
       if (ny > maxY) { ny = maxY; vy = -Math.abs(vy) * 0.55; hitY = true; }
 
       const cornered = hitX && hitY && dist < DANGER;
-      const trappedOnWall = (hitX || hitY) && dist < 70;
+      const trappedOnWall = (hitX || hitY) && dist < 55;
       if (cornered || trappedOnWall) {
         const esc = randomFar(px, py);
         cx = esc[0];
