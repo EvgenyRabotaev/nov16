@@ -407,7 +407,8 @@
 
   function loadPulled() {
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
+      let raw = localStorage.getItem(STORAGE_KEY);
+      if (raw == null) raw = sessionStorage.getItem(STORAGE_KEY); // перенос со старой версии
       const arr = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(arr)) return [];
       const known = new Set(CARDS.map(c => c.id));
@@ -420,7 +421,7 @@
   let pulledIds = loadPulled();
 
   function savePulled() {
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(pulledIds)); } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pulledIds)); } catch (e) {}
   }
 
   function remainingCards() {
@@ -439,7 +440,7 @@
 
   function resetPool() {
     pulledIds = [];
-    try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    try { localStorage.removeItem(STORAGE_KEY); sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
     updatePoolUI();
   }
 
@@ -1051,6 +1052,20 @@
     }
   }
 
+  // Предзагрузка картинки карточки, чтобы при открытии не мелькала прошлая.
+  const imgCache = {};
+  function preloadImg(src) {
+    if (!imgCache[src]) {
+      imgCache[src] = new Promise(res => {
+        const im = new Image();
+        im.onload = () => { (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => res(im)); };
+        im.onerror = () => res(null);
+        im.src = src;
+      });
+    }
+    return imgCache[src];
+  }
+
   function showCard(card) {
     const c = cardView(card);
     const reveal = document.getElementById('reveal');
@@ -1059,7 +1074,12 @@
     const meta = document.getElementById('meta');
     const glow = document.getElementById('cardGlow');
     const close = document.getElementById('btnClose');
+    img.style.visibility = 'hidden';
+    img.removeAttribute('src');
     img.src = c.img;
+    const showImg = () => { if (img.getAttribute('src') === c.img) img.style.visibility = ''; };
+    if (img.complete && img.naturalWidth) showImg();
+    else (img.decode ? img.decode() : Promise.reject()).then(showImg, () => { img.onload = showImg; if (img.complete) showImg(); });
     document.getElementById('cardName').textContent = c.title;
     document.getElementById('cardNote').textContent = c.note || '';
     document.getElementById('rarityUi').textContent = c.label;
@@ -1094,6 +1114,9 @@
     document.getElementById('meta').className = 'meta';
     document.getElementById('btnClose').className = 'btn-main';
     document.getElementById('cardGlow').style.opacity = '0';
+    const oldImg = document.getElementById('cardImg');
+    oldImg.style.visibility = 'hidden';
+    oldImg.removeAttribute('src');
     document.body.classList.remove('r3', 'r4', 'r5', 'r6', 'shake-4', 'shake-5', 'shake-6', 'falling', 'flying', 'approach');
     falling = null;
     flightTarget = 0;
@@ -1149,10 +1172,13 @@
     document.getElementById('home').classList.add('hidden');
     hideReveal();
     if (spend) setGems(gems - COST);
+    const imgReady = preloadImg(cardView(card).img);
     startFlight(card.rarity);
     const fin = await waitUntil(() => impactResult || my !== gen, totalMs(card.rarity) + 2000);
     if (my !== gen) return;
     await wait(280);
+    if (my !== gen) return;
+    await Promise.race([imgReady, wait(4000)]);
     if (my !== gen) return;
     showCard(card);
     if (window.__autoClose) {

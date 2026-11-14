@@ -115,8 +115,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      padding-top: 16vh;
+      justify-content: center;
       background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.52) 100%);
       z-index: 20;
       opacity: 0;
@@ -126,6 +125,12 @@
       padding: 24px;
     }
     .victory.show { opacity: 1; }
+    .victory .qhud-next.victory-next {
+      position: static;
+      transform: translateY(10px);
+      margin-top: 30px;
+    }
+    .victory .qhud-next.victory-next.qhud-next--show { transform: none; }
     .victory h1 {
       margin: 0;
       font-family: Georgia, "Times New Roman", "Noto Serif", serif;
@@ -255,7 +260,6 @@
 
   <div class="victory" id="victory" aria-hidden="true">
     <h1>Winner winner chicken dinner!</h1>
-    <p>Мы победили!</p>
   </div>
 
   <script>
@@ -712,7 +716,11 @@
       finished = true;
       animating = false;
       draw();
-      if (window.QuestHUD) { QuestHUD.setStep("victory"); QuestHUD.showNext("Дальше"); }
+      if (window.QuestHUD) {
+        QuestHUD.setStep("victory");
+        const nb = QuestHUD.showNext("Дальше", { className: "victory-next" });
+        victory.appendChild(nb);
+      }
     }
 
     async function animateAnswer() {

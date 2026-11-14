@@ -3,20 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ты веришь мне? — заглушка</title>
+<title>Ты веришь мне?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../common/hud.css">
 <script src="../common/quest_config.js"></script>
 <script src="../common/hud.js" data-screen="trust"></script>
+<style>
+  .trust-card .ph-title { margin: 4px 0 26px; }
+  .trust-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .trust-soft { background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(170, 205, 255, .6) !important; box-shadow: 0 4px 16px rgba(60, 120, 230, .25) !important; }
+</style>
 </head>
-<body class="ph-body ph--quest" data-placeholder="1">
+<body class="ph-body ph--quest">
 <div class="ph-bg" aria-hidden="true"></div>
-<main class="ph-card">
-  <div class="ph-kicker">Перед крутками</div>
+<main class="ph-card trust-card">
   <h1 class="ph-title">Ты веришь мне?</h1>
-  <p class="ph-text">Здесь будет вопрос с ответами «Да» и «Пока не до конца».</p>
-  <button class="ph-btn" id="phNext" type="button" onclick="QuestHUD.next()">Дальше</button>
+  <div class="trust-btns">
+    <button class="ph-btn" id="trustYes" type="button" data-answer="yes">Да</button>
+    <button class="ph-btn trust-soft" id="trustNotYet" type="button" data-answer="not-yet">Пока не до конца</button>
+  </div>
 </main>
+<script>
+document.querySelectorAll(".trust-btns button").forEach(function (b) {
+  b.addEventListener("click", function () {
+    try { localStorage.setItem("nov16_trust_answer", b.dataset.answer); } catch (e) {}
+    QuestHUD.next();
+  });
+});
+</script>
 </body>
 </html>

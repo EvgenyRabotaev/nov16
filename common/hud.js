@@ -30,7 +30,7 @@
   var params = new URLSearchParams(location.search);
   if (params.get("newgame") === "1") {
     lsDel(KEY); lsDel(AKEY);
-    try { sessionStorage.removeItem("quest_gacha_pulled_v1"); } catch (e) {}
+    try { localStorage.removeItem("quest_gacha_pulled_v1"); localStorage.removeItem("nov16_trust_answer"); sessionStorage.removeItem("quest_gacha_pulled_v1"); } catch (e) {}
   }
 
   function getPrimos() {
