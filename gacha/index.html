@@ -157,7 +157,7 @@
     margin-top: 16px;
   }
 
-  #reveal { justify-content: center; z-index: 9; }
+  #reveal { justify-content: center; justify-content: safe center; overflow-y: auto; z-index: 9; }
   .card-stage {
     margin-bottom: 18px;
     position: relative;
@@ -175,7 +175,8 @@
   .card-enter {
     position: relative;
     z-index: 1;
-    width: min(300px, 68vw);
+    width: min(300px, 68vw, max(170px, (100vh - 400px) * .75));   /* ниже экран — меньше карта, чтобы влез текст */
+    width: min(300px, 68vw, max(170px, (100dvh - 400px) * .75));
     aspect-ratio: 3 / 4;
     perspective: 1400px;
     opacity: 0;
@@ -260,10 +261,17 @@
   }
   .cnote {
     font-family: "Segoe UI", system-ui, sans-serif;
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 4px;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #eef3ff;
+    margin: 8px auto 0;
+    max-width: min(460px, calc(100vw - 36px));
+    white-space: pre-line;          /* абзацы из card_texts.md */
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
   }
+  .cnote:empty { display: none; }
+  @media (max-width: 480px) { .cnote { font-size: 14px; line-height: 1.4; } .cname { font-size: 23px; } }
   #btnClose {
     margin-top: 22px;
     opacity: 0;
@@ -308,6 +316,7 @@
 <link rel="stylesheet" href="../common/hud.css?v=20261115b">
 <script src="../common/quest_config.js?v=20261115b"></script>
 <script src="../common/hud.js?v=20261115b" data-screen="gacha" data-counter="off"></script>
+<script src="card_texts.js?v=20261115c"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
 </head>
 <body>
 <canvas id="fx"></canvas>
@@ -432,6 +441,8 @@
     { id: 'secret_577', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_577.jpg' },
     { id: 'secret_687', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_687.jpg' }
   ];
+  /* описания из card_texts.js (window.CARD_TEXTS: id → текст) перекрывают note */
+  if (window.CARD_TEXTS) CARDS.forEach(c => { if (window.CARD_TEXTS[c.id]) c.note = window.CARD_TEXTS[c.id]; });
 
     /* v2: набор из 43 карточек (39 + 4 секретные). Старые ключи (v1) игнорируются.
      Сброс для теста: gacha/?resetgacha=1 (только гача) или start/?newgame=1 (весь квест). */
