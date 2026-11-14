@@ -361,7 +361,7 @@
       .ev-intro { font-size: 15px; } .ev-lines li { font-size: 16px; } .ev-note { font-size: 14px; } .ev-feed { font-size: 15px; }
       .ev-actions { justify-content: stretch; } .ev-next { width: 100%; }
     }
-    /* ===== Финальная мини-игра: снайпер (M24) ===== */
+    /* ===== Финальная мини-игра: снайпер (AWM из аирдропа) ===== */
     #sniper {
       position: fixed; inset: 0; z-index: 22; background: #000;
       opacity: 0; pointer-events: none; transition: opacity .45s ease;
@@ -473,7 +473,7 @@
     <div id="sniperFlash"></div>
     <div class="sn-top" id="snTop">Последний враг. <b>Прицелься</b> в каску и стреляй</div>
     <div class="sn-msg" id="snMsg">Мимо! Ещё раз</div>
-    <div class="sn-kill" id="snKill"><span class="k-v">Vika</span> ➤ Enemy, M24, <span class="k-hs">headshot</span></div>
+    <div class="sn-kill" id="snKill"><span class="k-v">Vika</span> ➤ Enemy, AWM, <span class="k-hs">headshot</span></div>
     <button id="shotBtn" type="button" aria-label="Выстрел">ШОТ</button>
   </div>
   <div class="victory" id="victory" aria-hidden="true">
@@ -1280,7 +1280,7 @@
       if (k === 8) {
         finished = true;
         panel.classList.add("hidden");
-        /* Финал: Женя нокает первого (4→3), последнего снимает Вика из M24 (мини-игра) → 2 → победа. */
+        /* Финал: Женя нокает первого (4→3), последнего снимает Вика из AWM (мини-игра) → 2 → победа. */
         phase = "finale";
         await wait(550);
         appendKillLine(FINALE_KILLS[0], false);
@@ -1843,7 +1843,7 @@
       await Sniper.start();
       document.body.classList.remove("sniper-on");
       if (window.QuestHUD && QuestHUD.layout) QuestHUD.layout();
-      appendKillLine({ tag: "[F4M]", name: "Marusabelle", action: "убила", enemy: "Enemy_2 · M24 · хедшот" }, false);
+      appendKillLine({ tag: "[F4M]", name: "Marusabelle", action: "убила", enemy: "Enemy_2 · AWM · хедшот" }, false);
       setAlive(2);
       Sniper.hide();
       showVictory();
