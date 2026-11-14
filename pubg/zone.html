@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Зона — PUBG</title>
   <style>
+    @font-face {
+      font-family: "Barlow Condensed";
+      src: url("fonts/BarlowCondensed-Regular.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: "Barlow Condensed";
+      src: url("fonts/BarlowCondensed-Medium.ttf") format("truetype");
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: "Barlow Condensed";
+      src: url("fonts/BarlowCondensed-SemiBold.ttf") format("truetype");
+      font-weight: 600;
+      font-style: normal;
+    }
+
+    :root {
+      --hud-font: "Barlow Condensed", "IBM Plex Sans Condensed", "Segoe UI", "Noto Sans", sans-serif;
+    }
+
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
@@ -121,11 +144,109 @@
       color: #fff8e8;
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
     }
+    .victory .victory-sub {
+      margin-top: 8px;
+      font-size: clamp(16px, 1.8vw, 26px);
+      color: #ffe9b0;
+    }
+
+    /* PUBG-style alive counter, top-right */
+    .alive-hud {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      z-index: 25;
+      min-width: 88px;
+      padding: 7px 14px 6px;
+      background: rgba(8, 9, 12, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+      text-align: center;
+      font-family: var(--hud-font);
+      pointer-events: none;
+    }
+    .alive-num {
+      font-weight: 600;
+      font-size: 42px;
+      line-height: 0.95;
+      color: #f5f5f3;
+      letter-spacing: 0.02em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+      font-variant-numeric: tabular-nums;
+      transition: transform 0.12s ease;
+    }
+    .alive-hud.tick .alive-num {
+      transform: scale(1.1);
+    }
+    .alive-label {
+      margin-top: 3px;
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: rgba(235, 235, 230, 0.82);
+    }
+
+    .kill-feed {
+      position: fixed;
+      top: 108px;
+      right: 22px;
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      pointer-events: none;
+      font-family: var(--hud-font);
+      max-width: min(520px, calc(100vw - 40px));
+    }
+    .kf-line {
+      background: rgba(8, 9, 12, 0.72);
+      padding: 5px 11px 4px;
+      font-size: 18px;
+      line-height: 1.2;
+      color: #f0f0ee;
+      opacity: 0;
+      transform: translateX(14px);
+      animation: kf-in 0.28s ease forwards;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+    .kf-line.shown {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+    @keyframes kf-in {
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .kf-tag { color: #c8c4b8; font-weight: 500; }
+    .kf-name { color: #fff; font-weight: 600; }
+    .kf-action { color: rgba(230, 230, 225, 0.72); font-weight: 400; }
+    .kf-enemy { color: #e8e4dc; font-weight: 500; }
+
+    @media (max-width: 700px) {
+      .alive-hud {
+        top: 10px;
+        right: 10px;
+        min-width: 72px;
+        padding: 5px 10px 5px;
+      }
+      .alive-num { font-size: 32px; }
+      .alive-label { font-size: 9px; letter-spacing: 0.14em; }
+      .kill-feed { top: 84px; right: 10px; }
+      .kf-line { font-size: 14px; padding: 4px 8px 3px; }
+    }
   </style>
 </head>
 <body>
   <img id="map" src="../maps/island_fullscreen.jpg" alt="Карта острова">
   <canvas id="overlay"></canvas>
+
+  <div class="alive-hud" id="aliveHud" aria-live="polite" aria-label="В живых: 100">
+    <div class="alive-num" id="aliveNum">100</div>
+    <div class="alive-label">В ЖИВЫХ</div>
+  </div>
+  <div class="kill-feed" id="killFeed" aria-live="polite"></div>
 
   <aside class="panel" id="panel">
     <div class="q-num" id="qNum">Вопрос 1 из 8</div>
@@ -136,6 +257,7 @@
   <div class="victory" id="victory" aria-hidden="true">
     <h1>Winner winner chicken dinner!</h1>
     <p>Мы победили!</p>
+    <p class="victory-sub">Мы вдвоём</p>
   </div>
 
   <script>
@@ -200,12 +322,26 @@
     const AUTO_FIRST_MS = 1500;
     const AUTO_PAUSE_MS = 1200;
 
+    /* Alive count at the start of each zone phase (questions 1..8).
+       Edit this array to change how quickly the lobby thins out.
+       The last value is the final-phase count; after question 8
+       the finale then drops it 4 → 3 → 2. */
+    const ALIVE_BY_PHASE = [100, 81, 63, 47, 32, 19, 9, 4];
+
+    const FINALE_KILLS = [
+      { to: 3, tag: "[F4M]", name: "Rea_ction", action: "нокаутировал", enemy: "Enemy_1" },
+      { to: 2, tag: "[F4M]", name: "Marusabelle", action: "убила", enemy: "Enemy_2" }
+    ];
+
     const canvas = document.getElementById("overlay");
     const ctx = canvas.getContext("2d");
     const panel = document.getElementById("panel");
     const qNum = document.getElementById("qNum");
     const answerBtn = document.getElementById("answerBtn");
     const victory = document.getElementById("victory");
+    const aliveHud = document.getElementById("aliveHud");
+    const aliveNumEl = document.getElementById("aliveNum");
+    const killFeed = document.getElementById("killFeed");
 
     const AUTO = new URLSearchParams(location.search).get("auto") === "1";
 
@@ -223,6 +359,8 @@
     let phase = "idle";
     let route = null;
     let travelT = 0;
+    let alive = ALIVE_BY_PHASE[0];
+    let aliveGen = 0;
 
     function coverTransform(vw, vh) {
       const scale = Math.max(vw / IMG.w, vh / IMG.h);
@@ -481,6 +619,100 @@
       return pts;
     }
 
+    function setAlive(n) {
+      const next = Math.max(0, Math.round(n));
+      const changed = next !== alive;
+      alive = next;
+      aliveNumEl.textContent = String(alive);
+      aliveHud.setAttribute("aria-label", "В живых: " + alive);
+      if (changed) {
+        aliveHud.classList.remove("tick");
+        void aliveHud.offsetWidth;
+        aliveHud.classList.add("tick");
+      }
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    /* Deterministic irregular drops (1–4), like a real match, not a smooth lerp. */
+    function buildIrregularSteps(from, to) {
+      const pattern = [3, 1, 4, 2, 3, 2, 1, 4];
+      const steps = [];
+      let n = from;
+      let i = 0;
+      while (n > to) {
+        const drop = Math.min(pattern[i++ % pattern.length], n - to);
+        n -= drop;
+        steps.push(n);
+      }
+      return steps;
+    }
+
+    async function tickAliveTo(target, durationMs) {
+      const gen = ++aliveGen;
+      const from = alive;
+      if (from <= target) {
+        setAlive(target);
+        return;
+      }
+      const steps = buildIrregularSteps(from, target);
+      if (!steps.length) return;
+      const slot = Math.max(40, durationMs / steps.length);
+      for (let i = 0; i < steps.length; i++) {
+        if (gen !== aliveGen) return;
+        await wait(slot);
+        if (gen !== aliveGen) return;
+        setAlive(steps[i]);
+      }
+    }
+
+    function kfLineHtml(kill) {
+      return (
+        '<span class="kf-tag">' + kill.tag + "</span> " +
+        '<span class="kf-name">' + kill.name + "</span> " +
+        '<span class="kf-action">' + kill.action + "</span> " +
+        '<span class="kf-enemy">' + kill.enemy + "</span>"
+      );
+    }
+
+    function appendKillLine(kill, instant) {
+      const line = document.createElement("div");
+      line.className = "kf-line" + (instant ? " shown" : "");
+      line.innerHTML = kfLineHtml(kill);
+      killFeed.appendChild(line);
+      return line;
+    }
+
+    async function playFinale(instant) {
+      phase = "finale";
+      if (instant) {
+        setAlive(2);
+        killFeed.innerHTML = "";
+        FINALE_KILLS.forEach((k) => appendKillLine(k, true));
+        return;
+      }
+      await wait(550);
+      if (finished === false) return;
+      appendKillLine(FINALE_KILLS[0], false);
+      setAlive(FINALE_KILLS[0].to);
+      await wait(950);
+      appendKillLine(FINALE_KILLS[1], false);
+      setAlive(FINALE_KILLS[1].to);
+      await wait(700);
+    }
+
+    function showVictory() {
+      panel.classList.add("hidden");
+      victory.classList.add("show");
+      victory.setAttribute("aria-hidden", "false");
+      phase = "done";
+      finished = true;
+      animating = false;
+      draw();
+    }
+
     async function animateAnswer() {
       if (animating || finished) return;
       animating = true;
@@ -492,6 +724,11 @@
       const fromBlue = { ...blue };
       const toPos = { ...LANDINGS[k - 1] };
       const pts = buildRoute(pos, ROUTES[k - 1], toPos);
+
+      /* Countdown runs alongside the existing move; not used on the last answer
+         (that one keeps 4 until the finale after arrival). */
+      const nextAlive = (k < 8) ? ALIVE_BY_PHASE[k] : null;
+      let aliveAnim = Promise.resolve();
 
       if (route && route.alpha > 0) {
         phase = "route-fade";
@@ -512,6 +749,9 @@
 
       phase = "travel";
       const dur = travelDuration(pts);
+      if (nextAlive != null) {
+        aliveAnim = tickAliveTo(nextAlive, dur + SHRINK_MS);
+      }
       await animateValue(dur, (t) => {
         travelT = t;
         pos = pointAlong(pts, t);
@@ -528,18 +768,17 @@
 
       blue = { ...targetBlue };
       draw();
-      onArrived(k);
+      await aliveAnim;
+      if (nextAlive != null) setAlive(nextAlive);
+      await onArrived(k);
     }
 
-    function onArrived(k) {
+    async function onArrived(k) {
       if (k === 8) {
         finished = true;
-        animating = false;
-        phase = "done";
         panel.classList.add("hidden");
-        victory.classList.add("show");
-        victory.setAttribute("aria-hidden", "false");
-        draw();
+        await playFinale(false);
+        showVictory();
         return;
       }
       question = k + 1;
@@ -550,6 +789,53 @@
       panel.classList.remove("hidden");
       answerBtn.disabled = false;
       if (AUTO) setTimeout(autoTick, AUTO_PAUSE_MS);
+    }
+
+    /* Test / screenshot helper: settle on a phase with no route animation. */
+    function jumpToPhase(n) {
+      const k = Math.max(1, Math.min(8, n | 0));
+      aliveGen++;
+      finished = false;
+      animating = false;
+      victory.classList.remove("show");
+      victory.setAttribute("aria-hidden", "true");
+      killFeed.innerHTML = "";
+      question = k;
+      qNum.textContent = "Вопрос " + question + " из 8";
+      setAlive(ALIVE_BY_PHASE[k - 1]);
+      if (k === 1) {
+        blue = { ...INITIAL };
+        white = { ...ZONES[0] };
+        pos = { ...START };
+        route = null;
+      } else {
+        blue = { ...ZONES[k - 2] };
+        white = { ...ZONES[k - 1] };
+        pos = { ...LANDINGS[k - 2] };
+        const fromPos = (k >= 3) ? LANDINGS[k - 3] : START;
+        const pts = buildRoute(fromPos, ROUTES[k - 2], LANDINGS[k - 2]);
+        route = { points: pts, drawn: 1, alpha: 1 };
+      }
+      whiteAlpha = 1;
+      travelT = 0;
+      phase = "idle";
+      panel.classList.remove("hidden");
+      answerBtn.disabled = false;
+      draw();
+    }
+
+    function jumpToVictory() {
+      aliveGen++;
+      question = 8;
+      blue = { ...ZONES[7] };
+      white = { ...ZONES[7] };
+      whiteAlpha = 1;
+      pos = { ...LANDINGS[7] };
+      const pts = buildRoute(LANDINGS[6], ROUTES[7], LANDINGS[7]);
+      route = { points: pts, drawn: 1, alpha: 1 };
+      travelT = 1;
+      playFinale(true);
+      showVictory();
     }
 
     function autoTick() {
@@ -565,19 +851,23 @@
     }
 
     window.__zone = {
+      ALIVE_BY_PHASE,
       get state() {
         return {
           question,
           animating,
           finished,
           phase,
+          alive,
           routeDrawn: route ? route.drawn : 0,
           routeAlpha: route ? route.alpha : 0,
           travelT,
           pos: { ...pos },
           blue: { ...blue },
         };
-      }
+      },
+      jumpToPhase,
+      jumpToVictory,
     };
 
     if (document.readyState === "complete") boot();
