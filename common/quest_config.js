@@ -94,7 +94,16 @@ window.QUEST_CONFIG = {
       note: "Вторая фаза уже почти закончилась. Отряд всё ещё лутает третий дом."
     },
     {
-      after: 2, image: "events/ev2_cabrio.jpg", title: "Голубой кабриолет",
+      after: 2, image: "events/ev_fence.jpg", title: "Застрял в заборе",
+      intro: "",
+      lines: [
+        { who: "Вика", text: "Ты где там ходишь?" },
+        { who: "Женя", text: "О, щас бегу, в заборе застрял." }
+      ],
+      note: ""
+    },
+    {
+      after: 4, image: "events/ev2_cabrio.jpg", title: "Голубой кабриолет",
       intro: "Вика находит купешку и перекрашивает в голубой кабриолет.",
       lines: [
         { who: "Женя", text: "Может, я за руль?" },
@@ -104,7 +113,7 @@ window.QUEST_CONFIG = {
       note: "Отряд заезжает в безопасную зону на третьей фазе."
     },
     {
-      after: 4, image: "events/ev4_meds.jpg", title: "Аптечки",
+      after: 5, image: "events/ev4_meds.jpg", title: "Аптечки",
       intro: "",
       lines: [
         { who: "Вика", text: "Сколько у тебя аптечек?" },
@@ -115,7 +124,7 @@ window.QUEST_CONFIG = {
       note: "Медик отряда, Вика: 1. Аптечки Жени: снова Викины."
     },
     {
-      after: 5, image: "events/ev5_redzone.jpg", title: "Красная зона", red: true,
+      after: 6, image: "events/ev5_redzone.jpg", title: "Красная зона", red: true,
       intro: "Экран краснеет, падают снаряды, машина петляет.",
       lines: [
         { who: "Женя", text: "ВИКА, РАКЕТЫ!" },
@@ -126,7 +135,7 @@ window.QUEST_CONFIG = {
       note: ""
     },
     {
-      after: 6, image: "events/ev6_headshot.jpg", title: "Хедшот",
+      after: 7, image: "events/ev6_headshot.jpg", title: "Хедшот",
       intro: "Вика с М24 на холме.",
       lines: [
         { who: "Женя", text: "Он за деревом, далеко…" },
@@ -138,16 +147,8 @@ window.QUEST_CONFIG = {
         { who: "Женя", text: "Я влюбился второй раз" }
       ],
       note: ""
-    },
-    {
-      after: 7, image: "events/ev7_final.jpg", title: "Финальная зона",
-      intro: "Осталось четверо.",
-      lines: [
-        { who: "Женя", text: "Отметил тебе Драгунова, я с него прикрою" },
-        { who: "Вика", text: "Я с M24. Берём их" }
-      ],
-      note: ""
     }
+
   ],
   ANSWER_TEXT: {
     placeholder: "Твой ответ",
