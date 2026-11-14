@@ -503,7 +503,7 @@
         status.textContent = EMPTY_MSG;
         status.classList.add('empty');
       } else {
-        status.textContent = 'Осталось карточек: ' + left.length;
+        status.textContent = ''; /* 14.11: сколько карточек осталось — не показываем */
         status.classList.remove('empty');
       }
     }
