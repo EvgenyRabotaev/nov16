@@ -915,10 +915,10 @@
           el,
           phase: i * 1.37,
           range: 26 + i * 8,
-          omega: 0.55 + i * 0.08,
-          bob: 5 + (i % 3) * 2,
-          bobFreq: 1.15 + i * 0.15,
-          tailFreq: 8 + i * 0.6
+          omega: 0.28 + i * 0.04,
+          bob: 4 + (i % 3) * 1.5,
+          bobFreq: 0.55 + i * 0.07,
+          tailFreq: 2.4 + i * 0.25
         };
       });
       if (faunaState.length) {
@@ -929,7 +929,7 @@
             const ox = Math.sin(t * s.omega + s.phase) * s.range;
             const dir = Math.cos(t * s.omega + s.phase) >= 0 ? 1 : -1;
             const oy = Math.sin(t * s.bobFreq + s.phase) * s.bob;
-            const squash = 1 + Math.sin(t * s.tailFreq + s.phase) * 0.07;
+            const squash = 1 + Math.sin(t * s.tailFreq + s.phase) * 0.025;
             s.el.style.transform = "translate(-50%,-50%) translate(" + ox.toFixed(2) + "px," + oy.toFixed(2) + "px) scaleX(" + (dir * squash).toFixed(3) + ")";
           });
           faunaRaf = requestAnimationFrame(tick);
