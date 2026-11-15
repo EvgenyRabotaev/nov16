@@ -363,6 +363,7 @@ window.QUEST_CONFIG = {
            subnautica → loc1…loc7,
            genshin → q1…qN, "talk", "done". */
   HINTS: {
+    FALLBACK: "Тут без подсказки — доверься сердцу 💛",
     DEFAULT: "Подсказка появится позже",
     "sky": "Двигайте пару влево и вправо и ловите сердечки",
     "sky:done": "Жми «Дальше»",

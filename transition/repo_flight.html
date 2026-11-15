@@ -6,10 +6,12 @@
 <title>Поездка в Тейват</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%237ad0ff'/%3E%3C/svg%3E">
 <link rel="preload" as="image" href="repo/car.png">
+<link rel="preload" as="image" href="repo/worlds/01_space_hq.webp?v=20261115p39">
+<link rel="preload" as="image" href="repo/worlds/01_space_road.webp?v=20261115p39">
 <style>
   /* Переход R.E.P.O.: вид сбоку, три явные дорожки, Вика за рулём, Женя сзади.
      Фон мира статичен и раз в 20–25 с плавно сменяется. Колёса статичные (уже в car.png).
-     Музыка и длительность — TRANSITIONS.REPO_FLIGHT. Отладка: ?fast=1 (30 с). */
+     Музыка и длительность — TRANSITIONS.REPO_FLIGHT. Отладка: ?fast=1 (30 с), ?world=N (1–8, держит мир). */
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #07080e; user-select: none; -webkit-user-select: none; touch-action: none; }
   #bgRoot { position: fixed; inset: 0; overflow: hidden; background: #07080e; }
@@ -20,6 +22,7 @@
     position: absolute; inset: 0;
     background: center / cover no-repeat;
   }
+  .world-bg.pixel { image-rendering: pixelated; image-rendering: crisp-edges; }
   #vignette {
     position: fixed; inset: 0; z-index: 2; pointer-events: none;
     background: radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,.42) 100%);
@@ -27,7 +30,7 @@
   #road {
     position: fixed; left: 0; right: 0; bottom: 0; height: 38%;
     z-index: 3; pointer-events: none;
-    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(8,6,10,.12) 10%, rgba(8,6,10,.42) 100%);
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(8,6,10,.04) 18%, rgba(8,6,10,.16) 100%);
   }
   #road canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
   #roadFx { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -182,9 +185,9 @@
     .heart { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
   }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115m">
-<script src="../common/quest_config.js?v=20261115p34"></script>
-<script src="../common/hud.js?v=20261115m" data-screen="repo-flight"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115p39">
+<script src="../common/quest_config.js?v=20261115p39"></script>
+<script src="../common/hud.js?v=20261115p39" data-screen="repo-flight"></script>
 </head>
 <body>
 <div id="bgRoot">
@@ -221,16 +224,23 @@
   const DEBUG = FAST || /[?&](debug|skip)=1/.test(location.search);
   if (FAST) document.documentElement.classList.add("fast");
 
-  const WORLDS = CFG.WORLDS || [
-    { src: "repo/worlds/01_space_tile.jpg",  name: "Космос",            road: ["#16102a", "#2a1a48"], dash: "rgba(210,200,255,.75)", dust: "180,160,255" },
-    { src: "repo/worlds/02_pixel_tile.jpg",  name: "Пиксели",           road: ["#2a6a22", "#1f4a18"], dash: "rgba(255,255,255,.8)",  dust: "180,255,140" },
-    { src: "repo/worlds/03_cyber_tile.jpg",  name: "Неон",              road: ["#12081c", "#1c0a30"], dash: "rgba(255,80,220,.75)",  dust: "200,120,255" },
-    { src: "repo/worlds/04_clouds_tile.jpg", name: "Небесные острова",  road: ["#c8b898", "#a89070"], dash: "rgba(255,255,255,.85)", dust: "255,236,200" },
-    { src: "repo/worlds/05_lava_tile.jpg",   name: "Лава",              road: ["#2a1010", "#4a1810"], dash: "rgba(255,180,90,.8)",   dust: "255,140,60" },
-    { src: "repo/worlds/06_forest_tile.jpg", name: "Лес",               road: ["#243418", "#1a2810"], dash: "rgba(220,230,160,.8)",  dust: "170,255,140" },
-    { src: "repo/worlds/07_ocean_tile.jpg",  name: "Океан",             road: ["#0e3a48", "#0a5a68"], dash: "rgba(220,250,255,.85)", dust: "140,220,255" },
-    { src: "repo/worlds/08_teyvat_tile.jpg", name: "Тейват",            road: ["#b89450", "#d4b06a"], dash: "rgba(255,248,210,.9)",  dust: "255,220,140" }
-  ];
+  const ASSET = "20261115p39";
+  const WORLDS = (CFG.WORLDS || [
+    { src: "repo/worlds/01_space_hq.webp",  roadSrc: "repo/worlds/01_space_road.webp",  name: "Космос",            road: ["#16102a", "#2a1a48"], dash: "rgba(210,200,255,.75)", dust: "180,160,255", pixel: false },
+    { src: "repo/worlds/02_pixel_hq.webp",  roadSrc: "repo/worlds/02_pixel_road.webp",  name: "Пиксели",           road: ["#2a6a22", "#1f4a18"], dash: "rgba(255,255,255,.8)",  dust: "180,255,140", pixel: true },
+    { src: "repo/worlds/03_cyber_hq.webp",  roadSrc: "repo/worlds/03_cyber_road.webp",  name: "Неон",              road: ["#12081c", "#1c0a30"], dash: "rgba(255,80,220,.75)",  dust: "200,120,255" },
+    { src: "repo/worlds/04_clouds_hq.webp", roadSrc: "repo/worlds/04_clouds_road.webp", name: "Небесные острова",  road: ["#c8b898", "#a89070"], dash: "rgba(255,255,255,.85)", dust: "255,236,200" },
+    { src: "repo/worlds/05_lava_hq.webp",   roadSrc: "repo/worlds/05_lava_road.webp",   name: "Лава",              road: ["#2a1010", "#4a1810"], dash: "rgba(255,180,90,.8)",   dust: "255,140,60" },
+    { src: "repo/worlds/06_forest_hq.webp", roadSrc: "repo/worlds/06_forest_road.webp", name: "Лес",               road: ["#243418", "#1a2810"], dash: "rgba(220,230,160,.8)",  dust: "170,255,140" },
+    { src: "repo/worlds/07_ocean_hq.webp",  roadSrc: "repo/worlds/07_ocean_road.webp",  name: "Океан",             road: ["#0e3a48", "#0a5a68"], dash: "rgba(220,250,255,.85)", dust: "140,220,255" },
+    { src: "repo/worlds/08_teyvat_hq.webp", roadSrc: "repo/worlds/08_teyvat_road.webp", name: "Тейват",            road: ["#b89450", "#d4b06a"], dash: "rgba(255,248,210,.9)",  dust: "255,220,140" }
+  ]).map((w) => Object.assign({}, w, {
+    src: w.src + (w.src.indexOf("?") >= 0 ? "&" : "?") + "v=" + ASSET,
+    roadSrc: (w.roadSrc || w.src.replace(/_hq\.webp.*$/, "_road.webp")) + ((w.roadSrc || "").indexOf("?") >= 0 ? "&" : "?") + "v=" + ASSET
+  }));
+  const FORCE_WORLD = Math.max(0, parseInt(new URLSearchParams(location.search).get("world") || "0", 10));
+  const roadImgs = WORLDS.map((w) => { const im = new Image(); im.decoding = "async"; im.src = w.roadSrc; return im; });
+  let roadFadeFrom = 0, roadFadeStart = 0;
   const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 2;
   const HEART_CAP = CFG.HEART_CAP != null ? CFG.HEART_CAP : 0; /* 0 — без потолка */
   const HEART_KEY = "nov16_repo_hearts";
@@ -338,6 +348,7 @@
   }
   function setWorldInstant(i) {
     lastWorldShown = i; curWorld = i;
+    roadFadeFrom = i; roadFadeStart = 0;
     setStackWorld(frontStack, i);
     frontStack.classList.add("on");
     backStack.classList.remove("on");
@@ -407,10 +418,14 @@ function alreadyAwarded() {
   function setStackWorld(stack, i) {
     const w = WORLDS[i];
     const bg = stack.querySelector(".world-bg");
-    if (bg) bg.style.backgroundImage = "url(" + w.src + ")";
+    if (bg) {
+      bg.style.backgroundImage = "url(" + w.src + ")";
+      bg.classList.toggle("pixel", !!w.pixel);
+    }
   }
   function worldIndexAt(t) {
     const last = WORLDS.length - 1;
+    if (FORCE_WORLD) return Math.min(last, Math.max(0, FORCE_WORLD - 1));
     if (t < T.enter) return 0;
     if (t >= T.teyvatAt) return last;
     const pre = Math.max(1, T.teyvatAt - T.enter);
@@ -429,7 +444,9 @@ function alreadyAwarded() {
       clearTimeout(setWorld._hide);
       setWorld._hide = setTimeout(() => worldName.classList.remove("on"), FAST ? 1100 : 4000);
     }
-    if (prev < 0) { setStackWorld(frontStack, i); frontStack.classList.add("on"); return; }
+    if (prev < 0) { setStackWorld(frontStack, i); frontStack.classList.add("on"); roadFadeFrom = i; roadFadeStart = 0; return; }
+    roadFadeFrom = prev;
+    roadFadeStart = performance.now();
     setStackWorld(backStack, i);
     backStack.classList.add("on");
     frontStack.classList.remove("on");
@@ -613,37 +630,49 @@ function alreadyAwarded() {
     }
   }
 
-  function drawRoad(dt, roadSpd) {
-    const ctx = roadCtx;
-    const rh = H * 0.38;
-    const origin = H - rh;
-    ctx.clearRect(0, 0, W, rh);
-    const L = lanes();
-    const worldA = WORLDS[curWorld];
-    const yTop = L[0].bandTop - origin;
-    const yBot = L[2].bandBot - origin;
-    /* полотно дороги — три различимые полосы */
+  function roadTexReady(img) {
+    return !!(img && img.complete && img.naturalWidth);
+  }
+  function roadFadeK() {
+    if (!roadFadeStart) return 1;
+    const k = Math.min(1, (performance.now() - roadFadeStart) / WORLD_FADE);
+    return easeInOut(k);
+  }
+  function drawRoadTex(ctx, img, alpha, yTop, yBot, pixel) {
+    if (!roadTexReady(img) || alpha <= 0.004) return false;
+    const band = yBot - yTop;
+    const edge = Math.round(band * 0.14);
+    const destY = yTop - edge;
+    const destH = Math.max(2, band + edge * 2);
+    const tw = img.naturalWidth, th = img.naturalHeight;
+    const dw = Math.max(2, Math.round(destH * (tw / th)));
+    const off = ((scrollRoad % dw) + dw) % dw;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = !pixel;
+    if (!pixel) ctx.imageSmoothingQuality = "high";
+    let x = Math.round(-off);
+    while (x < W + 2) {
+      ctx.drawImage(img, 0, 0, tw, th, x, destY, dw, destH);
+      x += dw;
+    }
+    ctx.restore();
+    return true;
+  }
+  function drawRoadFallback(ctx, world, yTop, yBot, L, origin, alpha) {
+    if (alpha <= 0.004) return;
+    ctx.save();
     for (let i = 0; i < 3; i++) {
       const a = L[i].bandTop - origin, b = L[i].bandBot - origin;
       const grd = ctx.createLinearGradient(0, a, 0, b);
-      grd.addColorStop(0, worldA.road[0]);
-      grd.addColorStop(1, worldA.road[1]);
-      ctx.globalAlpha = 0.92;
+      grd.addColorStop(0, world.road[0]);
+      grd.addColorStop(1, world.road[1]);
+      ctx.globalAlpha = 0.92 * alpha;
       ctx.fillStyle = grd;
       ctx.fillRect(0, a, W, Math.max(2, b - a));
-      ctx.globalAlpha = (i % 2 === 0) ? 0.06 : 0.22;
-      ctx.fillStyle = "rgba(0,0,0,1)";
-      ctx.fillRect(0, a, W, Math.max(2, b - a));
     }
-    ctx.globalAlpha = 1;
-    /* кромки дороги */
-    ctx.strokeStyle = "rgba(255,255,255,0.28)";
-    ctx.lineWidth = 3;
-    ctx.setLineDash([]);
-    ctx.beginPath(); ctx.moveTo(0, yTop); ctx.lineTo(W, yTop); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, yBot); ctx.lineTo(W, yBot); ctx.stroke();
-    /* разделители между тремя полосами (бегут вперёд) */
-    ctx.strokeStyle = worldA.dash;
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = world.dash;
     for (let i = 1; i < 3; i++) {
       const y = L[i].bandTop - origin;
       ctx.lineWidth = 4;
@@ -655,6 +684,29 @@ function alreadyAwarded() {
       ctx.stroke();
     }
     ctx.setLineDash([]);
+    ctx.restore();
+  }
+  function drawRoad(dt, roadSpd) {
+    const ctx = roadCtx;
+    const rh = H * 0.38;
+    const origin = H - rh;
+    ctx.clearRect(0, 0, W, rh);
+    const L = lanes();
+    const yTop = L[0].bandTop - origin;
+    const yBot = L[2].bandBot - origin;
+    const to = curWorld;
+    const from = roadFadeFrom;
+    const k = (from === to) ? 1 : roadFadeK();
+    if (k < 1 && from !== to) {
+      const aImg = roadImgs[from], bImg = roadImgs[to];
+      const aOk = drawRoadTex(ctx, aImg, 1, yTop, yBot, !!(WORLDS[from] && WORLDS[from].pixel));
+      if (!aOk) drawRoadFallback(ctx, WORLDS[from], yTop, yBot, L, origin, 1);
+      const bOk = drawRoadTex(ctx, bImg, k, yTop, yBot, !!(WORLDS[to] && WORLDS[to].pixel));
+      if (!bOk) drawRoadFallback(ctx, WORLDS[to], yTop, yBot, L, origin, k);
+    } else {
+      const ok = drawRoadTex(ctx, roadImgs[to], 1, yTop, yBot, !!(WORLDS[to] && WORLDS[to].pixel));
+      if (!ok) drawRoadFallback(ctx, WORLDS[to], yTop, yBot, L, origin, 1);
+    }
   }
 
   function drawSpeed(dt, roadSpd, inFlight, car) {
@@ -763,8 +815,7 @@ function alreadyAwarded() {
     if (t > 80 && t < T.flash) {
       scrollRoad += roadSpd * dt;
     }
-    if (t >= T.enter) setWorld(worldIndexAt(t));
-    else setWorld(0);
+    setWorld(worldIndexAt(t));
     const car = placeCar(t);
     placePortal(t);
     updateLoot(dt, car, roadSpd);
@@ -884,6 +935,7 @@ function alreadyAwarded() {
     get t() { return clock; },
     duration: function () { return DURATION; }, T,
     get world() { return curWorld; },
+    get scrollRoad() { return scrollRoad; },
     get lane() { return laneTo; },
     get laneVisual() { return laneVisual; },
     get collected() { return collected; },
@@ -891,7 +943,11 @@ function alreadyAwarded() {
     get started() { return started; },
     get done() { return doneShown; },
     get skipped() { return skipped; },
-    debug: DEBUG, fast: FAST,
+    debug: DEBUG, fast: FAST, forceWorld: FORCE_WORLD,
+    worlds: WORLDS, fadeMs: WORLD_FADE,
+    roadReady: function () { return roadImgs.every((im) => roadTexReady(im)); },
+    roadFadeK: roadFadeK,
+    setWorld: setWorld, setWorldInstant: setWorldInstant,
     skip: skip, start: start, setLane: setLane,
     spawnHeart: function (ln, x) { return spawnHeart(ln, x); },
     clearHearts: function () { pickups.forEach((p) => p.el.remove()); pickups = []; lootEl.innerHTML = ""; },
@@ -912,7 +968,7 @@ function alreadyAwarded() {
 
   function begin() {
     resize();
-    setStackWorld(frontStack, 0);
+    setStackWorld(frontStack, worldIndexAt(0));
     if (musicSrc && !FAST && !audioFailed) {
       tapStart.classList.add("show");
       const go = () => { tapStart.removeEventListener("click", go); start(); };
@@ -922,7 +978,7 @@ function alreadyAwarded() {
     start();
   }
 
-  const preload = WORLDS.map((w) => w.src).concat(["repo/car.png"]);
+  const preload = WORLDS.map((w) => w.src).concat(WORLDS.map((w) => w.roadSrc)).concat(["repo/car.png"]);
   Promise.all(preload.map((src) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = src; }))).then(() => setTimeout(begin, 80));
 })();
 </script>

@@ -81,6 +81,7 @@
   }
   function reset() { lsDel(KEY); lsDel(AKEY); render(null); }
 
+  var FALLBACK_HINT = (HINTS && HINTS.FALLBACK) || "Тут без подсказки — доверься сердцу 💛";
   function isPlaceholderHint(t) {
     t = String(t || "").trim();
     return !t || t === "Подсказка появится позже";
@@ -94,14 +95,13 @@
   }
   function hintText() {
     var t = rawHint();
-    return isPlaceholderHint(t) ? "" : t;
+    return isPlaceholderHint(t) ? FALLBACK_HINT : t;
   }
-  function hasHint() { return !!hintText(); }
+  function hasHint() { return true; }
   function syncHintBtn() {
     if (!btn) return;
-    var ok = hasHint();
-    btn.hidden = !ok;
-    if (!ok) close();
+    btn.hidden = false;
+    btn.removeAttribute("hidden");
   }
   function nextUrl() {
     var n = FLOW[idx + 1];
@@ -217,7 +217,7 @@
   }
 
   function open() {
-    if (!hasHint()) { syncHintBtn(); return; }
+    if (!panel) return;
     panelText.textContent = hintText();
     panel.hidden = false;
     root.classList.add("qhud--open");
@@ -328,8 +328,7 @@
       step = s || "";
       syncHintBtn();
       if (panel && !panel.hidden) {
-        if (hasHint()) panelText.textContent = hintText();
-        else close();
+        panelText.textContent = hintText();
       }
     },
     getStep: function () { return step; },
