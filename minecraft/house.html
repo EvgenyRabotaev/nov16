@@ -103,13 +103,76 @@
   @media (max-width: 600px) {
     .mc-ach { left: 8px; top: auto; bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
   }
+
+  .panel.msg { cursor: pointer; }
+  .panel.msg .ans-inputs, .panel.msg #answerBtn { display: none; }
+  .panel.msg .ans-msg { color: #d4c48a; min-height: 0; margin: 0; text-align: center; font: 700 13px/1.3 "Courier New", "DejaVu Sans Mono", monospace; letter-spacing: .04em; animation: msgBlink 1.4s ease-in-out infinite; }
+  .panel.msg .q-num { display: none; }
+  @keyframes msgBlink { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+
+  #mcBookItem {
+    position: fixed; left: 50%; top: 42%;
+    z-index: 16;
+    width: min(104px, 26vw);
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 10px rgba(255, 230, 140, .95)) drop-shadow(0 0 26px rgba(255, 200, 80, .55));
+    animation: bookIn .55s ease both, bookBob 2.1s ease-in-out .55s infinite;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mcBookItem svg { display: block; width: 100%; height: auto; shape-rendering: crispEdges; }
+  @keyframes bookIn { from { transform: translate(-50%, -50%) scale(.4); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+  @keyframes bookBob {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-10px); }
+  }
+  #mcBookOpen {
+    position: fixed; inset: 0; z-index: 30;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, .5);
+    cursor: pointer;
+  }
+  #mcBookOpen.hidden { display: none; }
+  .mc-book-spread {
+    display: flex;
+    width: min(680px, calc(100vw - 28px));
+    background: #4a2e18;
+    border: 4px solid #1a0e08;
+    box-shadow: 0 18px 40px rgba(0,0,0,.55), inset 0 0 0 2px #7a4e28;
+    padding: 8px 8px 6px;
+    pointer-events: none;
+  }
+  .mc-book-page {
+    flex: 1 1 50%;
+    background: #f3e4c0;
+    min-height: min(52vh, 360px);
+    padding: 12px 10px 10px;
+    box-shadow: inset 0 0 18px rgba(120, 80, 30, .12);
+  }
+  .mc-book-page.left { border-right: 2px solid #d2bf8e; }
+  .mc-book-page svg { width: 100%; height: calc(100% - 4px); display: block; }
+  .mc-book-num {
+    margin-top: 8px;
+    font: 700 15px/1 "Courier New", "DejaVu Sans Mono", monospace;
+    color: #f3e4c0;
+    text-shadow: 1px 1px 0 #1a0e08;
+    letter-spacing: .08em;
+    pointer-events: none;
+  }
+  @media (max-width: 420px) {
+    .mc-book-spread { width: calc(100vw - 16px); padding: 6px; }
+    .mc-book-page { min-height: min(46vh, 300px); padding: 8px 6px; }
+  }
+
   @media (max-width: 700px) {
     .panel { padding: 12px 12px 12px; }
     .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 10px; max-height: 32vh; }
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p5"></script>
+<script src="../common/quest_config.js?v=20261115p6"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="minecraft"></script>
 <script src="craft.js?v=20261115i"></script>
 </head>
@@ -134,6 +197,15 @@
   <div class="ans-msg" id="ansMsg" aria-live="polite"></div>
   <button class="btn" id="answerBtn" type="button">Ответить</button>
 </aside>
+
+<div id="mcBookItem" hidden role="button" tabindex="0" aria-label="Книга"></div>
+<div id="mcBookOpen" class="hidden" role="dialog" aria-label="Ежедневник">
+  <div class="mc-book-spread">
+    <div class="mc-book-page left"><svg id="mcBookLeft" viewBox="0 0 160 200" aria-hidden="true"></svg></div>
+    <div class="mc-book-page right"><svg id="mcBookRight" viewBox="0 0 160 200" aria-hidden="true"></svg></div>
+  </div>
+  <div class="mc-book-num" id="mcBookNum">17/365</div>
+</div>
 
 <script>
 (function () {
@@ -485,6 +557,110 @@
 
   function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
+  /* Пиксельная книга (предмет в стиле Minecraft) и раскрытый ежедневник. */
+  const BOOK_ITEM_SVG = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">' +
+    '<rect x="3" y="2" width="11" height="13" fill="#3a2414"/>' +
+    '<rect x="2" y="1" width="11" height="13" fill="#8b2a2a"/>' +
+    '<rect x="3" y="2" width="9" height="11" fill="#a33434"/>' +
+    '<rect x="12" y="2" width="1" height="11" fill="#d8c9a0"/>' +
+    '<rect x="13" y="2" width="1" height="11" fill="#f0e6c8"/>' +
+    '<rect x="2" y="1" width="11" height="1" fill="#c44a4a"/>' +
+    '<rect x="2" y="1" width="1" height="13" fill="#6e1e1e"/>' +
+    '<rect x="5" y="4" width="5" height="1" fill="#6e1e1e"/>' +
+    '<rect x="5" y="6" width="4" height="1" fill="#6e1e1e"/>' +
+    '</svg>';
+
+  function squigglePage(svg, seed) {
+    let s = seed;
+    const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+    svg.innerHTML = "";
+    const stroke = "#4a3420";
+    for (let line = 0; line < 11; line++) {
+      const y = 14 + line * 15.5 + rnd() * 2.5;
+      let x = 8 + rnd() * 7;
+      const maxX = 152 - rnd() * 22;
+      let d = "M" + x.toFixed(1) + "," + y.toFixed(1);
+      while (x < maxX) {
+        const x2 = Math.min(maxX, x + 10 + rnd() * 12);
+        const y2 = y + (rnd() - 0.5) * 5.5;
+        const cx = (x + x2) / 2 + (rnd() - 0.5) * 5;
+        const cy = y + (rnd() - 0.55) * 9;
+        d += " Q" + cx.toFixed(1) + "," + cy.toFixed(1) + " " + x2.toFixed(1) + "," + y2.toFixed(1);
+        x = x2;
+      }
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", stroke);
+      path.setAttribute("stroke-width", String(1.15 + rnd() * 0.5));
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      path.setAttribute("opacity", String(0.72 + rnd() * 0.25));
+      svg.appendChild(path);
+    }
+  }
+
+  function showDiaryBook() {
+    return new Promise((res) => {
+      const item = document.getElementById("mcBookItem");
+      const open = document.getElementById("mcBookOpen");
+      const num = document.getElementById("mcBookNum");
+      if (num) num.textContent = ((MC.DIARY && MC.DIARY.page) || "17/365");
+      item.innerHTML = BOOK_ITEM_SVG;
+      item.hidden = false;
+      let opened = false, done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        open.classList.add("hidden");
+        item.hidden = true;
+        res();
+      };
+      const openBook = () => {
+        if (opened) return;
+        opened = true;
+        item.hidden = true;
+        squigglePage(document.getElementById("mcBookLeft"), 2039);
+        squigglePage(document.getElementById("mcBookRight"), 344);
+        open.classList.remove("hidden");
+      };
+      item.addEventListener("click", openBook);
+      item.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openBook(); } });
+      open.addEventListener("click", finish);
+      open.addEventListener("keydown", (e) => { if (e.key === "Escape" || e.key === "Enter" || e.key === " ") { e.preventDefault(); finish(); } });
+    });
+  }
+
+  function showPrologue() {
+    const text = MC.PROLOGUE;
+    if (!text) { render(); return; }
+    qText.innerHTML = esc(text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    qText.scrollTop = 0;
+    answerInputs.innerHTML = "";
+    ansMsg.textContent = "Нажми, чтобы продолжить";
+    ansMsg.className = "ans-msg";
+    answerBtn.disabled = true;
+    panel.classList.add("msg");
+    panel.classList.remove("hidden");
+    { panelBottom = panel.offsetTop + panel.offsetHeight; layout(); }
+    if (window.QuestHUD) QuestHUD.setStep("prologue");
+    let gone = false;
+    const go = () => {
+      if (gone) return;
+      gone = true;
+      panel.classList.remove("msg");
+      panel.removeEventListener("click", go);
+      document.removeEventListener("keydown", onKey);
+      answerBtn.disabled = false;
+      render();
+    };
+    const onKey = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } };
+    setTimeout(() => {
+      panel.addEventListener("click", go);
+      document.addEventListener("keydown", onKey);
+    }, 250);
+  }
+
   function render() {
     const q = curQ();
     qNum.textContent = exitMode ? "Новый путь" : "Вопрос " + (question + 1) + " из " + QUESTIONS.length;
@@ -512,7 +688,7 @@
   async function onCorrect() {
     if (exitMode) { exitCorrect(); return; }
     const q = QUESTIONS[question];
-    if (window.QuestHUD && q) QuestHUD.award(q.id || ("mc-q" + (question + 1)), q.placeholder ? 0 : undefined); /* заглушки — без примогемов */
+    if (window.QuestHUD && q) QuestHUD.award(q.id || ("mc-q" + (question + 1)), q.placeholder ? 0 : (q.primos != null ? q.primos : undefined)); /* заглушки — без примогемов; иначе q.primos или PER_QUESTION */
     await new Promise((r) => setTimeout(r, 650));
     panel.classList.add("hidden");
     step = question + 1;
@@ -523,6 +699,7 @@
     if (question >= QUESTIONS.length) { finish(); return; }
     busy = false;
     await new Promise((r) => setTimeout(r, 350));
+    if (QUESTIONS[question] && QUESTIONS[question].book) await showDiaryBook();
     render();
   }
 
@@ -560,7 +737,8 @@
 
   /* Отладка: house.html?craft=N (N = 2…5) — сразу крафт после вопроса N (предыдущие этапы дома уже стоят).
      house.html?exit=1 — сразу вопрос «Двигаемся дальше?»; house.html?craft=boat — сразу крафт лодки.
-     house.html?stage=0…5 — сразу показать этапы дома без крафта. */
+     house.html?stage=0…5 — сразу показать этапы дома без крафта.
+     house.html?book=1 — стены уже стоят, сразу книга, затем вопрос 4. */
   const STAGE_DEBUG = +((location.search.match(/[?&]stage=(\d)/) || [])[1] || -1);
   const CRAFT_DEBUG = +((location.search.match(/[?&]craft=(\d)/) || [])[1] || 0);
   const EXIT_DEBUG = EXIT && (/[?&]exit=1/.test(location.search) ? "q" : /[?&]craft=boat/.test(location.search) ? "craft" : "");
@@ -578,6 +756,12 @@
     STAGES.filter((st) => st.after <= n).forEach((st) => applyStage(st, true));
     if (n >= QUESTIONS.length) { together = 1; done = true; heartEl.classList.add("on"); startFireflies(); }
     layout();
+  } else if (/[?&]book=1/.test(location.search)) {
+    vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
+    question = 3; step = shown = 3;
+    STAGES.filter((st) => st.after <= 3).forEach((st) => applyStage(st, true));
+    layout(); busy = true;
+    setTimeout(async () => { await showDiaryBook(); busy = false; render(); }, 400);
   } else if (CRAFT_DEBUG >= 2 && stageAfter(CRAFT_DEBUG)) {
     question = CRAFT_DEBUG - 1; step = shown = CRAFT_DEBUG;
     vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
@@ -590,7 +774,7 @@
       busy = false; render();
     }, 500);
   } else {
-    setTimeout(render, 500);
+    setTimeout(showPrologue, 500);
   }
 })();
 </script>
