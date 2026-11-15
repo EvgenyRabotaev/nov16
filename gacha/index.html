@@ -403,6 +403,8 @@
   body.flying #home { pointer-events: none; }
   body.approach #ground { opacity: 1; }
 
+  /* На экране гачи подсказок нет — кнопку HUD прячем. */
+  .qhud-hint, .qhud-panel { display: none !important; }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115f">
 <script src="../common/quest_config.js?v=20261115p2"></script>
