@@ -488,6 +488,7 @@ window.QUEST_CONFIG = {
       HEART_PRIMOS: 2,
       HEART_CAP: 50,
       LANE_MS: 250,
+      WORLD_MS: 22500,
       TOAST: "Сердца собраны"
     }
   },

@@ -6,39 +6,30 @@
 <title>Поездка в Тейват</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%237ad0ff'/%3E%3C/svg%3E">
 <link rel="preload" as="image" href="repo/car.png">
-<link rel="preload" as="image" href="repo/wheel.png">
 <style>
-  /* Переход R.E.P.O.: вид сбоку, три дорожки, Вика за рулём, Женя сзади.
-     После Subnautica, перед Тейватом. Музыка и длительность — TRANSITIONS.REPO_FLIGHT.
-     Отладка: ?fast=1 (30 с), «Пропустить» только в отладке. */
+  /* Переход R.E.P.O.: вид сбоку, три явные дорожки, Вика за рулём, Женя сзади.
+     Фон мира статичен и раз в 20–25 с плавно сменяется. Колёса статичные (уже в car.png).
+     Музыка и длительность — TRANSITIONS.REPO_FLIGHT. Отладка: ?fast=1 (30 с). */
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #07080e; user-select: none; -webkit-user-select: none; touch-action: none; }
   #bgRoot { position: fixed; inset: 0; overflow: hidden; background: #07080e; }
   .world-stack { position: absolute; inset: 0; opacity: 0; transition: opacity 2.5s ease; will-change: opacity; pointer-events: none; }
   .world-stack.on { opacity: 1; }
   html.fast .world-stack { transition-duration: 1.4s; }
-  .strip { position: absolute; left: 0; top: 0; height: 78%; width: 100%; overflow: hidden; }
-  .strip.mid {
-    top: 42%; height: 40%; opacity: .7; filter: brightness(.88) saturate(1.06);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 28%, #000 100%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 28%, #000 100%);
-  }
-  .tile {
-    position: absolute; top: 0; left: 0; height: 100%;
-    background: center / 100% 100% no-repeat;
-    will-change: transform;
-    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 180px), transparent 100%);
-            mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 180px), transparent 100%);
+  .world-bg {
+    position: absolute; inset: 0;
+    background: center / cover no-repeat;
   }
   #vignette {
     position: fixed; inset: 0; z-index: 2; pointer-events: none;
     background: radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,.42) 100%);
   }
   #road {
-    position: fixed; left: 0; right: 0; bottom: 0; height: 42%;
+    position: fixed; left: 0; right: 0; bottom: 0; height: 52%;
     z-index: 3; pointer-events: none;
-    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(8,6,10,.18) 18%, rgba(8,6,10,.42) 100%);
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(8,6,10,.10) 8%, rgba(8,6,10,.42) 100%);
   }
+  #road canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
   #roadFx { position: absolute; inset: 0; width: 100%; height: 100%; }
   #speedFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; }
   #pickups { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
@@ -47,6 +38,13 @@
     font-size: 32px; line-height: 46px; text-align: center;
     filter: drop-shadow(0 0 8px rgba(255, 120, 170, .9));
     will-change: transform; pointer-events: none;
+  }
+  .heart .heart-glyph { display: block; position: relative; z-index: 1; }
+  .heart .heart-glow {
+    position: absolute; left: 50%; top: 72%;
+    width: 78px; height: 24px; margin: 0 0 0 -39px;
+    background: radial-gradient(ellipse, rgba(255, 130, 180, .65) 0%, rgba(255, 200, 120, .25) 42%, transparent 70%);
+    filter: blur(2px); pointer-events: none; z-index: 0;
   }
   .heart.gone { animation: heartPop .28s ease forwards; }
   @keyframes heartPop { to { transform: scale(1.6); opacity: 0; } }
@@ -59,6 +57,7 @@
   #carWrap {
     position: fixed; z-index: 12; left: 0; top: 0;
     pointer-events: none; will-change: transform;
+    transform-origin: 45% 90%;
     opacity: 0;
   }
   #car {
@@ -68,17 +67,6 @@
   }
   #car .body { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none;
     filter: drop-shadow(0 10px 12px rgba(0,0,0,.45)); }
-  .wheel-slot {
-    position: absolute;
-    overflow: hidden;
-    pointer-events: none;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 36%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 36%);
-  }
-  .wheel-slot img {
-    display: block; width: 100%; height: 100%;
-    will-change: transform;
-  }
   #portal {
     position: fixed; z-index: 7; left: 78%; top: 58%;
     width: min(54vw, 420px); height: min(54vw, 420px);
@@ -203,19 +191,13 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115p26"></script>
+<script src="../common/quest_config.js?v=20261115p27"></script>
 <script src="../common/hud.js?v=20261115d" data-screen="repo-flight"></script>
 </head>
 <body>
 <div id="bgRoot">
-  <div class="world-stack on" id="stackA">
-    <div class="strip far"><div class="tile t0"></div><div class="tile t1"></div></div>
-    <div class="strip mid"><div class="tile t0"></div><div class="tile t1"></div></div>
-  </div>
-  <div class="world-stack" id="stackB">
-    <div class="strip far"><div class="tile t0"></div><div class="tile t1"></div></div>
-    <div class="strip mid"><div class="tile t0"></div><div class="tile t1"></div></div>
-  </div>
+  <div class="world-stack on" id="stackA"><div class="world-bg"></div></div>
+  <div class="world-stack" id="stackB"><div class="world-bg"></div></div>
 </div>
 <div id="vignette"></div>
 <div id="road"><canvas id="roadFx"></canvas></div>
@@ -223,8 +205,6 @@
 <div id="carWrap">
   <div id="car">
     <img class="body" src="repo/car.png" alt="Вика за рулём, Женя сзади">
-    <div class="wheel-slot" id="wheelRear"><img src="repo/wheel.png" alt=""></div>
-    <div class="wheel-slot" id="wheelFront"><img src="repo/wheel.png" alt=""></div>
   </div>
 </div>
 <canvas id="speedFx"></canvas>
@@ -264,11 +244,7 @@
   const HEART_KEY = "nov16_repo_hearts";
   const LANE_MS = CFG.LANE_MS || 250;
   const FADE = CFG.FADE_MS || 3000;
-  const OVERLAP = 180;
-  const WHEELS = [
-    { cx: 0.1406, cy: 0.8611, r: 0.0663 },
-    { cx: 0.782, cy: 0.860, r: 0.062 }
-  ];
+  const WORLD_MS = FAST ? 2800 : (CFG.WORLD_MS || 22500);
   const CAR_ASPECT = 1010 / 576;
 
   const ENTER = FAST ? 700 : 2000;
@@ -292,9 +268,6 @@
   let frontStack = stackA, backStack = stackB, curWorld = 0, lastWorldShown = -1, worldFadeTimer = 0;
   const carWrap = document.getElementById("carWrap");
   const carEl = document.getElementById("car");
-  const wheelRear = document.getElementById("wheelRear");
-  const wheelFront = document.getElementById("wheelFront");
-  const wheelImgs = [wheelRear.querySelector("img"), wheelFront.querySelector("img")];
   const portal = document.getElementById("portal");
   const titleCard = document.getElementById("titleCard");
   const veil = document.getElementById("veil");
@@ -317,11 +290,10 @@
   let collected = 0, awardedThisRun = 0;
   let nextSpawn = 0, pickups = [];
   let W = innerWidth, H = innerHeight;
-  let scrollFar = 0, scrollMid = 0, scrollRoad = 0, wheelAngle = 0;
+  let scrollRoad = 0;
   let lane = 1, laneFrom = 1, laneTo = 1, laneT0 = -1, laneVisual = 1;
   let audio = null, audioFailed = false, lastAT = -1;
-  let tileWFar = 1600, tileWMid = 1600;
-  let swipeY0 = null, swipeT0 = 0;
+  let swipeY0 = null, swipeT0 = 0, paused = false;
   let lines = [];
 
   function alreadyAwarded() {
@@ -370,42 +342,25 @@
     W = innerWidth; H = innerHeight;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     [roadCanvas, speedCanvas].forEach((c) => {
-      c.width = Math.round(W * dpr); c.height = Math.round(H * (c === roadCanvas ? 0.42 : 1) * dpr);
+      const frac = (c === roadCanvas ? 0.52 : 1);
+      c.width = Math.round(W * dpr); c.height = Math.round(H * frac * dpr);
       c.style.width = W + "px";
-      c.style.height = (c === roadCanvas ? H * 0.42 : H) + "px";
+      c.style.height = (H * frac) + "px";
       c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
     });
-    const farH = H * 0.78;
-    tileWFar = Math.max(W + OVERLAP + 40, farH * (1600 / 720));
-    tileWMid = Math.max(W + OVERLAP + 40, (H * 0.48) * (1600 / 720) * 1.15);
-    document.querySelectorAll(".strip.far .tile").forEach((el) => { el.style.width = tileWFar + "px"; });
-    document.querySelectorAll(".strip.mid .tile").forEach((el) => { el.style.width = tileWMid + "px"; });
-    layoutWheels();
     seedLines();
   }
   addEventListener("resize", resize);
 
-  function layoutWheels() {
-    [wheelRear, wheelFront].forEach((slot, i) => {
-      const w = WHEELS[i];
-      const size = w.r * 2 * 100;
-      slot.style.left = ((w.cx - w.r) * 100) + "%";
-      slot.style.top = ((w.cy - w.r) * 100) + "%";
-      slot.style.width = size + "%";
-      slot.style.height = (size * CAR_ASPECT) + "%";
-    });
-  }
-
   function setStackWorld(stack, i) {
     const w = WORLDS[i];
-    stack.querySelectorAll(".tile").forEach((el) => {
-      el.style.backgroundImage = "url(" + w.src + ")";
-    });
+    const bg = stack.querySelector(".world-bg");
+    if (bg) bg.style.backgroundImage = "url(" + w.src + ")";
   }
   function worldIndexAt(t) {
-    const span = Math.max(1, T.portalAt - T.enter);
-    const u = Math.max(0, Math.min(0.999, (t - T.enter) / span));
-    return Math.min(WORLDS.length - 1, Math.floor(u * WORLDS.length));
+    if (t < T.enter) return 0;
+    const i = Math.floor((t - T.enter) / WORLD_MS);
+    return Math.min(WORLDS.length - 1, Math.max(0, i));
   }
   function setWorld(i) {
     if (i === lastWorldShown) return;
@@ -429,23 +384,17 @@
     worldFadeTimer = setTimeout(() => { /* keep hidden stack ready */ }, FAST ? 1500 : 2700);
   }
 
-  function placeStrip(strip, scroll, tileW) {
-    const period = Math.max(1, tileW - OVERLAP);
-    const o = ((scroll % period) + period) % period;
-    const t0 = strip.querySelector(".t0");
-    const t1 = strip.querySelector(".t1");
-    t0.style.transform = "translate3d(" + (-o) + "px,0,0)";
-    t1.style.transform = "translate3d(" + (-o + period) + "px,0,0)";
-  }
-
   function lanes() {
-    const roadTop = H * (W < 600 ? 0.62 : 0.58);
-    const roadH = H * (W < 600 ? 0.24 : 0.28);
-    return [
-      { y: roadTop + roadH * 0.18, scale: 0.74, z: 10 },
-      { y: roadTop + roadH * 0.50, scale: 0.88, z: 12 },
-      { y: roadTop + roadH * 0.84, scale: 1.00, z: 15 }
-    ];
+    const top = H * (W < 600 ? 0.53 : 0.51);
+    const bot = H * 0.98;
+    const h = Math.max(80, bot - top);
+    return [0, 1, 2].map((i) => ({
+      y: top + h * ((i + 0.5) / 3),
+      scale: 0.76 + i * 0.12,
+      z: 10 + i * 3,
+      bandTop: top + h * (i / 3),
+      bandBot: top + h * ((i + 1) / 3)
+    }));
   }
   function laneState() {
     let v = laneTo, tilt = 0;
@@ -486,7 +435,7 @@
   }
 
   function carSize() {
-    const cw = Math.min(W * (W < 600 ? 0.62 : 0.38), W < 600 ? 280 : 440);
+    const cw = Math.min(W * (W < 600 ? 0.52 : 0.22), W < 600 ? 210 : 230);
     return { cw, ch: cw / CAR_ASPECT };
   }
   function placeCar(t) {
@@ -534,11 +483,14 @@
     if (pickups.length > 7) return null;
     const el = document.createElement("div");
     el.className = "heart";
-    el.textContent = "♥";
+    el.innerHTML = '<i class="heart-glow" aria-hidden="true"></i><span class="heart-glyph">♥</span>';
     const L = lanes();
     const ln = Math.max(0, Math.min(2, laneIdx == null ? (Math.random() * 3 | 0) : laneIdx));
     const item = { el, kind: "heart", lane: ln, x: x != null ? x : W + 50, taken: false };
-    el.style.zIndex = String(L[ln].z + 1);
+    el.dataset.lane = String(ln);
+    el.style.zIndex = String(Math.max(18, L[ln].z + 8));
+    el.style.transform = "translate3d(" + item.x + "px," + L[ln].y + "px,0) scale(" + L[ln].scale + ")";
+    item.y = L[ln].y;
     lootEl.appendChild(el);
     pickups.push(item);
     return item;
@@ -580,9 +532,10 @@
       const p = pickups[i];
       if (p.taken) { pickups.splice(i, 1); continue; }
       p.x -= roadSpd * dt;
-      const y = L[p.lane].y - 18 * L[p.lane].scale;
+      const y = L[p.lane].y;
       const sc = L[p.lane].scale;
       p.el.style.transform = "translate3d(" + p.x + "px," + y + "px,0) scale(" + sc + ")";
+      p.y = y;
       if (!p.taken && car && Math.abs(car.lane - p.lane) < 0.4 && Math.abs(p.x - car.cx) < Math.max(36, car.cw * 0.18)) {
         collectItem(p, car);
         continue;
@@ -600,34 +553,59 @@
 
   function drawRoad(dt, roadSpd) {
     const ctx = roadCtx;
-    const rh = H * 0.42;
+    const rh = H * 0.52;
+    const origin = H - rh;
     ctx.clearRect(0, 0, W, rh);
     const L = lanes();
     const worldA = WORLDS[curWorld];
-    const y0 = L[0].y - (H - rh) - 22;
-    const y2 = L[2].y - (H - rh) + 28;
-    const grd = ctx.createLinearGradient(0, y0, 0, y2);
-    grd.addColorStop(0, worldA.road[0]);
-    grd.addColorStop(1, worldA.road[1]);
-    ctx.globalAlpha = 0.78;
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, y0, W, Math.max(40, y2 - y0));
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(0, y0, W, 6);
-    ctx.globalAlpha = 1;
+    const yTop = L[0].bandTop - origin;
+    const yBot = L[2].bandBot - origin;
+    /* полотно дороги — три различимые полосы */
     for (let i = 0; i < 3; i++) {
-      const yAbs = L[i].y - (H - rh);
-      ctx.strokeStyle = worldA.dash;
-      ctx.lineWidth = 3 + i;
-      ctx.setLineDash([16 + i * 6, 20 + i * 8]);
-      ctx.lineDashOffset = -scrollRoad * (0.7 + i * 0.15);
-      ctx.beginPath();
-      ctx.moveTo(0, yAbs);
-      ctx.lineTo(W, yAbs);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      const a = L[i].bandTop - origin, b = L[i].bandBot - origin;
+      const grd = ctx.createLinearGradient(0, a, 0, b);
+      grd.addColorStop(0, worldA.road[0]);
+      grd.addColorStop(1, worldA.road[1]);
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, a, W, Math.max(2, b - a));
+      ctx.globalAlpha = (i % 2 === 0) ? 0.06 : 0.22;
+      ctx.fillStyle = "rgba(0,0,0,1)";
+      ctx.fillRect(0, a, W, Math.max(2, b - a));
     }
+    ctx.globalAlpha = 1;
+    /* кромки дороги */
+    ctx.strokeStyle = "rgba(255,255,255,0.28)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(0, yTop); ctx.lineTo(W, yTop); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, yBot); ctx.lineTo(W, yBot); ctx.stroke();
+    /* разделители между тремя полосами (бегут вперёд) */
+    ctx.strokeStyle = worldA.dash;
+    for (let i = 1; i < 3; i++) {
+      const y = L[i].bandTop - origin;
+      ctx.lineWidth = 4;
+      ctx.setLineDash([28, 22]);
+      ctx.lineDashOffset = -scrollRoad * (0.85 + i * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    /* мягкое пятно на полосе под каждым сердечком */
+    pickups.forEach((p) => {
+      if (p.taken) return;
+      const y = L[p.lane].y - origin;
+      const g = ctx.createRadialGradient(p.x, y, 2, p.x, y, 46);
+      g.addColorStop(0, "rgba(255,140,190,0.55)");
+      g.addColorStop(0.45, "rgba(255,180,140,0.22)");
+      g.addColorStop(1, "rgba(255,180,140,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(p.x, y, 36, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
   }
 
   function drawSpeed(dt, roadSpd, inFlight) {
@@ -699,34 +677,28 @@
 
   function frame(ts) {
     if (!lastTs) lastTs = ts;
-    const dt = Math.min(48, ts - lastTs);
+    let dt = Math.min(48, ts - lastTs);
     lastTs = ts;
-    if (audio && !skipped && !audio.paused && !audio.ended && audio.currentTime !== lastAT) {
-      lastAT = audio.currentTime;
-      clock = lastAT * 1000;
-    } else {
-      clock += dt;
+    if (paused) dt = 0;
+    if (!paused) {
+      if (audio && !skipped && !audio.paused && !audio.ended && audio.currentTime !== lastAT) {
+        lastAT = audio.currentTime;
+        clock = lastAT * 1000;
+      } else {
+        clock += dt;
+      }
     }
     if (clock > T.done) clock = T.done;
     const t = clock;
     const roadSpd = (FAST ? 0.38 : 0.22) * Math.max(0.85, W / 390);
     if (t > 80 && t < T.flash) {
       scrollRoad += roadSpd * dt;
-      scrollMid += roadSpd * 0.45 * dt;
-      scrollFar += roadSpd * 0.18 * dt;
-      wheelAngle += (roadSpd * dt) / 18;
     }
     if (t >= T.enter) setWorld(worldIndexAt(t));
     else setWorld(0);
-    placeStrip(frontStack.querySelector(".far"), scrollFar, tileWFar);
-    placeStrip(frontStack.querySelector(".mid"), scrollMid, tileWMid);
-    placeStrip(backStack.querySelector(".far"), scrollFar, tileWFar);
-    placeStrip(backStack.querySelector(".mid"), scrollMid, tileWMid);
     const car = placeCar(t);
     placePortal(t);
     updateLoot(dt, car, roadSpd);
-    wheelImgs[0].style.transform = "rotate(" + wheelAngle + "rad)";
-    wheelImgs[1].style.transform = "rotate(" + wheelAngle + "rad)";
     const inFlight = started && t > 200 && t < T.flash;
     drawRoad(dt, roadSpd);
     drawSpeed(dt, roadSpd, inFlight);
@@ -768,7 +740,7 @@
     audio = new Audio();
     audio.preload = "auto";
     audio.setAttribute("playsinline", "");
-    audio.src = musicSrc + (/[?]/.test(musicSrc) ? "&" : "?") + "v=20261115p26";
+    audio.src = musicSrc + (/[?]/.test(musicSrc) ? "&" : "?") + "v=20261115p27";
     audio.addEventListener("error", () => { audioFailed = true; });
     audio.addEventListener("loadedmetadata", () => {
       if (!FAST && isFinite(audio.duration) && audio.duration > 0) {
@@ -851,6 +823,9 @@
     started: false, done: false, skipped: false, debug: DEBUG, fast: FAST,
     skip: skip, start: start, setLane: setLane,
     spawnHeart: function (ln, x) { return spawnHeart(ln, x); },
+    clearHearts: function () { pickups.forEach((p) => p.el.remove()); pickups = []; lootEl.innerHTML = ""; },
+    lanes: lanes, worldMs: WORLD_MS,
+    pause: function (v) { paused = v !== false; if (!paused) lastTs = 0; },
     music: !!musicSrc
   };
 
@@ -866,7 +841,7 @@
     start();
   }
 
-  const preload = WORLDS.map((w) => w.src).concat(["repo/car.png", "repo/wheel.png"]);
+  const preload = WORLDS.map((w) => w.src).concat(["repo/car.png"]);
   Promise.all(preload.map((src) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = src; }))).then(() => setTimeout(begin, 80));
 })();
 </script>
