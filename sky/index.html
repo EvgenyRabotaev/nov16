@@ -107,7 +107,7 @@
   #heartSummary.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115p28"></script>
+<script src="../common/quest_config.js?v=20261115p29"></script>
 <script src="../common/hud.js?v=20261115d" data-screen="sky" data-counter="off"></script>
 </head>
 <body>
@@ -163,12 +163,31 @@
   }
   addEventListener("resize", layout); layout();
 
-  /* ---------- руление: мышь / палец двигают пару влево-вправо ---------- */
-  const steer = { target: 0, off: 0, vel: 0, lastInput: -1e9, enabled: false };
+  /* ---------- руление: мышь / палец (горизонталь) и клавиатура (стрелки, WASD) ---------- */
+  const steer = {
+    target: 0, off: 0, vel: 0, lastInput: -1e9, enabled: false,
+    x: 0, y: 0, vx: 0, vy: 0,
+    keys: { l: false, r: false, u: false, d: false }
+  };
   function inputAt(x) { steer.target = Math.max(-1, Math.min(1, (x / W) * 2 - 1)); steer.lastInput = performance.now(); }
   addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" || e.buttons || e.pressure > 0) inputAt(e.clientX); }, { passive: true });
   addEventListener("pointerdown", (e) => { getHeartAc(); if (!e.target.closest || !e.target.closest(".qhud-next, .qhud-btn, .qhud, .skip")) inputAt(e.clientX); }, { passive: true });
   addEventListener("touchmove", (e) => { if (e.touches[0]) inputAt(e.touches[0].clientX); }, { passive: true });
+  function onKey(e, down) {
+    const k = e.key;
+    let hit = false;
+    if (k === "ArrowLeft" || k === "a" || k === "A") { steer.keys.l = down; hit = true; }
+    if (k === "ArrowRight" || k === "d" || k === "D") { steer.keys.r = down; hit = true; }
+    if (k === "ArrowUp" || k === "w" || k === "W") { steer.keys.u = down; hit = true; }
+    if (k === "ArrowDown" || k === "s" || k === "S") { steer.keys.d = down; hit = true; }
+    if (hit) {
+      if (e.preventDefault) e.preventDefault();
+      if (down) steer.lastInput = performance.now();
+    }
+  }
+  addEventListener("keydown", (e) => onKey(e, true));
+  addEventListener("keyup", (e) => onKey(e, false));
+  addEventListener("blur", () => { steer.keys.l = steer.keys.r = steer.keys.u = steer.keys.d = false; });
   document.documentElement.style.touchAction = "none";
 
   /* ---------- разнообразие на длинном полёте: порывы, смена оттенков, кольца света, рои искр ---------- */
@@ -267,16 +286,18 @@
 
   /* ---------- сердечки ---------- */
   const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 2;
-  const HEART_EVERY = CFG.HEART_EVERY_MS || 2500;
-  const HEART_JITTER = CFG.HEART_JITTER_MS != null ? CFG.HEART_JITTER_MS : 500;
-  const HEART_FALL = CFG.HEART_FALL_MS || 5200;
+  const HEART_EVERY = CFG.HEART_EVERY_MS || 850;
+  const HEART_JITTER = CFG.HEART_JITTER_MS != null ? CFG.HEART_JITTER_MS : 150;
+  const HEART_FALL = CFG.HEART_FALL_MS || 3000;
   const HEART_START = CFG.HEART_START_MS != null ? CFG.HEART_START_MS : 800;
+  const HEART_LANES = CFG.HEART_LANES || 5;
+  const HEART_DOUBLE_EVERY = CFG.HEART_DOUBLE_EVERY || 4;
   const HEART_AWARD = CFG.AWARD_ID || "sky-hearts";
   const heartLayer = document.getElementById("heartLayer");
   const heartHud = document.getElementById("heartHud");
   const heartCountEl = document.getElementById("heartCount");
   const heartSummary = document.getElementById("heartSummary");
-  let heartPlan = [];   /* { t, lane } lane: -1|0|1 */
+  let heartPlan = [];   /* { t, lane } lane: 0..HEART_LANES-1 */
   let hearts = [];      /* live */
   let nextPlanI = 0, caught = 0, awarded = false, skippedFull = false;
   let heartAudio = null;
@@ -287,12 +308,16 @@
     const end = T.flyEnd - Math.min(HEART_FALL * 0.75, 4000);
     const plan = [];
     let t = start, i = 0;
+    const span = HEART_JITTER * 2 + 1;
     while (t <= end) {
-      /* детерминированный джиттер 2–3 с, чтобы пропуск давал тот же максимум */
-      const span = HEART_JITTER * 2 + 1;
+      /* детерминированный джиттер 0.7–1 с; иногда второе сердце в другом ряду — тот же максимум при пропуске */
       const j = HEART_JITTER ? ((i * 17 + 11) % span) - HEART_JITTER : 0;
-      const lane = ((i * 5 + 2) % 3) - 1;
+      const lane = (i * 3 + 1) % HEART_LANES;
       plan.push({ t: t, lane: lane });
+      if (HEART_DOUBLE_EVERY > 0 && i % HEART_DOUBLE_EVERY === HEART_DOUBLE_EVERY - 1) {
+        const lane2 = (lane + 2 + (i % 2)) % HEART_LANES;
+        if (lane2 !== lane) plan.push({ t: t, lane: lane2 });
+      }
       t += HEART_EVERY + j;
       i++;
     }
@@ -352,8 +377,10 @@
   }
 
   function laneX(lane) {
-    const span = Math.min(W * 0.28, Math.max(90, W * 0.22));
-    return W / 2 + lane * span;
+    const n = Math.max(1, HEART_LANES);
+    const pad = Math.max(28, W * (portrait ? 0.10 : 0.07));
+    const usable = Math.max(1, W - pad * 2);
+    return pad + usable * ((lane + 0.5) / n);
   }
 
   function popHeart(h, silent) {
@@ -445,31 +472,86 @@
     /* руление: только в полёте; в начале и при посадке — к центру */
     const inFlight = !skipped && t > T.enter + 300 && t < T.flyEnd;
     steer.enabled = inFlight;
-    const idle = performance.now() - steer.lastInput > 2500;
-    let tgt = inFlight ? (idle ? Math.sin(t / 2600) * 0.35 + Math.sin(t / 1100) * 0.08 : steer.target) : 0;
-    const prev = steer.off;
-    steer.off += (tgt - steer.off) * Math.min(1, rdt * 0.0032);
-    steer.vel = (steer.off - prev) / Math.max(1, rdt);
+    const pw = portrait ? Math.min(W * 0.74, 440) : Math.min(W * 0.36, H * 0.62 / PAIR_AR, 620);
+    const ph = pw * PAIR_AR;
+    const cyFly = portrait ? H * 0.70 : H * 0.67;
+    const maxX = Math.max(0, W / 2 - pw * 0.5 - 12);
+    const maxYUp = Math.max(0, cyFly - ph * 0.5 - 12);
+    const maxYDn = Math.max(0, H - cyFly - ph * 0.5 - 12);
+    const keyX = (steer.keys.r ? 1 : 0) - (steer.keys.l ? 1 : 0);
+    const keyY = (steer.keys.d ? 1 : 0) - (steer.keys.u ? 1 : 0);
+    const keying = !!(keyX || keyY);
+    const idle = !keying && performance.now() - steer.lastInput > 2500;
+    const maxVx = W * 0.00105, maxVy = H * 0.00095;
+    const accX = maxVx * 0.008, accY = maxVy * 0.008;
+    const damp = Math.pow(0.06, rdt / 160);
+    if (inFlight && keyX) {
+      steer.vx += keyX * accX * rdt;
+      steer.lastInput = performance.now();
+    } else {
+      steer.vx *= damp;
+    }
+    if (inFlight && keyY) {
+      steer.vy += keyY * accY * rdt;
+      steer.lastInput = performance.now();
+    } else {
+      steer.vy *= damp;
+    }
+    steer.vx = Math.max(-maxVx, Math.min(maxVx, steer.vx));
+    steer.vy = Math.max(-maxVy, Math.min(maxVy, steer.vy));
+    if (inFlight && keying) {
+      steer.x += steer.vx * rdt;
+      steer.y += steer.vy * rdt;
+      if (keyX) steer.target = maxX ? (steer.x / maxX) : 0;
+    } else if (inFlight && !idle) {
+      const tgtX = steer.target * maxX;
+      const prevX = steer.x;
+      steer.x += (tgtX - steer.x) * Math.min(1, rdt * 0.004);
+      steer.vx = (steer.x - prevX) / Math.max(1, rdt);
+    } else if (inFlight && idle) {
+      const tgtX = (Math.sin(t / 2600) * 0.35 + Math.sin(t / 1100) * 0.08) * maxX;
+      const prevX = steer.x;
+      steer.x += (tgtX - steer.x) * Math.min(1, rdt * 0.0022);
+      steer.vx = (steer.x - prevX) / Math.max(1, rdt);
+    } else {
+      steer.x += (0 - steer.x) * Math.min(1, rdt * 0.0032);
+      steer.y += (0 - steer.y) * Math.min(1, rdt * 0.0032);
+      steer.vx = 0; steer.vy = 0;
+    }
+    steer.x = Math.max(-maxX, Math.min(maxX, steer.x));
+    steer.y = Math.max(-maxYUp, Math.min(maxYDn, steer.y));
+    const prevOff = steer.off;
+    steer.off = maxX ? (steer.x / maxX) : 0;
+    steer.vel = (steer.off - prevOff) / Math.max(1, rdt);
     vp.x = vp.x0 - steer.off * W * 0.03;
     bg.style.transform = "translateX(" + (-steer.off * W * 0.02) + "px) scale(" + (1.0 + 0.14 * easeIO(clamp(t / T.landEnd))) + ")";
     drawFx(t, dt, flow);
 
-    const pw = portrait ? Math.min(W * 0.9, 520) : Math.min(W * 0.36, H * 0.62 / PAIR_AR, 620);
-    const ph = pw * PAIR_AR;
-    const cyFly = portrait ? H * 0.64 : H * 0.6;
-    const range = Math.max(0, Math.min(W * 0.3, (W - pw) / 2 + pw * 0.12));     /* дальность руления */
-    let cx = W / 2 + steer.off * range, cy, sc = 1, rot = 0, op = 1;
-    const bank = Math.max(-12, Math.min(12, steer.vel * 9000)) + steer.off * 4;     /* крен по скорости */
+    let cx = W / 2 + steer.x, cy, sc = 1, rot = 0, op = 1;
+    const bank = Math.max(-12, Math.min(12, steer.vel * 9000)) + steer.off * 4;
     const isl = { w: portrait ? Math.min(W * 0.82, 420) : Math.min(W * 0.34, H * 0.62 / ISL_AR, 600) };
     isl.h = isl.w * ISL_AR; isl.cx = W / 2; isl.cy = portrait ? H * 0.38 : H * 0.42;
     if (t < T.enter) { const e = easeOut(clamp(t / T.enter)); cy = H + ph * 0.8 + (cyFly - H - ph * 0.8) * e; sc = 1.25 - 0.25 * e; op = clamp(t / 500); }
-    else if (t < T.flyEnd) { const u = t - T.enter; cy = cyFly + Math.sin(u / 900) * H * 0.018 + Math.abs(steer.off) * H * 0.02; rot = Math.sin(u / 1300) * 2.2 + bank; }
+    else if (t < T.flyEnd) { const u = t - T.enter; cy = cyFly + steer.y + Math.sin(u / 900) * H * 0.018; rot = Math.sin(u / 1300) * 2.2 + bank; }
     else {
       const e = easeIO(clamp((t - T.flyEnd) / (T.landEnd - T.flyEnd)));
       const tx = isl.cx - isl.w * 0.02, ty = isl.cy - isl.h * 0.2;
-      const u = t - T.enter; const y0 = cyFly + Math.sin(u / 900) * H * 0.018 * (1 - e);
-      const x0 = W / 2 + steer.off * range;
+      const u = t - T.enter; const y0 = cyFly + steer.y * (1 - e) + Math.sin(u / 900) * H * 0.018 * (1 - e);
+      const x0 = W / 2 + steer.x * (1 - e);
       cx = x0 + (tx - x0) * e; cy = y0 + (ty - y0) * e; sc = 1 - 0.8 * e; rot = (Math.sin(u / 1300) * 2.2 + bank) * (1 - e);
+    }
+    /* зажим с учётом поворота и дрожания, чтобы пара оставалась на экране */
+    if (t >= T.enter && t < T.flyEnd) {
+      const rad = Math.abs(rot) * Math.PI / 180;
+      const hw = pw * sc * 0.5, hh = ph * sc * 0.5;
+      const aabbW = hw * Math.cos(rad) + hh * Math.sin(rad);
+      const aabbH = hw * Math.sin(rad) + hh * Math.cos(rad);
+      const pad = 18;
+      cx = Math.max(aabbW + pad, Math.min(W - aabbW - pad, cx));
+      cy = Math.max(aabbH + pad, Math.min(H - aabbH - pad, cy));
+      steer.x = cx - W / 2;
+      const bob = Math.sin((t - T.enter) / 900) * H * 0.018;
+      steer.y = cy - cyFly - bob;
     }
     const flutter = 1 + Math.sin(t / 260) * 0.012;
     pairWrap.style.width = pw + "px"; pairWrap.style.opacity = op;
@@ -498,13 +580,14 @@
       showHeartSummary();
       if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше"); }
     }
-    window.__sky.t = t; window.__sky.cx = cx; window.__sky.rot = rot;
+    window.__sky.t = t; window.__sky.cx = cx; window.__sky.cy = cy; window.__sky.rot = rot; window.__sky.cyFly = cyFly;
     requestAnimationFrame(frame);
   }
   window.__sky = { t: 0, done: false, T, speed: SPEED, steer, music: !!audio, audio, skipped: false,
     get caught() { return caught; }, get planned() { return heartPlan.length; },
     get awarded() { return awarded; }, hearts: hearts, skip: function () { skip(); },
-    playHeartSound: playHeartSound };
+    lanes: HEART_LANES, fallMs: HEART_FALL, everyMs: HEART_EVERY, primos: HEART_PRIMOS,
+    laneX: laneX, playHeartSound: playHeartSound };
   /* «Пропустить»: остров быстро подлетает, пара к центру и садится, музыка гаснет — ~3.6 с, потом «Дальше» */
   const skipBtn = document.getElementById("skipBtn");
   function skip() {

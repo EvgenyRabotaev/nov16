@@ -384,12 +384,14 @@ window.QUEST_CONFIG = {
     RISE_MS: 2600,
     LAND_MS: 2600,
     FADE_MS: 3000,
-    /* Сердечки в полёте: ловятся парой (мышь/палец). За пропуск начисляется полный максимум. */
+    /* Сердечки в полёте: 5 рядов, ловятся парой (мышь/палец/стрелки). За пропуск — полный максимум. */
     HEART_PRIMOS: 2,
-    HEART_EVERY_MS: 2500,
-    HEART_JITTER_MS: 500,
-    HEART_FALL_MS: 5200,
+    HEART_EVERY_MS: 850,
+    HEART_JITTER_MS: 150,
+    HEART_FALL_MS: 3000,
     HEART_START_MS: 800,
+    HEART_LANES: 5,
+    HEART_DOUBLE_EVERY: 4,
     AWARD_ID: "sky-hearts",
     HEART_SUMMARY: "Собрано сердечек: {n}, +{x} примогемов"
   },

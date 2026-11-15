@@ -245,23 +245,30 @@
       bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 12px));
       left: 50%;
       width: min(560px, calc(100% - 32px));
-      max-height: min(280px, 34dvh);
-      padding: 12px 16px;
+      max-height: min(46dvh, 400px);
+      height: auto;
+      overflow: hidden;
+      padding: 10px 14px;
       border-radius: 16px;
       transform: translate(-50%, 18px);
       box-shadow: 0 12px 36px rgba(0, 4, 12, .55), 0 0 0 1px rgba(255,255,255,.04) inset;
+      scrollbar-width: none;
     }
+    .pda.q-pop::-webkit-scrollbar { display: none; width: 0; height: 0; }
     .pda.q-pop.on { transform: translate(-50%, 0) scale(1); opacity: 1; }
     .pda.q-pop { background: #071820; }
-    .pda.q-pop .pda-kicker { margin-bottom: 4px; }
-    .pda.q-pop .pda-title { font-size: 15px; margin-bottom: 6px; }
+    .pda.q-pop .pda-kicker { margin-bottom: 2px; }
+    .pda.q-pop .pda-title { font-size: 14px; margin-bottom: 4px; }
     .pda.q-pop .q-text {
-      margin-bottom: 8px; min-height: 0; flex: 1 1 auto;
-      overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-      font-size: 14px; line-height: 1.4;
+      margin-bottom: 8px; min-height: 0; flex: 0 0 auto;
+      overflow: hidden;
+      font-size: 13.5px; line-height: 1.35;
     }
-    .pda.q-pop .pda-btn { width: 100%; }
-    .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; }
+    .ans-block {
+      display: flex; flex-direction: row; flex-wrap: wrap;
+      gap: 8px; align-items: stretch; margin: 0; flex: 0 0 auto;
+    }
+    .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0; flex: 1 1 160px; min-width: 0; }
     .ans-input {
       width: 100%; padding: 10px 12px; border-radius: 8px;
       border: 1px solid rgba(160, 220, 240, .42); background: rgba(4, 18, 28, .85);
@@ -271,18 +278,24 @@
     .ans-input.ok { border-color: #8ee8c8; }
     .ans-input.bad { animation: qshake .38s ease; }
     @keyframes qshake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
-    .ans-msg { min-height: 18px; margin: 0 0 10px; font-size: 14px; color: #f0c060; }
+    .pda.q-pop .ans-block .pda-btn {
+      width: auto; flex: 0 0 auto; align-self: flex-end;
+      padding: 10px 16px; white-space: nowrap;
+    }
+    .ans-msg { min-height: 0; margin: 6px 0 0; font-size: 13px; color: #f0c060; }
+    .ans-msg:empty { display: none; margin: 0; }
     .ans-msg.ok { color: #8ee8c8; }
     @media (max-width: 600px) {
       .pda { width: min(420px, calc(100vw - 24px)); padding: 14px 14px 12px; }
-      .pda-text, .pda.q-pop .q-text { font-size: 14px; line-height: 1.4; }
+      .pda-text, .pda.q-pop .q-text { font-size: 13px; line-height: 1.35; }
       .pda.q-pop {
-        max-height: min(260px, 32dvh);
-        padding: 10px 14px;
+        max-height: min(46dvh, 400px);
+        padding: 10px 12px;
       }
     }
     @media (min-width: 900px) {
-      .pda.q-pop { width: min(640px, calc(100% - 32px)); max-height: min(250px, 31dvh); }
+      .pda.q-pop { width: min(640px, calc(100% - 32px)); max-height: min(40dvh, 360px); }
+      .pda.q-pop .q-text { font-size: 14px; line-height: 1.4; }
     }
     /* На узком экране карточка оставляет правый нижний угол для счётчика и подсказки */
     @media (max-width: 900px) {
@@ -718,7 +731,7 @@
 
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p28"></script>
+<script src="../common/quest_config.js?v=20261115p29"></script>
 <script src="../common/hud.js?v=20261115j" data-screen="subnautica"></script>
 <style>
   /* HUD остаётся в нижнем углу; карточка сама оставляет ему место */
@@ -797,9 +810,11 @@
       <div class="pda-kicker" id="qKicker">КПК</div>
       <div class="pda-title" id="qTitle">Вопрос</div>
       <div class="pda-text q-text" id="qText"></div>
-      <div class="ans-inputs" id="answerInputs"></div>
+      <div class="ans-block">
+        <div class="ans-inputs" id="answerInputs"></div>
+        <button class="pda-btn" id="answerBtn" type="button">Ответить</button>
+      </div>
       <div class="ans-msg" id="ansMsg" aria-live="polite"></div>
-      <button class="pda-btn" id="answerBtn" type="button">Ответить</button>
     </div>
 
     <div id="radioTune" aria-hidden="true">
@@ -1415,6 +1430,15 @@
       if (hud) {
         const w = Math.ceil(hud.getBoundingClientRect().width) || 168;
         document.documentElement.style.setProperty("--qhud-w", w + "px");
+      }
+      const text = document.getElementById("qText");
+      if (on && qPop && text) {
+        text.style.fontSize = "";
+        for (let i = 0; i < 8; i++) {
+          if (qPop.scrollHeight <= qPop.clientHeight + 1) break;
+          const fs = Math.max(12, (parseFloat(getComputedStyle(text).fontSize) || 14) - 0.5);
+          text.style.fontSize = fs + "px";
+        }
       }
     }
     function hideQuestion() {
