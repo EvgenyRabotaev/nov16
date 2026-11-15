@@ -28,6 +28,7 @@
   animation: qhud-float 1.4s ease-out forwards; pointer-events: none;
 }
 @keyframes qhud-float { from { opacity: 0; transform: translateY(6px); } 20% { opacity: 1; } to { opacity: 0; transform: translateY(-26px); } }
+.qhud-hint[hidden] { display: none !important; }
 .qhud-hint {
   appearance: none; cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px;

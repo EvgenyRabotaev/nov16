@@ -81,8 +81,27 @@
   }
   function reset() { lsDel(KEY); lsDel(AKEY); render(null); }
 
+  function isPlaceholderHint(t) {
+    t = String(t || "").trim();
+    return !t || t === "Подсказка появится позже";
+  }
+  function rawHint() {
+    var k = screenId + ":" + step;
+    if (Object.prototype.hasOwnProperty.call(HINTS, k)) return HINTS[k];
+    if (Object.prototype.hasOwnProperty.call(HINTS, screenId)) return HINTS[screenId];
+    if (Object.prototype.hasOwnProperty.call(HINTS, "DEFAULT")) return HINTS.DEFAULT;
+    return "";
+  }
   function hintText() {
-    return HINTS[screenId + ":" + step] || HINTS[screenId] || HINTS.DEFAULT || "Подсказка появится позже";
+    var t = rawHint();
+    return isPlaceholderHint(t) ? "" : t;
+  }
+  function hasHint() { return !!hintText(); }
+  function syncHintBtn() {
+    if (!btn) return;
+    var ok = hasHint();
+    btn.hidden = !ok;
+    if (!ok) close();
   }
   function nextUrl() {
     var n = FLOW[idx + 1];
@@ -183,6 +202,7 @@
     panelText = root.querySelector(".qhud-panel-text");
     if (script && script.dataset.counter === "off") counter.style.display = "none";
 
+    syncHintBtn();
     btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
     root.querySelector(".qhud-close").addEventListener("click", function (e) { e.stopPropagation(); close(); });
     panel.addEventListener("click", function (e) { e.stopPropagation(); });
@@ -196,7 +216,12 @@
     setTimeout(layout, 300);
   }
 
-  function open() { panelText.textContent = hintText(); panel.hidden = false; root.classList.add("qhud--open"); }
+  function open() {
+    if (!hasHint()) { syncHintBtn(); return; }
+    panelText.textContent = hintText();
+    panel.hidden = false;
+    root.classList.add("qhud--open");
+  }
   function close() { if (!panel) return; panel.hidden = true; root.classList.remove("qhud--open"); }
   function toggle() { if (panel.hidden) open(); else close(); }
 
@@ -299,13 +324,20 @@
     screen: screenId, theme: theme, root: ROOT,
     getPrimos: getPrimos, setPrimos: setPrimos, addPrimos: addPrimos, spend: spend,
     award: award, awards: awards, reset: reset,
-    setStep: function (s) { step = s || ""; if (panel && !panel.hidden) panelText.textContent = hintText(); },
+    setStep: function (s) {
+      step = s || "";
+      syncHintBtn();
+      if (panel && !panel.hidden) {
+        if (hasHint()) panelText.textContent = hintText();
+        else close();
+      }
+    },
     getStep: function () { return step; },
-    hintText: hintText, openHint: function () { build(); open(); }, closeHint: close,
+    hintText: hintText, hasHint: hasHint, openHint: function () { build(); open(); }, closeHint: close,
     newGame: function () { newGame(); render(null); },
     next: next, nextUrl: nextUrl, showNext: showNext, hideNext: hideNext,
     watchMap: watchMap, placeOutside: placeOutside, layout: layout,
-    setVisible: function (v) { build(); root.style.display = v ? "" : "none"; if (!v) close(); render(null); if (v) layout(); },
+    setVisible: function (v) { build(); root.style.display = v ? "" : "none"; if (!v) close(); render(null); if (v) { syncHintBtn(); layout(); } },
     refresh: function (delta) { render(delta || null); },
     normalize: norm, checkPart: checkPart, checkAnswer: checkAnswer, getQuestion: getQuestion,
     answerText: function (k) { return (CFG.ANSWER_TEXT || {})[k] || ""; }

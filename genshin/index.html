@@ -373,9 +373,9 @@
     .fairy { width: min(160px, 32vw, 38vh); bottom: calc(36vh + env(safe-area-inset-bottom, 0px)); }
   }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115k">
-<script src="../common/quest_config.js?v=20261115p32"></script>
-<script src="../common/hud.js?v=20261115k" data-screen="genshin"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115m">
+<script src="../common/quest_config.js?v=20261115p33"></script>
+<script src="../common/hud.js?v=20261115m" data-screen="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -417,7 +417,7 @@
 <div class="note" id="note">
   <div class="note-card">
     <div class="note-kicker" id="noteKicker">Записка</div>
-    <div class="note-text" id="noteText">Заглушка: записка</div>
+    <div class="note-text" id="noteText"></div>
     <button class="btn" id="noteBtn" type="button">Дальше</button>
   </div>
 </div>
@@ -597,7 +597,7 @@
       el.dataset.id = w.id;
       pinAt(el, w.x, w.y);
       el.innerHTML = '<div class="wp-glyph"><div class="beam"></div></div><div class="pin-name"></div>';
-      el.querySelector(".pin-name").textContent = w.name || ("Место " + (i + 1));
+      el.querySelector(".pin-name").textContent = w.name || (spotOne(true) + " " + (i + 1));
       if (i === wi && !locReady) el.addEventListener("click", (e) => { e.stopPropagation(); onWaypointTap(i); });
       pins.appendChild(el);
       if (w.chest && (openedChests[w.id] || (i === wi && mode === "chest"))) {
@@ -840,7 +840,7 @@
     const el = pins.querySelector('[data-chest="' + p.id + '"]');
     if (el) el.classList.add("open");
     openedChests[p.id] = true;
-    setTimeout(() => showNote("Записка", p.chest.text || "Заглушка: записка", () => {
+    setTimeout(() => showNote("Записка", p.chest.text || "", () => {
       renderPins();
       if (p.cook && !cooked) beginCook();
       else markLocationReady();
@@ -848,14 +848,14 @@
   }
   function openCommission(c) {
     if (!c || doneCommissions[c.id] || (mode !== "map" && mode !== "chest")) return;
-    showNote(c.name || spotOne(true), c.text || "Заглушка: записка", () => {
+    showNote(c.name || spotOne(true), c.text || "", () => {
       doneCommissions[c.id] = true;
       renderPins();
     });
   }
   function showNote(kicker, text, after) {
     noteKicker.textContent = kicker || "Записка";
-    noteText.textContent = text || "Заглушка: записка";
+    noteText.textContent = text || "";
     noteAfter = after || null;
     note.classList.add("on");
     setFlags();
@@ -931,7 +931,7 @@
     const ok = recipe.length && recipe.length === have.length && recipe.every((id, i) => id === have[i]);
     if (ok) {
       cooked = true;
-      cookHint.textContent = COOKING.result || "Заглушка: блюдо";
+      cookHint.textContent = COOKING.result || "";
       const line = (COOKING.comments && COOKING.comments.success) || "Ура-а!";
       setTimeout(() => {
         cook.classList.remove("on");
