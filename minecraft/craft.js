@@ -201,7 +201,7 @@
     gold_ingot: "Золотой слиток", diamond: "Алмаз", book: "Книга", torch: "Факел",
     red_dye: "Красный краситель", yellow_dye: "Жёлтый краситель", red_room: "Красная комната"
   };
-  const RED_IDS = ["red_wool", "red_dye", "red_concrete"];
+  const RED_IDS = ["red_wool", "red_dye"]; /* бетон — только обманка */
 
   /* Рецепты (форма может стоять в любом месте сетки, как в игре). */
   const RECIPES = {
@@ -216,7 +216,7 @@
       inv: [
         ["log", 4], ["planks", 8], ["glass", 8], ["cobblestone", 16], ["torch", 8], ["iron_ingot", 6],
         ["red_wool", 16], ["gold_ingot", 4], ["diamond", 2], ["book", 4], ["wool", 6], ["blue_wool", 4],
-        ["red_dye", 4], ["yellow_wool", 4], ["black_wool", 4], ["stick", 8], ["pink_wool", 4], ["red_concrete", 8]
+        ["red_dye", 16], ["yellow_wool", 4], ["black_wool", 4], ["stick", 8], ["pink_wool", 4], ["red_concrete", 16]
       ]
     }
   };
