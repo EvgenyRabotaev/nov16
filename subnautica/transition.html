@@ -333,7 +333,7 @@
     }
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p13"></script>
+<script src="../common/quest_config.js?v=20261115p14"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
 </head>
 <body>
@@ -404,7 +404,7 @@
     const params = new URLSearchParams(location.search);
     const AUTO = params.get("auto") === "1";
     const FAST = params.get("fast") === "1";
-    const Q_DEBUG = params.get("q") === "1" || params.get("question") === "1";
+    const Q_DEBUG = Math.max(0, parseInt(params.get("q") || params.get("question") || "", 10) || 0);
     const START_LOC = (() => {
       const n = parseInt(params.get("loc") || "", 10);
       return Number.isFinite(n) ? Math.max(0, Math.min(6, n)) : 0;
@@ -428,7 +428,7 @@
     let o2Last = 0, o2WarnShown = false;
     let scanned = {};
     let pdaAfter = null;
-    let repairDone = false, radioDone = false, photoDone = false, leviDone = false, leviQDone = false;
+    let repairDone = false, radioDone = false, photoDone = false, leviDone = false, leviQDone = false, heartQDone = false;
     let airTimer = 0, o2Raf = 0, faunaRaf = 0, leviRaf = 0;
     let faunaState = [];
     let images = [];
@@ -839,17 +839,24 @@
     const ansMsg = document.getElementById("ansMsg");
     const answerBtn = document.getElementById("answerBtn");
 
+    function subQuestions() { return (CFG.QUESTIONS && CFG.QUESTIONS.subnautica) || []; }
+    function subQuestion(id) { return subQuestions().find((q) => q.id === id) || null; }
     function leviQuestion() {
-      const id = (SUB.LEVIATHAN && SUB.LEVIATHAN.question) || "";
-      const list = (CFG.QUESTIONS && CFG.QUESTIONS.subnautica) || [];
-      if (id) return list.find((q) => q.id === id) || null;
-      return list[0] || null;
+      const id = (SUB.LEVIATHAN && SUB.LEVIATHAN.question) || "sn-who";
+      return subQuestion(id) || subQuestions()[0] || null;
     }
+    function heartLoc() { return (SUB.HEART && SUB.HEART.loc != null) ? SUB.HEART.loc : (LOCS.length - 1); }
+    function heartQuestion() {
+      const id = (SUB.HEART && SUB.HEART.question) || "sn-maomao";
+      return subQuestion(id);
+    }
+    let currentQ = null;
     function hideQuestion() {
       if (qPop) qPop.classList.remove("on");
     }
-    function showLeviQuestion(q) {
-      if (!q || !qPop) { afterLeviQuestion(); return; }
+    function showLeviQuestion(q, step) {
+      if (!q || !qPop) { afterQuestion(q); return; }
+      currentQ = q;
       setReady(false);
       if (qKicker) qKicker.textContent = "КПК";
       if (qTitle) qTitle.textContent = "Вопрос";
@@ -871,17 +878,23 @@
       }
       if (answerBtn) answerBtn.disabled = false;
       qPop.classList.add("on");
-      if (window.QuestHUD) QuestHUD.setStep("levi-q");
+      if (window.QuestHUD) QuestHUD.setStep(step || (q && q.id === (heartQuestion() && heartQuestion().id) ? "q2" : "levi-q"));
       const first = answerInputs && answerInputs.querySelector("input");
       if (first) setTimeout(() => first.focus({ preventScroll: true }), 250);
     }
-    function afterLeviQuestion() {
+    function afterLeviQuestion() { afterQuestion(leviQuestion()); }
+    function afterQuestion(q) {
       hideQuestion();
+      currentQ = null;
+      if (q && heartQuestion() && q.id === heartQuestion().id) {
+        setReady(true);
+        return;
+      }
       const L = SUB.LEVIATHAN || {};
       showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => setReady(true));
     }
     function submitLeviQuestion() {
-      const q = leviQuestion();
+      const q = currentQ || leviQuestion();
       if (!q || !qPop || !qPop.classList.contains("on")) return;
       const inputs = [...(answerInputs ? answerInputs.querySelectorAll(".ans-input") : [])];
       const values = inputs.map((el) => el.value);
@@ -899,11 +912,12 @@
         }
         return;
       }
-      if (ansMsg) { ansMsg.className = "ans-msg ok"; ansMsg.textContent = (window.QuestHUD && QuestHUD.answerText("correct")) || "Верно"; }
+      if (ansMsg) { ansMsg.className = "ans-msg ok"; ansMsg.textContent = q.success || (window.QuestHUD && QuestHUD.answerText("correct")) || "Верно"; }
       if (answerBtn) answerBtn.disabled = true;
-      leviQDone = true;
-      if (window.QuestHUD) QuestHUD.award(q.id || "sn-who", q.placeholder ? 0 : (q.primos != null ? q.primos : undefined));
-      setTimeout(afterLeviQuestion, FAST ? 250 : 650);
+      if (heartQuestion() && q.id === heartQuestion().id) heartQDone = true;
+      else leviQDone = true;
+      if (window.QuestHUD) QuestHUD.award(q.id || "sn-q", q.placeholder ? 0 : (q.primos != null ? q.primos : undefined));
+      setTimeout(() => afterQuestion(q), FAST ? 250 : 650);
     }
     if (answerBtn) answerBtn.addEventListener("click", (e) => { e.stopPropagation(); submitLeviQuestion(); });
 
@@ -1291,10 +1305,12 @@
       const needRadio = SUB.RADIO && i === SUB.RADIO.loc && !radioDone;
       const needLevi = SUB.LEVIATHAN && i === SUB.LEVIATHAN.loc && !leviDone;
       const needLeviQ = SUB.LEVIATHAN && i === SUB.LEVIATHAN.loc && leviDone && !leviQDone && leviQuestion();
+      const needHeartQ = i === heartLoc() && !heartQDone && heartQuestion();
       if (needRepair) startRepair();
       else if (needRadio) startRadio();
       else if (needLevi) startLeviathan();
-      else if (needLeviQ) showLeviQuestion(leviQuestion());
+      else if (needLeviQ) showLeviQuestion(leviQuestion(), "levi-q");
+      else if (needHeartQ) showLeviQuestion(heartQuestion(), "q2");
       else setReady(true);
       /* Фото на 500 м убрано (15.11): локация остаётся, шаг со снимком больше не запускается. */
       document.documentElement.dataset.index = String(i);
@@ -1307,6 +1323,7 @@
         leviDone = true; leviQDone = true;
         hideBtn.classList.remove("show"); cover.classList.remove("on"); hideQuestion();
       }
+      if (index === heartLoc() && !heartQDone) { heartQDone = true; hideQuestion(); }
       pda.classList.remove("on");
       setReady(true);
     }
@@ -1331,7 +1348,9 @@
     async function main() {
       resize();
       await preload();
-      if (Q_DEBUG && !(parseInt(params.get("loc") || "", 10) >= 0)) {
+      if (Q_DEBUG >= 2) {
+        index = heartLoc();
+      } else if (Q_DEBUG >= 1 && !(parseInt(params.get("loc") || "", 10) >= 0)) {
         index = (SUB.LEVIATHAN && SUB.LEVIATHAN.loc != null) ? SUB.LEVIATHAN.loc : 5;
       } else if (START_LOC > 0) {
         index = START_LOC;
@@ -1341,7 +1360,9 @@
         if (SUB.RADIO && index > SUB.RADIO.loc) radioDone = true;
         if (SUB.PHOTO && index > SUB.PHOTO.loc) photoDone = true;
         if (SUB.LEVIATHAN && index > SUB.LEVIATHAN.loc) { leviDone = true; leviQDone = true; }
-        if (Q_DEBUG && SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc) leviDone = true;
+        if (Q_DEBUG >= 1 && SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc) leviDone = true;
+        if (Q_DEBUG >= 2) { leviDone = true; leviQDone = true; }
+        if (index > heartLoc()) heartQDone = true;
       }
       layerCurrent.src = images[index].src;
       applyLayer(layerCurrent, 0, 0, 1, 1, 1);
@@ -1356,7 +1377,7 @@
       window.__ready = true;
       window.__goNext = goNext;
       window.__subnautica = {
-        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, scanned: Object.assign({}, scanned) }; },
+        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, scanned: Object.assign({}, scanned) }; },
         completeGate: forceComplete,
         spawnBubble: spawnAirBubble
       };
