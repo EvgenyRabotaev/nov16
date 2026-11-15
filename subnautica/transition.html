@@ -149,20 +149,68 @@
     #o2.warn .fill { background: linear-gradient(90deg, #c45a2a, #f0c060); }
     #o2 .val { font-size: 11px; margin-top: 3px; letter-spacing: .08em; opacity: .8; }
     .air-bubble {
-      position: absolute; z-index: 7; border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.8), rgba(160, 230, 255, .35) 45%, rgba(80, 180, 220, .15));
-      border: 1px solid rgba(200, 240, 255, .5);
-      cursor: pointer; pointer-events: auto;
-      animation: airUp 7s linear forwards;
+      position: absolute; z-index: 7;
+      appearance: none; -webkit-appearance: none;
+      background: transparent; border: none; padding: 0; margin: 0;
+      border-radius: 50%; cursor: pointer; pointer-events: auto;
+      animation: airUp 8s linear forwards;
     }
-    @keyframes airUp { from { transform: translateY(0) scale(1); opacity: .9; } to { transform: translateY(-120vh) scale(.6); opacity: 0; } }
+    .air-bubble::before {
+      content: ""; position: absolute; left: 50%; top: 50%;
+      width: var(--bubble-size, 52px); height: var(--bubble-size, 52px);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 32% 28%,
+          rgba(255,255,255,.95) 0 7%,
+          rgba(210,245,255,.58) 18%,
+          rgba(130,215,240,.34) 46%,
+          rgba(70,170,220,.16) 72%,
+          rgba(40,130,190,.06) 100%);
+      box-shadow:
+        0 0 10px 3px rgba(150,230,255,.55),
+        0 0 22px 8px rgba(80,190,230,.28),
+        inset 0 -6px 10px rgba(30,100,150,.18),
+        inset 0 0 0 2px rgba(210,245,255,.55);
+      pointer-events: none;
+      animation: airPulse 1.8s ease-in-out infinite;
+    }
+    .air-bubble::after {
+      content: ""; position: absolute; left: 50%; top: 50%;
+      width: calc(var(--bubble-size, 52px) * .22);
+      height: calc(var(--bubble-size, 52px) * .16);
+      transform: translate(-120%, -140%);
+      border-radius: 50%;
+      background: rgba(255,255,255,.92);
+      pointer-events: none;
+      filter: blur(.3px);
+    }
+    @keyframes airPulse {
+      0%, 100% { transform: translate(-50%,-50%) scale(1); }
+      50% { transform: translate(-50%,-50%) scale(1.08); }
+    }
+    @keyframes airUp {
+      0%   { transform: translate(0, 0); opacity: 1; }
+      20%  { transform: translate(var(--wobble, 16px), -24vh); opacity: 1; }
+      40%  { transform: translate(calc(var(--wobble, 16px) * -.8), -48vh); opacity: 1; }
+      60%  { transform: translate(calc(var(--wobble, 16px) * .6), -72vh); opacity: .95; }
+      80%  { transform: translate(calc(var(--wobble, 16px) * -.4), -96vh); opacity: .55; }
+      100% { transform: translate(0, -120vh); opacity: 0; }
+    }
 
     .fish {
       position: absolute; z-index: 6; cursor: pointer; pointer-events: auto;
-      width: 54px; height: 28px; transform: translate(-50%, -50%);
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
+      appearance: none; -webkit-appearance: none;
+      background: transparent !important; border: none !important;
+      padding: 0; margin: 0; box-shadow: none; outline: none;
+      width: 112px; height: auto;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
     }
-    .fish svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .fish.kind-peeper { width: 112px; }
+    .fish.kind-boomerang { width: 86px; }
+    .fish.kind-reginald { width: 130px; }
+    .fish img { display: block; width: 100%; height: auto; pointer-events: none; background: transparent; border: none; }
     .fish.scanned { opacity: .45; cursor: default; filter: grayscale(.4) drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
     .fish-label {
       position: absolute; left: 50%; top: 110%; transform: translateX(-50%);
@@ -237,9 +285,13 @@
     #cover.on { opacity: 1; }
     .levi {
       position: absolute; z-index: 5; pointer-events: none;
-      width: min(70vw, 760px); height: auto; opacity: 0;
-      filter: drop-shadow(0 8px 16px rgba(0,0,0,.5));
+      width: min(100vw, 1320px); height: auto; opacity: 0;
+      left: 0; top: 10%;
+      will-change: transform, opacity;
+      filter: blur(1.15px) brightness(.72) saturate(.88) contrast(1.06)
+              drop-shadow(0 22px 28px rgba(0, 16, 40, .55));
     }
+    .levi-canvas { display: block; width: 100%; height: auto; background: transparent; }
 
     #radioPing {
       position: absolute; z-index: 8; cursor: pointer; display: none;
@@ -253,7 +305,9 @@
 
     @media (max-width: 600px) {
       #o2 { width: 100px; top: 2.6%; right: 2.4%; }
-      .fish { width: 48px; height: 24px; }
+      .fish.kind-peeper { width: 88px; }
+      .fish.kind-boomerang { width: 70px; }
+      .fish.kind-reginald { width: 100px; }
       #camBtn { width: 48px; height: 48px; bottom: 22%; }
     }
   </style>
@@ -280,7 +334,7 @@
     <button id="camBtn" type="button" title="Сделать снимок">📷</button>
     <div id="flash"></div>
     <div id="cover"></div>
-    <svg class="levi" id="levi" viewBox="0 0 800 220" aria-hidden="true"></svg>
+    <div class="levi" id="levi" aria-hidden="true"></div>
     <button id="hideBtn" type="button">Спрятаться</button>
     <div id="repair">
       <h2 id="repairTitle">Ремонт капсулы</h2>
@@ -321,6 +375,18 @@
     const params = new URLSearchParams(location.search);
     const AUTO = params.get("auto") === "1";
     const FAST = params.get("fast") === "1";
+    const START_LOC = (() => {
+      const n = parseInt(params.get("loc") || "", 10);
+      return Number.isFinite(n) ? Math.max(0, Math.min(6, n)) : 0;
+    })();
+    const ASSET_V = "20261115q";
+    const FISH_SRC = {
+      peeper: "fish_peeper.png?v=" + ASSET_V,
+      boomerang: "fish_boomerang.png?v=" + ASSET_V,
+      reginald: "fish_reginald.png?v=" + ASSET_V
+    };
+    const FISH_KIND_BY_ID = { fish1: "boomerang", fish2: "peeper", kelp1: "peeper", kelp2: "reginald" };
+    const LEVI_SRC = "leviathan.png?v=" + ASSET_V;
     const SUB = (window.QUEST_CONFIG && window.QUEST_CONFIG.SUBNAUTICA) || {};
     const O2CFG = Object.assign({ max: 100, drainPerSec: 1.1, warnAt: 28, bubbleHeal: 26, minFloor: 16 }, SUB.OXYGEN || {});
     const PHOTO_KEY = (SUB.PHOTO && SUB.PHOTO.storageKey) || "nov16_sub_photo";
@@ -333,7 +399,8 @@
     let scanned = {};
     let pdaAfter = null;
     let repairDone = false, radioDone = false, photoDone = false, leviDone = false;
-    let airTimer = 0, o2Raf = 0;
+    let airTimer = 0, o2Raf = 0, faunaRaf = 0, leviRaf = 0;
+    let faunaState = [];
     let images = [];
     let bubbles = [];
     let vents = [];
@@ -760,12 +827,19 @@
       renderO2();
     }
     function spawnAirBubble() {
-      const b = document.createElement("div");
+      const b = document.createElement("button");
+      b.type = "button";
       b.className = "air-bubble";
-      const size = 18 + Math.random() * 18;
-      b.style.width = b.style.height = size + "px";
-      b.style.left = (10 + Math.random() * 80) + "%";
-      b.style.bottom = (-4 + Math.random() * 8) + "%";
+      b.setAttribute("aria-label", "Кислород");
+      const visual = 48 + Math.random() * 28;
+      const hit = Math.max(visual * 1.35, 56);
+      b.style.width = b.style.height = hit + "px";
+      b.style.setProperty("--bubble-size", visual + "px");
+      const wobble = (12 + Math.random() * 20) * (Math.random() < 0.5 ? -1 : 1);
+      b.style.setProperty("--wobble", wobble + "px");
+      b.style.animationDuration = (FAST ? 4.2 : 7.5 + Math.random() * 2) + "s";
+      b.style.left = (8 + Math.random() * 84) + "%";
+      b.style.bottom = (-6 + Math.random() * 10) + "%";
       b.addEventListener("click", (e) => {
         e.stopPropagation();
         addO2(O2CFG.bubbleHeal);
@@ -804,23 +878,31 @@
     }
 
     /* ----- сканер ----- */
-    function fishSvg(color) {
-      color = color || "#4aa3d8";
-      return '<svg viewBox="0 0 64 32"><ellipse cx="28" cy="16" rx="20" ry="11" fill="'+color+'" /><polygon points="48,16 64,4 64,28" fill="'+color+'" /><circle cx="18" cy="14" r="2.2" fill="#102028" /><path d="M8 16 Q14 8 22 12" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.4"/></svg>';
+    function cancelFauna() {
+      if (faunaRaf) cancelAnimationFrame(faunaRaf);
+      faunaRaf = 0;
+      faunaState = [];
     }
     function renderFauna() {
+      cancelFauna();
       faunaBox.innerHTML = "";
       const list = (SUB.SCANNER || []).filter((f) => f.loc === index);
-      list.forEach((f, i) => {
+      faunaState = list.map((f, i) => {
+        const kind = f.kind || FISH_KIND_BY_ID[f.id] || ["peeper", "boomerang", "reginald"][i % 3];
         const el = document.createElement("button");
         el.type = "button";
-        el.className = "fish" + (scanned[f.id] ? " scanned" : "");
+        el.className = "fish kind-" + kind + (scanned[f.id] ? " scanned" : "");
         el.style.left = f.x + "%";
         el.style.top = f.y + "%";
-        el.style.animation = "fishSwim "+(3.2+i*0.4)+"s ease-in-out "+(i*0.4)+"s infinite alternate";
-        const colors = ["#3d8ed8", "#e0a03a", "#4cbfa6", "#d46aa0"];
-        el.innerHTML = fishSvg(colors[i % colors.length]) + '<span class="fish-label"></span>';
-        el.querySelector(".fish-label").textContent = f.name || "Сканировать";
+        const img = document.createElement("img");
+        img.src = FISH_SRC[kind] || FISH_SRC.peeper;
+        img.alt = "";
+        img.draggable = false;
+        const label = document.createElement("span");
+        label.className = "fish-label";
+        label.textContent = f.name || "Сканировать";
+        el.appendChild(img);
+        el.appendChild(label);
         el.addEventListener("click", (e) => {
           e.stopPropagation();
           if (scanned[f.id]) return;
@@ -829,11 +911,32 @@
           showPda("Сканер", f.name || "Существо", f.comment || "Заглушка: запись КПК.", "Закрыть");
         });
         faunaBox.appendChild(el);
+        return {
+          el,
+          phase: i * 1.37,
+          range: 26 + i * 8,
+          omega: 0.55 + i * 0.08,
+          bob: 5 + (i % 3) * 2,
+          bobFreq: 1.15 + i * 0.15,
+          tailFreq: 8 + i * 0.6
+        };
       });
+      if (faunaState.length) {
+        const t0 = performance.now();
+        const tick = (now) => {
+          const t = (now - t0) / 1000;
+          faunaState.forEach((s) => {
+            const ox = Math.sin(t * s.omega + s.phase) * s.range;
+            const dir = Math.cos(t * s.omega + s.phase) >= 0 ? 1 : -1;
+            const oy = Math.sin(t * s.bobFreq + s.phase) * s.bob;
+            const squash = 1 + Math.sin(t * s.tailFreq + s.phase) * 0.07;
+            s.el.style.transform = "translate(-50%,-50%) translate(" + ox.toFixed(2) + "px," + oy.toFixed(2) + "px) scaleX(" + (dir * squash).toFixed(3) + ")";
+          });
+          faunaRaf = requestAnimationFrame(tick);
+        };
+        faunaRaf = requestAnimationFrame(tick);
+      }
     }
-    const styleFish = document.createElement("style");
-    styleFish.textContent = "@keyframes fishSwim { from { transform: translate(-50%,-50%) translateX(-8px); } to { transform: translate(-50%,-50%) translateX(10px) scaleX(-1); } }";
-    document.head.appendChild(styleFish);
 
     /* ----- ремонт ----- */
     const WIRE_COLORS = [
@@ -960,14 +1063,82 @@
     camBtn.addEventListener("click", (e) => { e.stopPropagation(); takePhoto(); });
 
     /* ----- левиафан ----- */
+    function buildLeviathan() {
+      levi.innerHTML = "";
+      const canvas = document.createElement("canvas");
+      canvas.className = "levi-canvas";
+      levi.appendChild(canvas);
+      const img = new Image();
+      img.src = LEVI_SRC;
+      levi._canvas = canvas;
+      levi._img = img;
+    }
+    function drawLeviathan(now) {
+      const canvas = levi._canvas;
+      const img = levi._img;
+      if (!canvas || !img || !img.naturalWidth) return;
+      const w = levi.clientWidth || Math.min(cssW || window.innerWidth, 1320);
+      const h = w * (img.naturalHeight / img.naturalWidth);
+      const pad = h * 0.18;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cw = Math.max(1, Math.round(w * dpr));
+      const ch = Math.max(1, Math.round((h + pad * 2) * dpr));
+      if (canvas.width !== cw || canvas.height !== ch) {
+        canvas.width = cw;
+        canvas.height = ch;
+        canvas.style.width = w + "px";
+        canvas.style.height = (h + pad * 2) + "px";
+      }
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h + pad * 2);
+      const slices = Math.max(90, Math.floor(w / 3));
+      const sw = img.naturalWidth / slices;
+      const dw = w / slices;
+      const amp = h * 0.045;
+      const overlap = 1.25;
+      for (let i = 0; i < slices; i++) {
+        const y = pad + Math.sin(now / 480 + i * 0.07) * amp;
+        const sx = Math.max(0, i * sw - overlap);
+        const sww = Math.min(img.naturalWidth - sx, sw + overlap * 2);
+        const dx = i * dw - overlap * (dw / sw);
+        ctx.drawImage(img, sx, 0, sww, img.naturalHeight, dx, y, sww * (dw / sw), h);
+      }
+      ctx.save();
+      ctx.globalCompositeOperation = "source-atop";
+      const haze = ctx.createLinearGradient(0, 0, 0, h + pad * 2);
+      haze.addColorStop(0, "rgba(18, 60, 110, 0.32)");
+      haze.addColorStop(1, "rgba(8, 28, 70, 0.42)");
+      ctx.fillStyle = haze;
+      ctx.fillRect(0, 0, w, h + pad * 2);
+      ctx.restore();
+    }
     function startLeviathan() {
       if (leviDone) { setReady(true); return; }
       setReady(false);
       if (window.QuestHUD) QuestHUD.setStep("leviathan");
       const L = SUB.LEVIATHAN || {};
-      levi.innerHTML = '<path d="M40 130 C 140 60, 260 40, 400 80 C 520 110, 620 90, 740 50 L 780 70 C 640 130, 520 160, 400 140 C 260 120, 140 150, 40 150 Z" fill="rgba(4,16,28,.82)"/><ellipse cx="720" cy="58" rx="18" ry="10" fill="rgba(4,16,28,.82)"/>';
-      levi.style.top = "8%"; levi.style.left = "-60%"; levi.style.opacity = "0.9";
-      levi.animate([{ transform: "translateX(0)" }, { transform: "translateX(160vw)" }], { duration: FAST ? 1800 : 7000, easing: "linear", fill: "forwards" });
+      buildLeviathan();
+      levi.style.top = "10%";
+      levi.style.left = "0";
+      levi.style.opacity = "0";
+      const dur = FAST ? 2200 : 14000;
+      const t0 = performance.now();
+      const tick = (now) => {
+        const p = Math.min(1, (now - t0) / dur);
+        const vw = cssW || window.innerWidth;
+        const lw = levi.offsetWidth || Math.min(vw, 1320);
+        const x = -lw * 0.92 + p * (vw + lw * 1.05);
+        const bob = Math.sin(now / 1100) * 8;
+        levi.style.transform = "translate(" + x + "px, " + bob + "px)";
+        if (p < 0.06) levi.style.opacity = String((p / 0.06) * 0.9);
+        else levi.style.opacity = "0.9";
+        drawLeviathan(now);
+        if (p < 1 && !leviDone) leviRaf = requestAnimationFrame(tick);
+        else leviRaf = 0;
+      };
+      if (leviRaf) cancelAnimationFrame(leviRaf);
+      leviRaf = requestAnimationFrame(tick);
       showPda("КПК", "Предупреждение", L.warning || "Крупная биоформа поблизости.", "Понятно", () => {
         hideBtn.classList.add("show");
         if (AUTO || FAST) setTimeout(() => hideBtn.click(), FAST ? 200 : 700);
@@ -980,6 +1151,7 @@
       setTimeout(() => {
         cover.classList.remove("on");
         levi.style.opacity = "0";
+        if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
         leviDone = true;
         const L = SUB.LEVIATHAN || {};
         showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => setReady(true));
@@ -987,6 +1159,7 @@
     });
 
     function clearLocExtras() {
+      cancelFauna();
       faunaBox.innerHTML = "";
       camBtn.classList.remove("show");
       radioPing.classList.remove("show");
@@ -994,6 +1167,7 @@
       repairEl.classList.remove("on");
       cover.classList.remove("on");
       levi.style.opacity = "0";
+      if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
       pda.classList.remove("on");
     }
 
@@ -1029,28 +1203,42 @@
         img.onerror = () => reject(new Error("fail " + loc.src));
         img.src = loc.src;
       })));
+      const extras = Object.values(FISH_SRC).concat([LEVI_SRC]);
+      await Promise.all(extras.map((src) => new Promise((resolve) => {
+        const img = new Image();
+        img.onload = img.onerror = () => resolve();
+        img.src = src;
+      })));
     }
 
     async function main() {
       resize();
       await preload();
-      layerCurrent.src = images[0].src;
+      if (START_LOC > 0) {
+        index = START_LOC;
+        if (SUB.REPAIR && index > SUB.REPAIR.loc) repairDone = true;
+        if (SUB.RADIO && index > SUB.RADIO.loc) radioDone = true;
+        if (SUB.PHOTO && index > SUB.PHOTO.loc) photoDone = true;
+        if (SUB.LEVIATHAN && index > SUB.LEVIATHAN.loc) leviDone = true;
+      }
+      layerCurrent.src = images[index].src;
       applyLayer(layerCurrent, 0, 0, 1, 1, 1);
       applyLayer(layerNext, 16, 0, 1, 0, 1);
-      setDepth(LOCS[0].depth);
+      setDepth(LOCS[index].depth);
       boot.classList.add("gone");
-      if (window.QuestHUD) QuestHUD.setStep("loc1");
+      if (window.QuestHUD) QuestHUD.setStep("loc" + (index + 1));
       setTimeout(() => boot.remove(), 600);
       document.documentElement.dataset.ready = "1";
-      document.documentElement.dataset.index = "0";
+      document.documentElement.dataset.index = String(index);
       document.documentElement.dataset.busy = "0";
       window.__ready = true;
       window.__goNext = goNext;
       window.__subnautica = {
         get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, scanned: Object.assign({}, scanned) }; },
-        completeGate: forceComplete
+        completeGate: forceComplete,
+        spawnBubble: spawnAirBubble
       };
-      onArrive(0);
+      onArrive(index);
       startOxygen();
 
       if (AUTO) {
