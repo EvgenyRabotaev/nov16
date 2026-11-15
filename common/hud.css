@@ -52,6 +52,16 @@
 .qhud-panel-title { font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
 .qhud-close { appearance: none; border: 0; background: none; color: inherit; font-size: 16px; cursor: pointer; opacity: .7; padding: 2px 4px; }
 .qhud-close:hover { opacity: 1; }
+.qhud-panel--task {
+  width: min(360px, calc(100vw - 28px));
+  padding: 14px 16px 16px;
+}
+.qhud-panel--task .qhud-panel-title { letter-spacing: .08em; }
+.qhud-panel--task .qhud-panel-text { font-size: 16px; line-height: 1.5; }
+@media (max-width: 600px) {
+  .qhud-panel--task { width: min(340px, calc(100vw - 20px)); font-size: 15px; }
+  .qhud-panel--task .qhud-panel-text { font-size: 15px; }
+}
 
 /* «Дальше» */
 .qhud-next {

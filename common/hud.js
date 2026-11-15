@@ -4,7 +4,8 @@
      <script src="../common/quest_config.js"></script>
      <script src="../common/hud.js" data-screen="pubg-flight"></script>
    API: window.QuestHUD.getPrimos() / setPrimos(n) / addPrimos(n) / spend(n)
-        award(id, n) / setStep(step) / next() / showNext(label) / reset()          */
+        award(id, n) / setStep(step) / next() / showNext(label) / reset()
+        Подсказки-задания на вопросах: QUEST_CONFIG.HINT_TASKS, сброс ?resethints=1 */
 (function () {
   "use strict";
   var script = document.currentScript;
@@ -82,6 +83,10 @@
   function reset() { lsDel(KEY); lsDel(AKEY); render(null); }
 
   var FALLBACK_HINT = (HINTS && HINTS.FALLBACK) || "Тут без подсказки — доверься сердцу 💛";
+  var HINT_TASKS_CFG = CFG.HINT_TASKS || {};
+  var HINT_TASK_ITEMS = Array.isArray(HINT_TASKS_CFG) ? HINT_TASKS_CFG : (HINT_TASKS_CFG.items || HINT_TASKS_CFG.tasks || []);
+  var HINT_TASK_TITLE = HINT_TASKS_CFG.title || "Подсказка за задание";
+  var TKEY = HINT_TASKS_CFG.storageKey || "nov16_hint_tasks";
   function isPlaceholderHint(t) {
     t = String(t || "").trim();
     return !t || t === "Подсказка появится позже";
@@ -93,7 +98,53 @@
     if (Object.prototype.hasOwnProperty.call(HINTS, "DEFAULT")) return HINTS.DEFAULT;
     return "";
   }
-  function hintText() {
+  /* Только шаги вопросов q1, q2, … — не крафт, карта, радио и прочие мини-игры. */
+  function isQuestionHint() {
+    return /^q\d+$/i.test(String(step || ""));
+  }
+  function taskKey() { return screenId + ":" + step; }
+  function loadTasksState() {
+    try {
+      var st = JSON.parse(lsGet(TKEY) || "") || {};
+      return { used: st.used | 0, assigned: st.assigned && typeof st.assigned === "object" ? st.assigned : {} };
+    } catch (e) { return { used: 0, assigned: {} }; }
+  }
+  function saveTasksState(st) {
+    lsSet(TKEY, JSON.stringify({ used: st.used | 0, assigned: st.assigned || {} }));
+  }
+  function resetHintTasks() {
+    lsDel(TKEY);
+  }
+  function peekTaskIndex() {
+    var st = loadTasksState();
+    var k = taskKey();
+    return Object.prototype.hasOwnProperty.call(st.assigned, k) ? st.assigned[k] : null;
+  }
+  function assignTaskIndex() {
+    var st = loadTasksState();
+    var k = taskKey();
+    if (Object.prototype.hasOwnProperty.call(st.assigned, k)) return st.assigned[k];
+    var idx = st.used | 0;
+    st.assigned[k] = idx;
+    st.used = idx + 1;
+    saveTasksState(st);
+    return idx;
+  }
+  function taskTextFor(index) {
+    var items = HINT_TASK_ITEMS;
+    if (!items || !items.length) return FALLBACK_HINT;
+    var i = Math.max(0, index | 0);
+    return items[Math.min(i, items.length - 1)];
+  }
+  function hintText(assign) {
+    if (isQuestionHint()) {
+      var idx = peekTaskIndex();
+      if (idx == null) {
+        if (!assign) return taskTextFor(loadTasksState().used);
+        idx = assignTaskIndex();
+      }
+      return taskTextFor(idx);
+    }
     var t = rawHint();
     return isPlaceholderHint(t) ? FALLBACK_HINT : t;
   }
@@ -102,6 +153,10 @@
     if (!btn) return;
     btn.hidden = false;
     btn.removeAttribute("hidden");
+  }
+  if (params.get("resethints") === "1") {
+    resetHintTasks();
+    try { params.delete("resethints"); history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash); } catch (e) {}
   }
   function nextUrl() {
     var n = FLOW[idx + 1];
@@ -175,7 +230,7 @@
   };
   var LABEL = { pubg: "ПОДСКАЗКА", subnautica: "ПОДСКАЗКА", minecraft: "Подсказка", genshin: "Подсказка", quest: "Подсказка" };
 
-  var root, row, counter, num, btn, panel, panelText, nextBtn, built = false;
+  var root, row, counter, num, btn, panel, panelText, panelTitle, nextBtn, built = false;
 
   function build() {
     if (built) return;
@@ -200,6 +255,7 @@
     btn = root.querySelector(".qhud-hint");
     panel = root.querySelector(".qhud-panel");
     panelText = root.querySelector(".qhud-panel-text");
+    panelTitle = root.querySelector(".qhud-panel-title");
     if (script && script.dataset.counter === "off") counter.style.display = "none";
 
     syncHintBtn();
@@ -216,13 +272,23 @@
     setTimeout(layout, 300);
   }
 
+  function fillPanel(assign) {
+    if (!panel || !panelText) return;
+    var task = isQuestionHint();
+    var title = task ? HINT_TASK_TITLE : "Подсказка";
+    if (panelTitle) panelTitle.textContent = title;
+    panel.setAttribute("aria-label", title);
+    panel.classList.toggle("qhud-panel--task", task);
+    if (root) root.classList.toggle("qhud--task", task);
+    panelText.textContent = hintText(!!assign);
+  }
   function open() {
     if (!panel) return;
-    panelText.textContent = hintText();
+    fillPanel(true);
     panel.hidden = false;
     root.classList.add("qhud--open");
   }
-  function close() { if (!panel) return; panel.hidden = true; root.classList.remove("qhud--open"); }
+  function close() { if (!panel) return; panel.hidden = true; root.classList.remove("qhud--open", "qhud--task"); if (panel) panel.classList.remove("qhud-panel--task"); }
   function toggle() { if (panel.hidden) open(); else close(); }
 
   function render(delta) {
@@ -327,12 +393,13 @@
     setStep: function (s) {
       step = s || "";
       syncHintBtn();
-      if (panel && !panel.hidden) {
-        panelText.textContent = hintText();
-      }
+      if (panel && !panel.hidden) fillPanel(true);
     },
     getStep: function () { return step; },
-    hintText: hintText, hasHint: hasHint, openHint: function () { build(); open(); }, closeHint: close,
+    hintText: function () { return hintText(false); },
+    hasHint: hasHint, isQuestionHint: isQuestionHint,
+    hintTasksState: loadTasksState, resetHintTasks: resetHintTasks,
+    openHint: function () { build(); open(); }, closeHint: close,
     newGame: function () { newGame(); render(null); },
     next: next, nextUrl: nextUrl, showNext: showNext, hideNext: hideNext,
     watchMap: watchMap, placeOutside: placeOutside, layout: layout,
