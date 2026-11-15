@@ -1,0 +1,4 @@
+Sofia Sans
+Copyright 2019 The Sofia Sans Project Authors (https://github.com/lettersoup/sofia-sans)
+Licensed under the SIL Open Font License, Version 1.1.
+https://scripts.sil.org/OFL

@@ -7,10 +7,47 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23d3bc8e'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%236b8cff'/%3E%3C/svg%3E">
 <link rel="preload" as="image" href="map_bg.jpg">
 <link rel="preload" as="image" href="fairy.png">
+<link rel="preload" as="font" type="font/woff2" href="fonts/SofiaSans-cyrillic.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/SofiaSans-latin.woff2" crossorigin>
 <style>
+  /* Sofia Sans (SIL OFL 1.1) — свободный готический гротеск с кириллицей,
+     близкий к HYWenHei / SDK_SC_Web из Геншина. Самостоятельно в папке fonts/. */
+  @font-face {
+    font-family: "QuestTeyvat";
+    src: url("fonts/SofiaSans-cyrillic-ext.woff2") format("woff2");
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+  }
+  @font-face {
+    font-family: "QuestTeyvat";
+    src: url("fonts/SofiaSans-cyrillic.woff2") format("woff2");
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+  @font-face {
+    font-family: "QuestTeyvat";
+    src: url("fonts/SofiaSans-latin-ext.woff2") format("woff2");
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: "QuestTeyvat";
+    src: url("fonts/SofiaSans-latin.woff2") format("woff2");
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #2a3550; color: #3b4255;
-    font-family: Georgia, "Times New Roman", "Noto Serif", serif; user-select: none; -webkit-user-select: none; }
+    font-family: "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif; user-select: none; -webkit-user-select: none; }
   .bg { position: fixed; inset: 0; background: url("map_bg.jpg") center / cover no-repeat; filter: brightness(.88) saturate(1.05); }
   .bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, transparent 40%, rgba(20, 28, 50, .45) 100%); }
   .vignette { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 120px rgba(10, 16, 36, .45); }
@@ -27,13 +64,13 @@
     z-index: 10;
     transition: opacity .4s ease, transform .4s ease;
   }
-  .panel.hidden { opacity: 0; transform: translate(-50%, -16px); pointer-events: none; }
-  .q-kicker { font-family: "Segoe UI", "Noto Sans", sans-serif; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #a8853f; }
+  .panel.hidden { opacity: 0; transform: translate(-50%, -16px); pointer-events: none; visibility: hidden; transition: opacity .4s ease, transform .4s ease, visibility 0s linear .4s; }
+  .q-kicker { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #a8853f; font-weight: 600; }
   .q-text { margin: 10px 0 14px; font-size: 20px; line-height: 1.45; color: #3b4255; max-height: 34vh; overflow-y: auto; }
   .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; }
   .ans-input {
     width: 100%; padding: 11px 14px; border: 1.5px solid #d3bc8e; border-radius: 10px;
-    background: #fffdf8; color: #3b4255; font: 16px/1.3 "Segoe UI", "Noto Sans", sans-serif;
+    background: #fffdf8; color: #3b4255; font: 16px/1.3 "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif;
     outline: none; user-select: text; -webkit-user-select: text;
   }
   .ans-input::placeholder { color: #9aa0b0; }
@@ -41,79 +78,128 @@
   .ans-input.ok { border-color: #6aaf6a; }
   .ans-input.bad { animation: shake .38s ease; }
   @keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
-  .ans-msg { min-height: 20px; margin: 0 0 10px; font-family: "Segoe UI", sans-serif; font-size: 14px; color: #8a7040; }
+  .ans-msg { min-height: 20px; margin: 0 0 10px; font-size: 14px; color: #8a7040; }
   .ans-msg.ok { color: #3d8a4a; }
   .btn {
     appearance: none; cursor: pointer; min-width: 160px; padding: 11px 26px;
-    font: 600 16px/1 "Segoe UI", "Noto Sans", sans-serif; color: #495366;
+    font: 600 16px/1 "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif; color: #495366;
     background: #ece5d8; border: 2px solid #d3bc8e; border-radius: 999px;
     box-shadow: 0 0 0 2px #fff, 0 4px 14px rgba(40, 30, 10, .25);
   }
   .btn:hover:not(:disabled) { filter: brightness(1.05); }
   .btn:disabled { opacity: .55; cursor: default; }
 
-  /* ----- феечка + диалог ----- */
+  /* ----- феечка + диалог в стиле Геншина ----- */
   .talk {
-    position: fixed; inset: 0; z-index: 12; pointer-events: none;
-    opacity: 0; transition: opacity .5s ease;
+    position: fixed; inset: 0; z-index: 9500; pointer-events: none;
+    opacity: 0; transition: opacity .45s ease;
   }
   .talk.on { opacity: 1; pointer-events: auto; }
+
   .fairy {
     position: absolute;
-    right: max(8px, env(safe-area-inset-right, 0px));
-    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
-    width: min(260px, 46vw, 52vh);
-    filter: drop-shadow(0 10px 18px rgba(80, 60, 140, .35));
+    right: max(4vw, env(safe-area-inset-right, 0px));
+    bottom: calc(18vh + env(safe-area-inset-bottom, 0px));
+    width: min(280px, 38vw, 56vh);
+    filter: drop-shadow(0 8px 16px rgba(20, 16, 40, .55)) drop-shadow(0 0 12px rgba(180, 160, 255, .25));
     transform-origin: 50% 80%;
     animation: fairyIn .7s cubic-bezier(.2, 1.4, .4, 1) both, fairyBob 3.2s ease-in-out .7s infinite;
     pointer-events: none;
+    z-index: 2;
   }
   .fairy img { width: 100%; height: auto; display: block; }
   @keyframes fairyIn { from { opacity: 0; transform: translate(24px, 18px) scale(.82); } to { opacity: 1; transform: none; } }
   @keyframes fairyBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-10px) rotate(1.5deg); } }
 
+  /* Полная тёмная лента снизу, как в Геншине: без рамки и скруглений */
   .dlg {
-    position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%);
-    width: min(720px, calc(100vw - 24px));
-    padding: 16px 20px 14px;
-    background: linear-gradient(180deg, rgba(28, 32, 52, .88), rgba(16, 20, 38, .92));
-    border: 1.5px solid rgba(211, 188, 142, .85); border-radius: 14px;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, .4), inset 0 0 0 1px rgba(255, 255, 255, .06);
-    color: #f5f0e6; cursor: pointer;
+    position: absolute; left: 0; right: 0; bottom: 0;
+    z-index: 3;
+    min-height: 32vh;
+    padding: 72px 28% 36px 7.5%;
+    padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px));
+    padding-right: max(28%, calc(80px + env(safe-area-inset-right, 0px)));
+    background: linear-gradient(to top,
+      rgba(0, 0, 0, .88) 0%,
+      rgba(0, 0, 0, .82) 28%,
+      rgba(0, 0, 0, .62) 58%,
+      rgba(0, 0, 0, .28) 82%,
+      rgba(0, 0, 0, 0) 100%);
+    color: #f7f4ec;
+    cursor: pointer;
   }
   .dlg-who {
-    font-family: "Segoe UI", "Noto Sans", sans-serif;
-    font-weight: 700; font-size: 15px; letter-spacing: .04em;
-    margin-bottom: 6px;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .9), 0 0 12px rgba(0, 0, 0, .45);
   }
   .dlg-who.who-vika { color: #f5c542; }
   .dlg-who.who-fairy { color: #c9b0ff; }
   .dlg-who.who-zhenya { color: #e08a4a; }
-  .dlg-who.who-stage { color: #b8c0d0; font-weight: 500; font-style: italic; }
-  .dlg-text { font-size: 18px; line-height: 1.45; min-height: 1.45em; }
-  .dlg-hint { margin-top: 8px; font-family: "Segoe UI", sans-serif; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: rgba(211, 188, 142, .75); text-align: right; }
+  .dlg-who.who-stage { color: #c5c9d6; font-weight: 500; letter-spacing: .08em; text-transform: none; font-style: italic; }
+  .dlg-text {
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.55;
+    min-height: 3.1em;
+    max-width: 860px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .85);
+  }
+  .dlg-cont {
+    position: absolute;
+    right: max(36px, calc(16px + env(safe-area-inset-right, 0px)));
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    width: 18px; height: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease;
+  }
+  .dlg-cont.show { opacity: 1; animation: contBob .75s ease-in-out infinite; }
+  .dlg-cont::before {
+    content: "";
+    display: block;
+    width: 0; height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 11px solid #f3e2a8;
+    filter: drop-shadow(0 0 6px rgba(243, 226, 168, .85));
+  }
+  @keyframes contBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+  }
 
   @media (max-width: 900px) {
-    /* диалог выше кнопки подсказки и счётчика примогемов справа снизу */
-    .dlg { width: calc(100vw - 16px); bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
-    .fairy { bottom: calc(200px + env(safe-area-inset-bottom, 0px)); }
+    .dlg {
+      min-height: 34vh;
+      padding: 56px 20px 40px 20px;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+    }
+    .dlg-text { font-size: 20px; max-width: none; }
+    .dlg-who { font-size: 16px; }
+    .fairy { width: min(200px, 42vw, 44vh); bottom: calc(26vh + env(safe-area-inset-bottom, 0px)); }
+    .dlg-cont { right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
   }
   @media (max-width: 600px) {
     .q-text { font-size: 16px; }
-    .dlg { padding: 14px 14px 12px; }
-    .dlg-text { font-size: 16px; }
-    .fairy { width: min(200px, 42vw); }
+    .dlg-who { font-size: 16px; }
+    .dlg-text { font-size: 18px; min-height: 3.3em; }
+    .fairy { width: min(168px, 40vw); right: 0; }
     .panel { padding: 14px 14px 12px; }
   }
   @media (max-height: 700px) {
     .q-text { font-size: 16px; max-height: 28vh; margin: 8px 0 10px; }
-    .fairy { width: min(180px, 36vw, 40vh); bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }
+    .dlg { min-height: 36vh; padding-top: 44px; }
+    .dlg-text { font-size: 18px; }
+    .fairy { width: min(160px, 32vw, 38vh); bottom: calc(28vh + env(safe-area-inset-bottom, 0px)); }
   }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115f">
-<script src="../common/quest_config.js?v=20261115f"></script>
-<script src="../common/hud.js?v=20261115f" data-screen="genshin"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115g">
+<script src="../common/quest_config.js?v=20261115g"></script>
+<script src="../common/hud.js?v=20261115g" data-screen="genshin"></script>
 </head>
 <body>
 <div class="bg" aria-hidden="true"></div>
@@ -129,10 +215,10 @@
 
 <div class="talk" id="talk">
   <div class="fairy" id="fairy"><img id="fairyImg" alt="Феечка"></div>
-  <div class="dlg" id="dlg" role="button" tabindex="0">
+  <div class="dlg" id="dlg" role="button" tabindex="0" aria-live="polite">
     <div class="dlg-who" id="dlgWho"></div>
     <div class="dlg-text" id="dlgText"></div>
-    <div class="dlg-hint" id="dlgHint">Нажми, чтобы продолжить</div>
+    <div class="dlg-cont" id="dlgCont" aria-hidden="true"></div>
   </div>
 </div>
 
@@ -145,6 +231,9 @@
   const FAIRY = G.FAIRY || { name: "Феечка", img: "fairy.png", color: "#c9b0ff" };
   const COLORS = Object.assign({ "Вика": "#f5c542", "Феечка": "#c9b0ff", "Женя": "#c45a1c" }, G.COLORS || {});
   const DIALOGUES = G.DIALOGUES || {};
+  const params = new URLSearchParams(location.search);
+  const FAST = params.get("fast") === "1";
+  const TYPE_MS = FAST ? 0 : (Number(G.TYPE_MS) || 24);
 
   const panel = document.getElementById("panel");
   const qNum = document.getElementById("qNum");
@@ -156,14 +245,28 @@
   const dlg = document.getElementById("dlg");
   const dlgWho = document.getElementById("dlgWho");
   const dlgText = document.getElementById("dlgText");
-  const dlgHint = document.getElementById("dlgHint");
+  const dlgCont = document.getElementById("dlgCont");
   const fairyImg = document.getElementById("fairyImg");
 
   fairyImg.src = FAIRY.img || "fairy.png";
   fairyImg.alt = FAIRY.name || "Феечка";
 
   let qi = 0, busy = false, lines = [], li = 0;
-  window.__genshin = { get state() { return { qi, busy, li, n: QUESTIONS.length }; } };
+  let typing = false, typeTimer = 0, typeFull = "";
+
+  function setFlags() {
+    const root = document.documentElement;
+    root.dataset.qi = String(qi);
+    root.dataset.li = String(li);
+    root.dataset.talk = talk.classList.contains("on") ? "1" : "0";
+    root.dataset.typing = typing ? "1" : "0";
+    root.dataset.done = (qi >= QUESTIONS.length) ? "1" : "0";
+  }
+
+  window.__genshin = {
+    get state() { return { qi, busy, li, n: QUESTIONS.length, typing, typeFull }; },
+    skipType: finishType
+  };
 
   function esc(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -185,6 +288,7 @@
   function showQuestion() {
     const q = QUESTIONS[qi];
     talk.classList.remove("on");
+    stopType();
     if (!q) { finish(); return; }
     qNum.textContent = "Комиссия " + (qi + 1) + " из " + QUESTIONS.length;
     qText.innerHTML = esc(q.text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
@@ -206,6 +310,7 @@
     panel.classList.remove("hidden");
     if (window.QuestHUD) { QuestHUD.setStep("q" + (qi + 1)); QuestHUD.hideNext && QuestHUD.hideNext(); }
     busy = false;
+    setFlags();
   }
 
   function submit() {
@@ -238,43 +343,93 @@
     li = 0;
     panel.classList.add("hidden");
     if (!lines.length) { afterTalk(); return; }
-    if (window.QuestHUD) QuestHUD.setStep("talk");
+    if (window.QuestHUD) { QuestHUD.setStep("talk"); QuestHUD.setVisible(false); }
     talk.classList.add("on");
     renderLine();
   }
 
+  function stopType() {
+    if (typeTimer) { clearTimeout(typeTimer); typeTimer = 0; }
+    typing = false;
+    typeFull = "";
+    dlgCont.classList.remove("show");
+  }
+
+  function finishType() {
+    if (typeTimer) { clearTimeout(typeTimer); typeTimer = 0; }
+    dlgText.textContent = typeFull;
+    typing = false;
+    dlgCont.classList.add("show");
+    setFlags();
+  }
+
+  function startType(full) {
+    stopType();
+    typeFull = full || "";
+    dlgText.textContent = "";
+    if (!typeFull || TYPE_MS <= 0) {
+      dlgText.textContent = typeFull;
+      typing = false;
+      dlgCont.classList.add("show");
+      setFlags();
+      return;
+    }
+    typing = true;
+    let i = 0;
+    const tick = () => {
+      i += 1;
+      dlgText.textContent = typeFull.slice(0, i);
+      if (i < typeFull.length) {
+        typeTimer = setTimeout(tick, TYPE_MS);
+      } else {
+        typeTimer = 0;
+        typing = false;
+        dlgCont.classList.add("show");
+        setFlags();
+      }
+    };
+    typeTimer = setTimeout(tick, TYPE_MS);
+    setFlags();
+  }
+
   function renderLine() {
     const L = lines[li] || { who: "", text: "" };
-    const last = li >= lines.length - 1;
     dlgWho.className = "dlg-who " + whoClass(L.who);
     dlgWho.textContent = L.who || "";
     const col = colorOf(L.who);
     dlgWho.style.color = col || "";
-    dlgText.textContent = L.text || "";
-    dlgHint.textContent = last ? (qi + 1 < QUESTIONS.length ? "Нажми — следующая комиссия" : "Нажми — дальше") : "Нажми, чтобы продолжить";
+    startType(L.text || "");
+    setFlags();
   }
 
   function advanceTalk() {
-    if (!talk.classList.contains("on") || busy === false && !lines.length) return;
-    if (li < lines.length - 1) { li++; renderLine(); return; }
+    if (!talk.classList.contains("on")) return;
+    if (typing) { finishType(); return; }
+    if (li < lines.length - 1) { li += 1; renderLine(); return; }
     afterTalk();
   }
 
   function afterTalk() {
+    stopType();
     talk.classList.remove("on");
-    qi++;
+    if (window.QuestHUD) QuestHUD.setVisible(true);
+    qi += 1;
     if (qi < QUESTIONS.length) showQuestion();
     else finish();
+    setFlags();
   }
 
   function finish() {
     panel.classList.add("hidden");
     talk.style.transition = "none";
     talk.classList.remove("on");
+    stopType();
     if (window.QuestHUD) {
+      QuestHUD.setVisible(true);
       QuestHUD.setStep("done");
       QuestHUD.showNext("Дальше");
     }
+    setFlags();
   }
 
   answerBtn.addEventListener("click", submit);
