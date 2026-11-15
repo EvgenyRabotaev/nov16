@@ -16,7 +16,7 @@ window.QUEST_CONFIG = {
     { id: "minecraft",    path: "minecraft/house.html",   theme: "minecraft",  title: "Наш дом" },
     { id: "boat",         path: "boat/index.html",        theme: "minecraft",  title: "Переход: плывём на лодке к капсуле" },
     { id: "subnautica",   path: "subnautica/transition.html", theme: "subnautica", title: "Подводный мир" },
-    { id: "repo-flight",  path: "transition/repo_flight.html", theme: "quest", title: "Переход: полёт в Тейват" },
+    { id: "repo-flight",  path: "transition/repo_flight.html", theme: "quest", title: "Переход: на машинке в Тейват" },
     { id: "genshin",      path: "genshin/index.html",     theme: "genshin",    title: "Тейват" },
     { id: "trust",        path: "finale/trust.html",      theme: "quest",      title: "Ты веришь мне?" },
     { id: "gacha",        path: "gacha/index.html",       theme: "quest",      title: "Крутки" }
@@ -310,7 +310,7 @@ window.QUEST_CONFIG = {
     "subnautica:q5": "Подсказка появится позже",
     "subnautica:q6": "Подсказка появится позже",
     "subnautica:oxygen": "Лови пузыри, если кислорода мало — проиграть нельзя",
-    "repo-flight": "Ловите сердца и звёзды на лету. Коснитесь экрана — и они подпрыгнут",
+    "repo-flight": "Меняйте дорожку стрелками и собирайте сердца",
     "genshin:q1": "Подсказка появится позже",
     "genshin:q2": "Подсказка появится позже",
     "genshin:q3": "Подсказка появится позже",
@@ -410,7 +410,7 @@ window.QUEST_CONFIG = {
      MUSIC: путь от папки boat/ или URL; пусто — без музыки. С музыкой: плавание = длина трека − ENTER_MS − ARRIVE_MS.
      Без музыки: плавание SAIL_MS. */
   BOAT: {
-    MUSIC: "",
+    MUSIC: "okean.mp3",
     SAIL_MS: 22000,
     ENTER_MS: 1800,
     ARRIVE_MS: 4500,
@@ -423,10 +423,11 @@ window.QUEST_CONFIG = {
      HEART_PRIMOS — за одно сердце, HEART_CAP — потолок примогемов за все сердца (сохраняется). */
   TRANSITIONS: {
     REPO_FLIGHT: {
-      MUSIC: null,
+      MUSIC: "kacheli.mp3",
       DURATION_MS: 180000,
       HEART_PRIMOS: 2,
       HEART_CAP: 50,
+      LANE_MS: 250,
       TOAST: "Сердца собраны"
     }
   },

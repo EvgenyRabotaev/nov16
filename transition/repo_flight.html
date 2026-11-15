@@ -3,99 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Полёт в Тейват</title>
+<title>Поездка в Тейват</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%237ad0ff'/%3E%3C/svg%3E">
-<link rel="preload" as="image" href="repo/vika.png">
-<link rel="preload" as="image" href="repo/zhenya.png">
+<link rel="preload" as="image" href="repo/car.png">
+<link rel="preload" as="image" href="repo/wheel.png">
 <style>
-  /* Переход R.E.P.O.: после Subnautica, перед Тейватом.
-     Два робота (Вика — розовый, Женя — синий) летят сквозь игровые миры ~3 мин.
-     Музыка и длительность — QUEST_CONFIG.TRANSITIONS.REPO_FLIGHT.
-     Отладка: ?fast=1 (30 с) и «Пропустить» только в отладке. */
+  /* Переход R.E.P.O.: вид сбоку, три дорожки, Вика за рулём, Женя сзади.
+     После Subnautica, перед Тейватом. Музыка и длительность — TRANSITIONS.REPO_FLIGHT.
+     Отладка: ?fast=1 (30 с), «Пропустить» только в отладке. */
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #05060c; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-  #worlds { position: fixed; inset: 0; overflow: hidden; background: #05060c; }
-  .world {
-    position: absolute; inset: -12% -16%;
-    background: center / cover no-repeat;
-    opacity: 0; pointer-events: none;
-    will-change: transform, opacity;
-    transition: opacity 1.8s ease;
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #07080e; user-select: none; -webkit-user-select: none; touch-action: none; }
+  #bgRoot { position: fixed; inset: 0; overflow: hidden; background: #07080e; }
+  .world-stack { position: absolute; inset: 0; opacity: 0; transition: opacity 2.5s ease; will-change: opacity; pointer-events: none; }
+  .world-stack.on { opacity: 1; }
+  html.fast .world-stack { transition-duration: 1.4s; }
+  .strip { position: absolute; left: 0; top: 0; height: 78%; width: 100%; overflow: hidden; }
+  .strip.mid {
+    top: 42%; height: 40%; opacity: .7; filter: brightness(.88) saturate(1.06);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 28%, #000 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 28%, #000 100%);
   }
-  .world.on { opacity: 1; }
-  html.fast .world { transition-duration: .55s; }
+  .tile {
+    position: absolute; top: 0; left: 0; height: 100%;
+    background: center / 100% 100% no-repeat;
+    will-change: transform;
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 180px), transparent 100%);
+            mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 180px), transparent 100%);
+  }
   #vignette {
     position: fixed; inset: 0; z-index: 2; pointer-events: none;
-    background: radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0,0,0,.38) 100%);
+    background: radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,.42) 100%);
   }
-  #fx, #fxFront { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  #fx { z-index: 3; }
-  #fxFront { z-index: 8; }
-  #pair {
-    position: fixed; z-index: 6; left: 0; top: 0;
-    width: min(56vw, 420px); height: min(62vh, 520px);
-    pointer-events: none; will-change: transform;
-    opacity: 0;
+  #road {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 42%;
+    z-index: 3; pointer-events: none;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(8,6,10,.18) 18%, rgba(8,6,10,.42) 100%);
   }
-  .bot {
-    position: absolute; bottom: 0; width: 48%;
-    transform-origin: 50% 80%;
-    filter: drop-shadow(0 14px 16px rgba(0,0,0,.35));
+  #roadFx { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #speedFx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; }
+  #pickups { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
+  .heart {
+    position: absolute; left: 0; top: 0; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+    font-size: 32px; line-height: 46px; text-align: center;
+    filter: drop-shadow(0 0 8px rgba(255, 120, 170, .9));
+    will-change: transform; pointer-events: none;
   }
-  #botVika { left: 0; z-index: 2; }
-  #botZhenya { right: 0; z-index: 1; }
-  .bot-bob { transform-origin: 50% 70%; animation: bob 0.7s ease-in-out infinite; }
-  #botZhenya .bot-bob { animation-delay: -0.32s; }
-  .bot img { display: block; width: 100%; height: auto; pointer-events: none; }
-  #botVika img { filter: drop-shadow(0 0 16px rgba(255, 90, 170, .45)); }
-  #botZhenya img { filter: drop-shadow(0 0 16px rgba(70, 140, 255, .5)); }
-  @keyframes bob {
-    0%, 100% { transform: translateY(0) rotate(-7deg) scaleY(1); }
-    40% { transform: translateY(-9px) rotate(-5deg) scaleY(1.03); }
-    70% { transform: translateY(-3px) rotate(-8deg) scaleY(0.97); }
-  }
-  #pair.jump .bot { animation: hop 0.52s cubic-bezier(.2, .8, .25, 1); }
-  #botZhenya.delay-hop { animation-delay: .05s; }
-  @keyframes hop {
-    0% { transform: translateY(0); }
-    42% { transform: translateY(-34%); }
-    100% { transform: translateY(0); }
-  }
-  #loot { position: fixed; inset: 0; z-index: 7; pointer-events: none; }
-  .pickup {
-    position: absolute; left: 0; top: 0; width: 52px; height: 52px;
-    margin: -26px 0 0 -26px; border: 0; padding: 0; background: none;
-    pointer-events: auto; cursor: pointer; touch-action: manipulation;
-    will-change: transform; font-size: 32px; line-height: 52px; text-align: center;
-    filter: drop-shadow(0 0 8px rgba(255, 180, 220, .8));
-    animation: pickupSpin 2.8s linear infinite;
-  }
-  .pickup.star { font-size: 28px; filter: drop-shadow(0 0 8px rgba(255, 230, 140, .9)); }
-  .pickup.gone { animation: pickupPop .32s ease forwards; pointer-events: none; }
-  @keyframes pickupSpin { 50% { transform: rotate(12deg) scale(1.08); } }
-  @keyframes pickupPop { to { transform: scale(1.7); opacity: 0; } }
+  .heart.gone { animation: heartPop .28s ease forwards; }
+  @keyframes heartPop { to { transform: scale(1.6); opacity: 0; } }
   .floater {
-    position: absolute; z-index: 9; pointer-events: none;
+    position: absolute; z-index: 16; pointer-events: none;
     font: 700 16px/1 "Segoe UI", system-ui, sans-serif; color: #ffe7a8;
     text-shadow: 0 0 8px rgba(255, 200, 80, .8); animation: floaterUp .9s ease-out forwards;
   }
   @keyframes floaterUp { to { transform: translateY(-40px); opacity: 0; } }
-  #collectHud {
-    position: fixed; z-index: 10; top: calc(14px + env(safe-area-inset-top, 0px));
-    left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 14px; border-radius: 999px;
-    background: rgba(8, 10, 18, .42); color: #fff;
-    border: 1px solid rgba(255,255,255,.28);
-    font: 600 15px/1 "Segoe UI", "Noto Sans", system-ui, sans-serif;
-    letter-spacing: .04em; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-    opacity: 0; transition: opacity .6s ease; pointer-events: none;
+  #carWrap {
+    position: fixed; z-index: 12; left: 0; top: 0;
+    pointer-events: none; will-change: transform;
+    opacity: 0;
   }
-  #collectHud.on { opacity: 1; }
-  #collectHud .ico { color: #ff6ea8; font-size: 16px; }
+  #car {
+    position: relative; width: 100%; height: 100%;
+    transform-origin: 50% 88%;
+    will-change: transform;
+  }
+  #car .body { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none;
+    filter: drop-shadow(0 10px 12px rgba(0,0,0,.45)); }
+  .wheel-slot {
+    position: absolute;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 36%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 36%);
+  }
+  .wheel-slot img {
+    display: block; width: 100%; height: 100%;
+    will-change: transform;
+  }
   #portal {
-    position: fixed; z-index: 5; left: 50%; top: 46%;
-    width: min(70vw, 520px); height: min(70vw, 520px);
+    position: fixed; z-index: 7; left: 78%; top: 58%;
+    width: min(54vw, 420px); height: min(54vw, 420px);
     transform: translate(-50%, -50%) scale(.2); opacity: 0;
     pointer-events: none; will-change: transform, opacity;
   }
@@ -118,7 +104,7 @@
   @keyframes portalPulse { 50% { transform: scale(1.06); opacity: .9; } }
   @keyframes portalSpin { to { transform: rotate(360deg); } }
   #titleCard {
-    position: fixed; z-index: 11; left: 50%; top: 42%;
+    position: fixed; z-index: 18; left: 50%; top: 42%;
     transform: translate(-50%, -50%); text-align: center; pointer-events: none;
     opacity: 0; transition: opacity 1.2s ease, transform 1.2s ease;
     width: min(90vw, 640px);
@@ -127,7 +113,7 @@
   #titleCard .kicker {
     font: 600 13px/1.2 "Segoe UI", "Noto Sans", system-ui, sans-serif;
     letter-spacing: .28em; text-transform: uppercase; color: #fff6d0;
-    text-shadow: 0 0 16px rgba(255, 200, 90, .8), 0 1px 6px rgba(40, 20, 0, .9), 0 0 2px #3a2200;
+    text-shadow: 0 0 16px rgba(255, 200, 90, .8), 0 1px 6px rgba(40, 20, 0, .9);
     margin-bottom: 10px;
   }
   #titleCard h1 {
@@ -136,7 +122,7 @@
     text-shadow: 0 0 18px rgba(255, 200, 90, .85), 0 0 48px rgba(255, 160, 40, .55), 0 4px 12px rgba(80, 40, 0, .45);
   }
   #worldName {
-    position: fixed; z-index: 7; left: calc(16px + env(safe-area-inset-left, 0px));
+    position: fixed; z-index: 10; left: calc(16px + env(safe-area-inset-left, 0px));
     bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     font: 500 13px/1.2 "Segoe UI", "Noto Sans", system-ui, sans-serif;
     letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.72);
@@ -145,27 +131,56 @@
   }
   #worldName.on { opacity: 1; }
   #worldName.off { opacity: 0; transition: none; }
-  .veil { position: fixed; inset: 0; z-index: 12; pointer-events: none; background: #0a0c14; opacity: 1; transition: opacity 1.4s ease; }
+  #collectHud {
+    position: fixed; z-index: 16; top: calc(14px + env(safe-area-inset-top, 0px));
+    left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 999px;
+    background: rgba(8, 10, 18, .42); color: #fff;
+    border: 1px solid rgba(255,255,255,.28);
+    font: 600 15px/1 "Segoe UI", "Noto Sans", system-ui, sans-serif;
+    letter-spacing: .04em; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    opacity: 0; transition: opacity .6s ease; pointer-events: none;
+  }
+  #collectHud.on { opacity: 1; }
+  #collectHud .ico { color: #ff6ea8; }
+  #laneControls {
+    position: fixed; z-index: 17;
+    right: calc(14px + env(safe-area-inset-right, 0px));
+    top: 50%; transform: translateY(-58%);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  #laneControls button {
+    width: 52px; height: 52px; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.45);
+    background: rgba(16, 14, 24, .5); color: #fff;
+    font-size: 22px; line-height: 1; cursor: pointer;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    touch-action: manipulation;
+  }
+  #laneControls button:active { background: rgba(255,255,255,.22); }
+  #laneControls button:disabled { opacity: .35; }
+  .veil { position: fixed; inset: 0; z-index: 20; pointer-events: none; background: #0a0c14; opacity: 1; transition: opacity 1.2s ease; }
   .veil.off { opacity: 0; }
   .veil.flash { background: #fff8e6; transition: opacity .35s ease; }
-  .skip { position: fixed; z-index: 13; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  .skip { position: fixed; z-index: 21; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(66px + env(safe-area-inset-bottom, 0px));
     padding: 7px 14px; border: 1px solid rgba(255,255,255,.55); border-radius: 999px; background: rgba(20, 18, 30, .4); color: rgba(255,255,255,.92);
-    font: 500 14px/1.2 "Segoe UI", "Noto Sans", system-ui, sans-serif; letter-spacing: .03em;
-    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .8s ease; touch-action: manipulation; display: none; }
+    font: 500 14px/1.2 "Segoe UI", "Noto Sans", system-ui, sans-serif;
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .8s ease; display: none; }
   .skip.allowed { display: block; }
   .skip.show { opacity: .8; pointer-events: auto; }
-  .mute { position: fixed; z-index: 13; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); width: 38px; height: 38px; display: none;
+  .mute { position: fixed; z-index: 21; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); width: 38px; height: 38px; display: none;
     align-items: center; justify-content: center; padding: 0; border: 1px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(20, 18, 30, .4);
     -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); cursor: pointer; opacity: .8; touch-action: manipulation; }
   .mute.show { display: flex; }
   .mute svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .mute .off { display: none; } .mute.muted .on { display: none; } .mute.muted .off { display: inline; }
-  .tap-start { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 13; display: none; padding: 14px 26px; border-radius: 999px;
+  .tap-start { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 22; display: none; padding: 14px 26px; border-radius: 999px;
     font: 600 20px/1.2 "Segoe UI", system-ui, sans-serif; color: #3a2a18; background: rgba(255, 246, 220, .88); box-shadow: 0 0 30px rgba(255, 200, 120, .7); cursor: pointer; }
   .tap-start.show { display: block; animation: tapPulse 1.8s ease-in-out infinite; }
   @keyframes tapPulse { 50% { box-shadow: 0 0 50px rgba(255, 190, 100, 1); } }
   .rf-ach {
-    position: fixed; z-index: 20; left: 50%; top: calc(64px + env(safe-area-inset-top, 0px));
+    position: fixed; z-index: 24; left: 50%; top: calc(64px + env(safe-area-inset-top, 0px));
     transform: translateX(-50%); min-width: 220px; max-width: min(86vw, 360px);
     padding: 12px 16px 12px 14px; border-radius: 14px;
     background: rgba(16, 14, 24, .82); color: #fff; border: 1px solid rgba(255, 220, 150, .45);
@@ -180,35 +195,51 @@
   @keyframes rfAchIn { from { opacity: 0; transform: translate(-50%, -12px); } }
   @keyframes rfAchOut { to { opacity: 0; transform: translate(-50%, -12px); } }
   @media (max-width: 600px) {
-    #pair { width: min(66vw, 300px); height: min(52vh, 400px); }
-    .pickup { width: 58px; height: 58px; margin: -29px 0 0 -29px; font-size: 34px; }
+    #laneControls { top: auto; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); transform: none; }
+    #laneControls button { width: 56px; height: 56px; }
     .skip { right: calc(10px + env(safe-area-inset-right, 0px)); bottom: calc(58px + env(safe-area-inset-bottom, 0px)); font-size: 13px; padding: 6px 12px; }
-    #worldName { left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(62px + env(safe-area-inset-bottom, 0px)); font-size: 11px; }
-    #titleCard h1 { letter-spacing: .06em; }
+    #worldName { left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); font-size: 11px; }
+    .heart { width: 54px; height: 54px; margin: -27px 0 0 -27px; font-size: 36px; }
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115p19"></script>
+<script src="../common/quest_config.js?v=20261115p20"></script>
 <script src="../common/hud.js?v=20261115d" data-screen="repo-flight"></script>
 </head>
 <body>
-<div id="worlds"></div>
-<div id="vignette"></div>
-<canvas id="fx"></canvas>
-<div id="portal" aria-hidden="true"><div class="portal-ring"></div><div class="portal-core"></div></div>
-<div id="pair">
-  <div class="bot" id="botVika"><div class="bot-bob"><img src="repo/vika.png" alt="Вика"></div></div>
-  <div class="bot" id="botZhenya"><div class="bot-bob"><img src="repo/zhenya.png" alt="Женя"></div></div>
+<div id="bgRoot">
+  <div class="world-stack on" id="stackA">
+    <div class="strip far"><div class="tile t0"></div><div class="tile t1"></div></div>
+    <div class="strip mid"><div class="tile t0"></div><div class="tile t1"></div></div>
+  </div>
+  <div class="world-stack" id="stackB">
+    <div class="strip far"><div class="tile t0"></div><div class="tile t1"></div></div>
+    <div class="strip mid"><div class="tile t0"></div><div class="tile t1"></div></div>
+  </div>
 </div>
-<canvas id="fxFront"></canvas>
-<div id="loot"></div>
+<div id="vignette"></div>
+<div id="road"><canvas id="roadFx"></canvas></div>
+<div id="portal" aria-hidden="true"><div class="portal-ring"></div><div class="portal-core"></div></div>
+<div id="carWrap">
+  <div id="car">
+    <img class="body" src="repo/car.png" alt="Вика за рулём, Женя сзади">
+    <div class="wheel-slot" id="wheelRear"><img src="repo/wheel.png" alt=""></div>
+    <div class="wheel-slot" id="wheelFront"><img src="repo/wheel.png" alt=""></div>
+  </div>
+</div>
+<canvas id="speedFx"></canvas>
+<div id="pickups"></div>
 <div id="collectHud"><span class="ico">♥</span><span id="heartCount">0</span></div>
 <div id="worldName"></div>
 <div id="titleCard"><div class="kicker">Добро пожаловать</div><h1>Тейват</h1></div>
+<div id="laneControls">
+  <button type="button" id="laneUp" aria-label="Полоса выше">▲</button>
+  <button type="button" id="laneDown" aria-label="Полоса ниже">▼</button>
+</div>
 <div class="veil" id="veil"></div>
 <button type="button" class="skip" id="skipBtn">Пропустить ›</button>
 <button type="button" class="mute" id="muteBtn" aria-label="Звук"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#fff"/><path class="on" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="off" d="M17 9l5 6M22 9l-5 6"/></svg></button>
-<div class="tap-start" id="tapStart">Коснись, чтобы полететь ✨</div>
+<div class="tap-start" id="tapStart">Коснись, чтобы поехать 🚗</div>
 <script>
 (function () {
   "use strict";
@@ -219,23 +250,31 @@
   if (FAST) document.documentElement.classList.add("fast");
 
   const WORLDS = CFG.WORLDS || [
-    { src: "repo/worlds/01_space.jpg",  name: "Космос" },
-    { src: "repo/worlds/02_pixel.jpg",  name: "Пиксели" },
-    { src: "repo/worlds/03_cyber.jpg",  name: "Неон" },
-    { src: "repo/worlds/04_clouds.jpg", name: "Небесные острова" },
-    { src: "repo/worlds/05_lava.jpg",   name: "Лава" },
-    { src: "repo/worlds/06_forest.jpg", name: "Лес" },
-    { src: "repo/worlds/07_ocean.jpg",  name: "Океан" },
-    { src: "repo/worlds/08_teyvat.jpg", name: "Тейват" }
+    { src: "repo/worlds/01_space_tile.jpg",  name: "Космос",            road: ["#16102a", "#2a1a48"], dash: "rgba(210,200,255,.75)", dust: "180,160,255" },
+    { src: "repo/worlds/02_pixel_tile.jpg",  name: "Пиксели",           road: ["#2a6a22", "#1f4a18"], dash: "rgba(255,255,255,.8)",  dust: "180,255,140" },
+    { src: "repo/worlds/03_cyber_tile.jpg",  name: "Неон",              road: ["#12081c", "#1c0a30"], dash: "rgba(255,80,220,.75)",  dust: "200,120,255" },
+    { src: "repo/worlds/04_clouds_tile.jpg", name: "Небесные острова",  road: ["#c8b898", "#a89070"], dash: "rgba(255,255,255,.85)", dust: "255,236,200" },
+    { src: "repo/worlds/05_lava_tile.jpg",   name: "Лава",              road: ["#2a1010", "#4a1810"], dash: "rgba(255,180,90,.8)",   dust: "255,140,60" },
+    { src: "repo/worlds/06_forest_tile.jpg", name: "Лес",               road: ["#243418", "#1a2810"], dash: "rgba(220,230,160,.8)",  dust: "170,255,140" },
+    { src: "repo/worlds/07_ocean_tile.jpg",  name: "Океан",             road: ["#0e3a48", "#0a5a68"], dash: "rgba(220,250,255,.85)", dust: "140,220,255" },
+    { src: "repo/worlds/08_teyvat_tile.jpg", name: "Тейват",            road: ["#b89450", "#d4b06a"], dash: "rgba(255,248,210,.9)",  dust: "255,220,140" }
   ];
   const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 2;
   const HEART_CAP = CFG.HEART_CAP != null ? CFG.HEART_CAP : 50;
   const HEART_KEY = "nov16_repo_hearts";
+  const LANE_MS = CFG.LANE_MS || 250;
+  const FADE = CFG.FADE_MS || 3000;
+  const OVERLAP = 180;
+  const WHEELS = [
+    { cx: 0.1406, cy: 0.8611, r: 0.0663 },
+    { cx: 0.782, cy: 0.860, r: 0.062 }
+  ];
+  const CAR_ASPECT = 1010 / 576;
 
-  const ENTER = FAST ? 800 : 2000;
+  const ENTER = FAST ? 700 : 2000;
   const END = FAST ? 7000 : 14000;
-  let DURATION = FAST ? 30000 : (CFG.DURATION_MS || 180000);
   let skipped = false, started = false, doneShown = false;
+  let DURATION = FAST ? 30000 : (CFG.DURATION_MS || 180000);
   const T = {};
   function setTimeline() {
     if (skipped) return;
@@ -248,37 +287,42 @@
   }
   setTimeline();
 
-  const worldsEl = document.getElementById("worlds");
-  const worldEls = WORLDS.map((w, i) => {
-    const d = document.createElement("div");
-    d.className = "world" + (i === 0 ? " on" : "");
-    d.style.backgroundImage = "url(" + w.src + ")";
-    worldsEl.appendChild(d);
-    return d;
-  });
-  const pair = document.getElementById("pair");
+  const stackA = document.getElementById("stackA");
+  const stackB = document.getElementById("stackB");
+  let frontStack = stackA, backStack = stackB, curWorld = 0, lastWorldShown = -1, worldFadeTimer = 0;
+  const carWrap = document.getElementById("carWrap");
+  const carEl = document.getElementById("car");
+  const wheelRear = document.getElementById("wheelRear");
+  const wheelFront = document.getElementById("wheelFront");
+  const wheelImgs = [wheelRear.querySelector("img"), wheelFront.querySelector("img")];
   const portal = document.getElementById("portal");
   const titleCard = document.getElementById("titleCard");
   const veil = document.getElementById("veil");
   const worldName = document.getElementById("worldName");
   const collectHud = document.getElementById("collectHud");
   const heartCountEl = document.getElementById("heartCount");
-  const lootEl = document.getElementById("loot");
+  const lootEl = document.getElementById("pickups");
   const skipBtn = document.getElementById("skipBtn");
   const muteBtn = document.getElementById("muteBtn");
   const tapStart = document.getElementById("tapStart");
-  const canvas = document.getElementById("fx");
-  const canvasF = document.getElementById("fxFront");
-  const ctx = canvas.getContext("2d");
-  const ctxF = canvasF.getContext("2d");
+  const laneUp = document.getElementById("laneUp");
+  const laneDown = document.getElementById("laneDown");
+  const roadCanvas = document.getElementById("roadFx");
+  const speedCanvas = document.getElementById("speedFx");
+  const roadCtx = roadCanvas.getContext("2d");
+  const speedCtx = speedCanvas.getContext("2d");
 
-  let jumping = false, muted = false;
-  let clock = 0, lastTs = 0, curWorld = 0, lastWorldShown = -1;
-  let collected = 0, awardedThisRun = 0, jumpedTimes = 0;
+  let jumpingLane = false, muted = false;
+  let clock = 0, lastTs = 0;
+  let collected = 0, awardedThisRun = 0;
   let nextSpawn = 0, pickups = [];
   let W = innerWidth, H = innerHeight;
-  let particles = [], lines = [];
-  let audio = null, audioFailed = false, ambient = null, lastAT = -1;
+  let scrollFar = 0, scrollMid = 0, scrollRoad = 0, wheelAngle = 0;
+  let lane = 1, laneFrom = 1, laneTo = 1, laneT0 = -1, laneVisual = 1;
+  let audio = null, audioFailed = false, lastAT = -1;
+  let tileWFar = 1600, tileWMid = 1600;
+  let swipeY0 = null, swipeT0 = 0;
+  let lines = [];
 
   function alreadyAwarded() {
     try { return Math.max(0, parseInt(localStorage.getItem(HEART_KEY) || "0", 10) || 0); } catch (e) { return 0; }
@@ -286,7 +330,6 @@
   function setAwarded(n) {
     try { localStorage.setItem(HEART_KEY, String(n)); } catch (e) {}
   }
-
   function ruHeart(n) {
     const m = n % 100, m1 = n % 10;
     if (m > 10 && m < 20) return n + " сердец";
@@ -301,7 +344,6 @@
     if (m1 >= 2 && m1 <= 4) return n + " примогена";
     return n + " примогемов";
   }
-
   function showToast(title, pts) {
     document.querySelectorAll(".rf-ach").forEach((n) => n.remove());
     const el = document.createElement("div");
@@ -312,18 +354,54 @@
     document.body.appendChild(el);
     setTimeout(() => { el.classList.add("off"); setTimeout(() => el.remove(), 450); }, 3200);
   }
+  function easeInOut(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function mixHex(a, b, t) {
+    const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+    const r = Math.round(lerp((pa >> 16) & 255, (pb >> 16) & 255, t));
+    const g = Math.round(lerp((pa >> 8) & 255, (pb >> 8) & 255, t));
+    const bl = Math.round(lerp(pa & 255, pb & 255, t));
+    return "rgb(" + r + "," + g + "," + bl + ")";
+  }
 
   function resize() {
     W = innerWidth; H = innerHeight;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    [canvas, canvasF].forEach((c) => {
-      c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
-      c.style.width = W + "px"; c.style.height = H + "px";
+    [roadCanvas, speedCanvas].forEach((c) => {
+      c.width = Math.round(W * dpr); c.height = Math.round(H * (c === roadCanvas ? 0.42 : 1) * dpr);
+      c.style.width = W + "px";
+      c.style.height = (c === roadCanvas ? H * 0.42 : H) + "px";
       c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
     });
+    const farH = H * 0.78;
+    tileWFar = Math.max(W + OVERLAP + 40, farH * (1600 / 720));
+    tileWMid = Math.max(W + OVERLAP + 40, (H * 0.48) * (1600 / 720) * 1.15);
+    document.querySelectorAll(".strip.far .tile").forEach((el) => { el.style.width = tileWFar + "px"; });
+    document.querySelectorAll(".strip.mid .tile").forEach((el) => { el.style.width = tileWMid + "px"; });
+    layoutWheels();
+    seedLines();
   }
-  addEventListener("resize", resize); resize();
+  addEventListener("resize", resize);
 
+  function layoutWheels() {
+    [wheelRear, wheelFront].forEach((slot, i) => {
+      const w = WHEELS[i];
+      const size = w.r * 2 * 100;
+      slot.style.left = ((w.cx - w.r) * 100) + "%";
+      slot.style.top = ((w.cy - w.r) * 100) + "%";
+      slot.style.width = size + "%";
+      slot.style.height = (size * CAR_ASPECT) + "%";
+    });
+  }
+
+  function setStackWorld(stack, i) {
+    const w = WORLDS[i];
+    stack.querySelectorAll(".tile").forEach((el) => {
+      el.style.backgroundImage = "url(" + w.src + ")";
+    });
+  }
   function worldIndexAt(t) {
     const span = Math.max(1, T.portalAt - T.enter);
     const u = Math.max(0, Math.min(0.999, (t - T.enter) / span));
@@ -331,208 +409,257 @@
   }
   function setWorld(i) {
     if (i === lastWorldShown) return;
+    const prev = lastWorldShown;
     lastWorldShown = i; curWorld = i;
-    worldEls.forEach((el, k) => el.classList.toggle("on", k === i));
     worldName.textContent = WORLDS[i].name || "";
+    worldName.classList.remove("off");
     worldName.classList.add("on");
-    if (i === WORLDS.length - 1) return;
-    clearTimeout(setWorld._hide);
-    setWorld._hide = setTimeout(() => worldName.classList.remove("on"), FAST ? 1200 : 4200);
+    if (i !== WORLDS.length - 1) {
+      clearTimeout(setWorld._hide);
+      setWorld._hide = setTimeout(() => worldName.classList.remove("on"), FAST ? 1100 : 4000);
+    }
+    if (prev < 0) { setStackWorld(frontStack, i); frontStack.classList.add("on"); return; }
+    setStackWorld(backStack, i);
+    backStack.classList.add("on");
+    frontStack.classList.remove("on");
+    const oldFront = frontStack;
+    frontStack = backStack;
+    backStack = oldFront;
+    clearTimeout(worldFadeTimer);
+    worldFadeTimer = setTimeout(() => { /* keep hidden stack ready */ }, FAST ? 1500 : 2700);
   }
 
-  function pairSize() {
-    const pw = Math.min(W * (W < 600 ? 0.66 : 0.42), W < 600 ? 300 : 420);
-    const ph = pw * (847 / 375) * 0.52;
-    return { pw, ph };
+  function placeStrip(strip, scroll, tileW) {
+    const period = Math.max(1, tileW - OVERLAP);
+    const o = ((scroll % period) + period) % period;
+    const t0 = strip.querySelector(".t0");
+    const t1 = strip.querySelector(".t1");
+    t0.style.transform = "translate3d(" + (-o) + "px,0,0)";
+    t1.style.transform = "translate3d(" + (-o + period) + "px,0,0)";
   }
-  function placePair(t) {
-    const { pw, ph } = pairSize();
-    pair.style.width = pw + "px";
-    pair.style.height = ph + "px";
-    const midX = W < 600 ? 0.48 : 0.36;
-    let cx = W * midX, cy = H * 0.58, sc = 1, op = 1, rot = 0;
+
+  function lanes() {
+    const roadTop = H * (W < 600 ? 0.62 : 0.58);
+    const roadH = H * (W < 600 ? 0.24 : 0.28);
+    return [
+      { y: roadTop + roadH * 0.18, scale: 0.74, z: 10 },
+      { y: roadTop + roadH * 0.50, scale: 0.88, z: 12 },
+      { y: roadTop + roadH * 0.84, scale: 1.00, z: 15 }
+    ];
+  }
+  function laneState() {
+    let v = laneTo, tilt = 0;
+    if (laneT0 >= 0) {
+      const u = Math.min(1, (clock - laneT0) / LANE_MS);
+      const e = easeInOut(u);
+      v = lerp(laneFrom, laneTo, e);
+      tilt = Math.sin(u * Math.PI) * 7 * Math.sign(laneTo - laneFrom);
+      if (u >= 1) { laneT0 = -1; lane = laneTo; v = laneTo; tilt = 0; jumpingLane = false; }
+    }
+    laneVisual = v;
+    const L = lanes();
+    const i0 = Math.max(0, Math.min(2, Math.floor(v)));
+    const i1 = Math.max(0, Math.min(2, Math.ceil(v)));
+    const f = v - i0;
+    return {
+      y: lerp(L[i0].y, L[i1].y, f),
+      scale: lerp(L[i0].scale, L[i1].scale, f),
+      z: Math.round(lerp(L[i0].z, L[i1].z, f)),
+      tilt: tilt,
+      v: v
+    };
+  }
+  function setLane(next) {
+    if (!started || doneShown || clock >= T.portalAt) return;
+    next = Math.max(0, Math.min(2, next | 0));
+    if (next === laneTo && laneT0 < 0) return;
+    const st = laneState();
+    laneFrom = st.v;
+    laneTo = next;
+    laneT0 = clock;
+    jumpingLane = true;
+    updateLaneButtons();
+  }
+  function updateLaneButtons() {
+    laneUp.disabled = laneTo <= 0;
+    laneDown.disabled = laneTo >= 2;
+  }
+
+  function carSize() {
+    const cw = Math.min(W * (W < 600 ? 0.62 : 0.38), W < 600 ? 280 : 440);
+    return { cw, ch: cw / CAR_ASPECT };
+  }
+  function placeCar(t) {
+    const { cw, ch } = carSize();
+    carWrap.style.width = cw + "px";
+    carWrap.style.height = ch + "px";
+    const st = laneState();
+    let cx = W * (W < 600 ? 0.30 : 0.26);
+    let cy = st.y, sc = st.scale, op = 1, rot = st.tilt;
     if (t < T.enter) {
-      const k = t / T.enter;
+      const k = Math.max(0, t / T.enter);
       const e = 1 - Math.pow(1 - k, 3);
-      cx = W * (-0.2 + (midX + 0.2) * e);
-      cy = H * (0.85 - 0.27 * e);
-      sc = 0.7 + 0.3 * e;
-      op = Math.min(1, k * 1.6);
-    } else if (t < T.portalAt) {
-      const fly = t - T.enter;
-      cx = W * midX + Math.sin(fly / 900) * W * 0.03;
-      cy = H * 0.58 + Math.sin(fly / 640) * H * 0.025;
-      sc = 1;
-      op = 1;
-    } else if (t < T.flash) {
+      cx = W * (-0.35 + (W < 600 ? 0.65 : 0.61) * e);
+      op = Math.min(1, k * 1.8);
+      sc *= 0.85 + 0.15 * e;
+    } else if (t >= T.portalAt && t < T.flash) {
       const k = (t - T.portalAt) / Math.max(1, T.flash - T.portalAt);
       const e = k * k;
-      cx = W * (midX + (0.50 - midX) * e);
-      cy = H * (0.58 - 0.12 * e);
-      sc = 1 + 0.7 * e;
-      op = 1 - Math.max(0, (k - 0.75) * 4);
-    } else {
-      op = 0; sc = 1.8; cx = W * 0.5; cy = H * 0.46;
+      cx = lerp(cx, W * 0.72, e);
+      cy = lerp(cy, H * 0.58, e);
+      sc = lerp(sc, 1.15, e);
+      op = 1 - Math.max(0, (k - 0.72) * 3.5);
+      rot = 0;
+    } else if (t >= T.flash) {
+      op = 0; cx = W * 0.72; cy = H * 0.58;
     }
-    pair.style.opacity = String(op);
-    pair.style.transform = "translate(" + (cx - pw / 2) + "px," + (cy - ph / 2) + "px) scale(" + sc + ") rotate(" + rot + "deg)";
+    const bounce = (t > T.enter && t < T.portalAt) ? Math.sin(t / 90) * 3 : 0;
+    carWrap.style.opacity = String(op);
+    carWrap.style.zIndex = String(st.z + 1);
+    carWrap.style.transform = "translate3d(" + (cx - cw * 0.45) + "px," + (cy - ch * 0.90 + bounce) + "px,0) scale(" + sc + ") rotate(" + rot + "deg)";
+    return { cx: cx + cw * 0.28, cy: cy, cw, ch, scale: sc, lane: st.v };
   }
 
   function placePortal(t) {
-    if (t < T.portalAt - 800) { portal.classList.remove("on"); portal.style.opacity = "0"; return; }
+    if (t < T.portalAt - 900) { portal.classList.remove("on"); portal.style.opacity = "0"; return; }
     portal.classList.add("on");
-    let k = Math.max(0, Math.min(1, (t - (T.portalAt - 800)) / 1400));
+    let k = Math.max(0, Math.min(1, (t - (T.portalAt - 900)) / 1400));
     if (t > T.flash) k = 1;
     const pulse = 1 + Math.sin(t / 180) * 0.03;
     portal.style.opacity = String(Math.min(1, k * 1.2));
-    portal.style.transform = "translate(-50%, -50%) scale(" + (0.25 + 0.95 * k) * pulse + ")";
+    portal.style.transform = "translate(-50%, -50%) scale(" + (0.25 + 1.05 * k) * pulse + ")";
   }
 
-  function spawnLoot(kind, x, y) {
-    if (pickups.length > 8) return;
-    const el = document.createElement("button");
-    el.type = "button";
-    el.className = "pickup " + (kind === "star" ? "star" : "heart");
-    el.textContent = kind === "star" ? "✦" : "♥";
-    el.setAttribute("aria-label", kind === "star" ? "Звезда" : "Сердце");
-    const item = {
-      el, kind,
-      x: x != null ? x : W + 40,
-      y: y != null ? y : (0.18 + Math.random() * 0.52) * H,
-      vx: -(0.06 + Math.random() * 0.05) * (FAST ? 1.8 : 1),
-      amp: 10 + Math.random() * 18,
-      freq: 0.0015 + Math.random() * 0.0015,
-      phase: Math.random() * Math.PI * 2,
-      born: clock,
-      taken: false
-    };
-    el.style.left = item.x + "px";
-    el.style.top = item.y + "px";
-    el.addEventListener("pointerdown", (e) => { e.stopPropagation(); e.preventDefault(); collectItem(item, e.clientX, e.clientY); });
+  function spawnHeart(laneIdx, x) {
+    if (pickups.length > 7) return null;
+    const el = document.createElement("div");
+    el.className = "heart";
+    el.textContent = "♥";
+    const L = lanes();
+    const ln = Math.max(0, Math.min(2, laneIdx == null ? (Math.random() * 3 | 0) : laneIdx));
+    const item = { el, kind: "heart", lane: ln, x: x != null ? x : W + 50, taken: false };
+    el.style.zIndex = String(L[ln].z + 1);
     lootEl.appendChild(el);
     pickups.push(item);
     return item;
   }
-  function collectItem(item, cx, cy) {
+  function collectItem(item, car) {
     if (!item || item.taken) return;
     item.taken = true;
     item.el.classList.add("gone");
-    setTimeout(() => item.el.remove(), 320);
-    if (item.kind === "heart") {
-      collected += 1;
-      heartCountEl.textContent = String(collected);
-      const already = alreadyAwarded();
-      const remain = Math.max(0, HEART_CAP - already);
-      const gain = Math.min(HEART_PRIMOS, remain);
-      if (gain && window.QuestHUD) {
-        QuestHUD.addPrimos(gain);
-        setAwarded(already + gain);
-        awardedThisRun += gain;
-      }
-      const fl = document.createElement("div");
-      fl.className = "floater";
-      fl.textContent = gain ? "+" + gain : "♥";
-      fl.style.left = (cx || item.x) + "px";
-      fl.style.top = (cy || item.y) + "px";
-      document.body.appendChild(fl);
-      setTimeout(() => fl.remove(), 900);
+    setTimeout(() => item.el.remove(), 300);
+    collected += 1;
+    heartCountEl.textContent = String(collected);
+    const already = alreadyAwarded();
+    const remain = Math.max(0, HEART_CAP - already);
+    const gain = Math.min(HEART_PRIMOS, remain);
+    if (gain && window.QuestHUD) {
+      QuestHUD.addPrimos(gain);
+      setAwarded(already + gain);
+      awardedThisRun += gain;
     }
+    const fl = document.createElement("div");
+    fl.className = "floater";
+    fl.textContent = gain ? "+" + gain : "♥";
+    const L = lanes();
+    fl.style.left = item.x + "px";
+    fl.style.top = (L[item.lane].y - 30) + "px";
+    document.body.appendChild(fl);
+    setTimeout(() => fl.remove(), 900);
   }
-  function updateLoot(dt) {
-    const inWindow = started && clock > T.enter + 600 && clock < T.portalAt - 400;
+  function updateLoot(dt, car, roadSpd) {
+    const inWindow = started && clock > T.enter + 500 && clock < T.portalAt - 500;
     if (inWindow && clock >= nextSpawn) {
-      const kind = Math.random() < 0.72 ? "heart" : "star";
-      spawnLoot(kind);
-      const remain = Math.max(4000, T.portalAt - clock);
-      const want = FAST ? 9 : 22;
-      nextSpawn = clock + Math.max(FAST ? 700 : 1800, remain / want);
+      spawnHeart();
+      const remain = Math.max(3000, T.portalAt - clock);
+      const want = FAST ? 8 : 22;
+      nextSpawn = clock + Math.max(FAST ? 800 : 2000, remain / want);
     }
+    const L = lanes();
     for (let i = pickups.length - 1; i >= 0; i--) {
       const p = pickups[i];
       if (p.taken) { pickups.splice(i, 1); continue; }
-      p.x += p.vx * dt;
-      const y = p.y + Math.sin((clock + p.phase * 400) * p.freq) * p.amp;
-      p.el.style.left = p.x + "px"; p.el.style.top = y + "px";
-      if (p.x < -60) { p.el.remove(); pickups.splice(i, 1); }
+      p.x -= roadSpd * dt;
+      const y = L[p.lane].y - 18 * L[p.lane].scale;
+      const sc = L[p.lane].scale;
+      p.el.style.transform = "translate3d(" + p.x + "px," + y + "px,0) scale(" + sc + ")";
+      if (!p.taken && car && Math.abs(car.lane - p.lane) < 0.4 && Math.abs(p.x - car.cx) < Math.max(36, car.cw * 0.18)) {
+        collectItem(p, car);
+        continue;
+      }
+      if (p.x < -80) { p.el.remove(); pickups.splice(i, 1); }
     }
   }
 
-  function jump() {
-    if (!started || doneShown || clock >= T.portalAt) return;
-    if (jumping) return;
-    jumping = true; jumpedTimes += 1;
-    pair.classList.remove("jump");
-    void pair.offsetWidth;
-    pair.classList.add("jump");
-    setTimeout(() => { pair.classList.remove("jump"); jumping = false; }, 540);
-  }
-
-  function seedParticles() {
-    particles = [];
-    for (let i = 0; i < 70; i++) {
-      particles.push({
-        x: Math.random() * W, y: Math.random() * H,
-        z: 0.3 + Math.random() * 1.2,
-        s: 0.6 + Math.random() * 1.8,
-        a: 0.25 + Math.random() * 0.55
-      });
-    }
+  function seedLines() {
     lines = [];
-    for (let i = 0; i < 18; i++) {
-      lines.push({
-        x: Math.random() * W, y: Math.random() * H,
-        l: 30 + Math.random() * 80, v: 1.2 + Math.random() * 2.4, a: 0.08 + Math.random() * 0.18
-      });
+    for (let i = 0; i < 16; i++) {
+      lines.push({ x: Math.random() * W, y: H * (0.2 + Math.random() * 0.55), l: 24 + Math.random() * 70, v: 1.1 + Math.random() * 2, a: 0.08 + Math.random() * 0.16 });
     }
   }
-  seedParticles();
 
-  function particleColor(i) {
-    switch (i) {
-      case 0: return "255,255,255";
-      case 1: return "180,255,160";
-      case 2: return "180,120,255";
-      case 3: return "255,236,200";
-      case 4: return "255,140,60";
-      case 5: return "170,255,140";
-      case 6: return "140,220,255";
-      default: return "255,220,140";
+  function drawRoad(dt, roadSpd) {
+    const ctx = roadCtx;
+    const rh = H * 0.42;
+    ctx.clearRect(0, 0, W, rh);
+    const L = lanes();
+    const worldA = WORLDS[curWorld];
+    const y0 = L[0].y - (H - rh) - 22;
+    const y2 = L[2].y - (H - rh) + 28;
+    const grd = ctx.createLinearGradient(0, y0, 0, y2);
+    grd.addColorStop(0, worldA.road[0]);
+    grd.addColorStop(1, worldA.road[1]);
+    ctx.globalAlpha = 0.78;
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, y0, W, Math.max(40, y2 - y0));
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(0, y0, W, 6);
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < 3; i++) {
+      const yAbs = L[i].y - (H - rh);
+      ctx.strokeStyle = worldA.dash;
+      ctx.lineWidth = 3 + i;
+      ctx.setLineDash([16 + i * 6, 20 + i * 8]);
+      ctx.lineDashOffset = -scrollRoad * (0.7 + i * 0.15);
+      ctx.beginPath();
+      ctx.moveTo(0, yAbs);
+      ctx.lineTo(W, yAbs);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
   }
-  function drawFx(t, dt) {
+
+  function drawSpeed(dt, roadSpd, inFlight) {
+    const ctx = speedCtx;
     ctx.clearRect(0, 0, W, H);
-    ctxF.clearRect(0, 0, W, H);
-    const inFlight = started && t > 200 && t < T.flash;
-    const spd = (FAST ? 2.1 : 1) * (t >= T.portalAt ? 2.2 : 1);
-    const rgb = particleColor(curWorld);
-    if (inFlight) {
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        p.x -= p.z * 0.28 * spd * dt;
-        if (p.x < -8) { p.x = W + 8; p.y = Math.random() * H; }
-        ctx.fillStyle = "rgba(" + rgb + "," + p.a + ")";
-        if (curWorld === 1) ctx.fillRect(p.x, p.y, p.s * 2, p.s * 2);
-        else { ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill(); }
-      }
-      ctxF.strokeStyle = "rgba(255,255,255,0.18)";
-      for (let i = 0; i < lines.length; i++) {
-        const ln = lines[i];
-        ln.x -= ln.v * 0.55 * spd * dt;
-        if (ln.x < -ln.l) { ln.x = W + ln.l; ln.y = Math.random() * H; }
-        ctxF.globalAlpha = ln.a;
-        ctxF.beginPath();
-        ctxF.moveTo(ln.x, ln.y);
-        ctxF.lineTo(ln.x + ln.l, ln.y);
-        ctxF.stroke();
-      }
-      ctxF.globalAlpha = 1;
+    if (!inFlight) return;
+    const rgb = WORLDS[curWorld].dust;
+    ctx.strokeStyle = "rgba(255,255,255,0.18)";
+    for (let i = 0; i < lines.length; i++) {
+      const ln = lines[i];
+      ln.x -= ln.v * roadSpd * 0.55 * dt;
+      if (ln.x < -ln.l) { ln.x = W + ln.l; ln.y = H * (0.15 + Math.random() * 0.55); }
+      ctx.globalAlpha = ln.a;
+      ctx.beginPath();
+      ctx.moveTo(ln.x, ln.y);
+      ctx.lineTo(ln.x + ln.l, ln.y);
+      ctx.stroke();
     }
-    worldEls.forEach((el, i) => {
-      if (!el.classList.contains("on") && Math.abs(i - curWorld) > 1) return;
-      const local = t / 1000;
-      const drift = -((local * 6) % 16);
-      el.style.transform = "translate3d(" + drift + "%, 0, 0) scale(1.14)";
-    });
+    ctx.globalAlpha = 1;
+    /* пыль у колёс */
+    const { cw, ch } = carSize();
+    const st = laneState();
+    if (clock > T.enter && clock < T.portalAt) {
+      ctx.fillStyle = "rgba(" + rgb + ",0.35)";
+      for (let i = 0; i < 5; i++) {
+        const px = W * (W < 600 ? 0.18 : 0.16) - (scrollRoad * 0.2 + i * 14) % 50;
+        const py = st.y - 6 + Math.sin((clock + i * 80) / 70) * 4;
+        ctx.beginPath();
+        ctx.arc(px, py, 2 + (i % 3), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   }
 
   function finish() {
@@ -544,6 +671,8 @@
     worldName.classList.add("off");
     collectHud.classList.remove("on");
     skipBtn.classList.remove("show");
+    laneUp.disabled = true;
+    laneDown.disabled = true;
     if (awardedThisRun > 0 || collected > 0) {
       const title = CFG.TOAST || "Сердца собраны";
       showToast(title + " — " + ruHeart(collected), awardedThisRun ? ("+" + ruPrimo(awardedThisRun)) : "");
@@ -556,25 +685,21 @@
   }
 
   function fadeAudio(ms) {
-    const start = performance.now();
-    const fromFile = audio && !audio.paused ? audio.volume : 0;
-    const fromAmb = ambient && ambient.gain ? ambient.gain.gain.value : 0;
+    if (!audio) return;
+    const startAt = performance.now();
+    const from = audio.volume;
     function tick(now) {
-      const k = Math.min(1, (now - start) / ms);
-      if (audio) audio.volume = Math.max(0, fromFile * (1 - k));
-      if (ambient && ambient.gain) ambient.gain.gain.value = Math.max(0, fromAmb * (1 - k));
+      const k = Math.min(1, (now - startAt) / ms);
+      audio.volume = Math.max(0, from * (1 - k));
       if (k < 1) requestAnimationFrame(tick);
-      else {
-        try { if (audio) audio.pause(); } catch (e) {}
-        try { if (ambient && ambient.stop) ambient.stop(); } catch (e) {}
-      }
+      else { try { audio.pause(); } catch (e) {} }
     }
     requestAnimationFrame(tick);
   }
 
   function frame(ts) {
     if (!lastTs) lastTs = ts;
-    const dt = Math.min(64, ts - lastTs);
+    const dt = Math.min(48, ts - lastTs);
     lastTs = ts;
     if (audio && !skipped && !audio.paused && !audio.ended && audio.currentTime !== lastAT) {
       lastAT = audio.currentTime;
@@ -584,12 +709,27 @@
     }
     if (clock > T.done) clock = T.done;
     const t = clock;
+    const roadSpd = (FAST ? 0.38 : 0.22) * Math.max(0.85, W / 390);
+    if (t > 80 && t < T.flash) {
+      scrollRoad += roadSpd * dt;
+      scrollMid += roadSpd * 0.45 * dt;
+      scrollFar += roadSpd * 0.18 * dt;
+      wheelAngle += (roadSpd * dt) / 18;
+    }
     if (t >= T.enter) setWorld(worldIndexAt(t));
     else setWorld(0);
-    placePair(t);
+    placeStrip(frontStack.querySelector(".far"), scrollFar, tileWFar);
+    placeStrip(frontStack.querySelector(".mid"), scrollMid, tileWMid);
+    placeStrip(backStack.querySelector(".far"), scrollFar, tileWFar);
+    placeStrip(backStack.querySelector(".mid"), scrollMid, tileWMid);
+    const car = placeCar(t);
     placePortal(t);
-    updateLoot(dt);
-    drawFx(t, dt);
+    updateLoot(dt, car, roadSpd);
+    wheelImgs[0].style.transform = "rotate(" + wheelAngle + "rad)";
+    wheelImgs[1].style.transform = "rotate(" + wheelAngle + "rad)";
+    const inFlight = started && t > 200 && t < T.flash;
+    drawRoad(dt, roadSpd);
+    drawSpeed(dt, roadSpd, inFlight);
     if (t >= T.flash && !veil.classList.contains("flash")) {
       veil.classList.add("flash");
       veil.classList.remove("off");
@@ -599,16 +739,21 @@
     if (t >= T.titleAt) titleCard.classList.add("on");
     if (DEBUG && !skipped && t > T.enter + 400 && t < T.portalAt) skipBtn.classList.add("show");
     else skipBtn.classList.remove("show");
+    if (audio && !audio.paused) {
+      const left = T.done - t;
+      if (left < FADE) audio.volume = Math.max(0, Math.min(1, left / FADE));
+    }
     if (t >= T.done) finish();
     if (started && !doneShown) requestAnimationFrame(frame);
-    else if (doneShown) { placePair(T.done); placePortal(T.done); }
+    else if (doneShown) { placeCar(T.done); placePortal(T.done); }
     window.__repoFlight.t = t;
     window.__repoFlight.world = curWorld;
+    window.__repoFlight.lane = laneTo;
+    window.__repoFlight.laneVisual = laneVisual;
     window.__repoFlight.collected = collected;
     window.__repoFlight.awarded = awardedThisRun;
   }
 
-  /* ----- audio ----- */
   const musicSrc = (CFG.MUSIC && String(CFG.MUSIC).trim() && String(CFG.MUSIC).trim() !== "null") ? String(CFG.MUSIC).trim() : "";
   const MKEY = "nov16_repo_muted";
   function getMutedPref() { try { return localStorage.getItem(MKEY) === "1"; } catch (e) { return false; } }
@@ -617,44 +762,13 @@
     muteBtn.classList.toggle("muted", muted);
     try { localStorage.setItem(MKEY, muted ? "1" : "0"); } catch (e) {}
     if (audio) audio.muted = muted;
-    if (ambient && ambient.gain) ambient.gain.gain.value = muted ? 0 : (ambient.base || 0.07);
-  }
-
-  function makeAmbient(actx) {
-    const master = actx.createGain();
-    master.gain.value = 0.07;
-    master.connect(actx.destination);
-    const freqs = [174.6, 220, 261.6, 329.6];
-    const oscs = freqs.map((f, i) => {
-      const o = actx.createOscillator();
-      o.type = "sine";
-      o.frequency.value = f;
-      const g = actx.createGain();
-      g.gain.value = 0.12 - i * 0.02;
-      const fil = actx.createBiquadFilter();
-      fil.type = "lowpass";
-      fil.frequency.value = 520;
-      o.connect(g); g.connect(fil); fil.connect(master);
-      o.start();
-      return o;
-    });
-    const lfo = actx.createOscillator();
-    lfo.frequency.value = 0.07;
-    const lfoG = actx.createGain();
-    lfoG.gain.value = 0.03;
-    lfo.connect(lfoG); lfoG.connect(master.gain);
-    lfo.start();
-    return {
-      gain: master, base: 0.07,
-      stop: function () { try { oscs.forEach((o) => o.stop()); lfo.stop(); } catch (e) {} }
-    };
   }
 
   if (musicSrc && !FAST) {
     audio = new Audio();
     audio.preload = "auto";
     audio.setAttribute("playsinline", "");
-    audio.src = musicSrc + (/[?]/.test(musicSrc) ? "&" : "?") + "v=20261115p19";
+    audio.src = musicSrc + (/[?]/.test(musicSrc) ? "&" : "?") + "v=20261115p20";
     audio.addEventListener("error", () => { audioFailed = true; });
     audio.addEventListener("loadedmetadata", () => {
       if (!FAST && isFinite(audio.duration) && audio.duration > 0) {
@@ -665,20 +779,9 @@
   }
 
   function startAudio() {
-    if (muted) return;
-    if (audio && !audioFailed) {
-      const pr = audio.play();
-      if (pr && pr.catch) pr.catch(() => {});
-      return;
-    }
-    if (!ambient) {
-      try {
-        const actx = new (window.AudioContext || window.webkitAudioContext)();
-        if (actx.state === "suspended") actx.resume().catch(() => {});
-        ambient = makeAmbient(actx);
-        if (muted) ambient.gain.gain.value = 0;
-      } catch (e) {}
-    }
+    if (!audio || audioFailed || muted) return;
+    const pr = audio.play();
+    if (pr && pr.catch) pr.catch(() => {});
   }
 
   function start() {
@@ -689,7 +792,7 @@
     veil.classList.add("off");
     collectHud.classList.add("on");
     nextSpawn = ENTER + (FAST ? 500 : 1600);
-    if (window.QuestHUD) QuestHUD.setStep("fly");
+    if (window.QuestHUD) QuestHUD.setStep("drive");
     startAudio();
     requestAnimationFrame(frame);
   }
@@ -702,13 +805,14 @@
     lastTs = 0;
     pickups.forEach((p) => p.el.remove());
     pickups = [];
+    if (audio) { try { audio.currentTime = Math.max(0, (T.portalAt) / 1000); } catch (e) {} }
   }
 
   if (DEBUG) skipBtn.classList.add("allowed");
   skipBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
   skipBtn.addEventListener("click", (e) => { e.stopPropagation(); skip(); });
 
-  muteBtn.classList.add("show");
+  if (musicSrc && !FAST) muteBtn.classList.add("show");
   setMuted(getMutedPref());
   muteBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -717,25 +821,42 @@
     if (!next && started) startAudio();
   });
 
+  laneUp.addEventListener("click", (e) => { e.stopPropagation(); if (!started) return; setLane(laneTo - 1); });
+  laneDown.addEventListener("click", (e) => { e.stopPropagation(); if (!started) return; setLane(laneTo + 1); });
+  updateLaneButtons();
+
+  addEventListener("keydown", (e) => {
+    if (!started || doneShown) return;
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") { e.preventDefault(); setLane(laneTo - 1); }
+    if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") { e.preventDefault(); setLane(laneTo + 1); }
+  });
+
   addEventListener("pointerdown", (e) => {
-    if (!e.target || !e.target.closest) return;
-    if (e.target.closest(".qhud-next, .qhud-btn, .qhud, .qhud-hint, .qhud-panel, .skip, .mute, .pickup, .tap-start")) return;
-    if (!started) return;
-    jump();
+    if (e.target && e.target.closest && e.target.closest("#laneControls, .skip, .mute, .tap-start, .qhud, .qhud-next, .qhud-hint, .qhud-panel")) return;
+    swipeY0 = e.clientY; swipeT0 = performance.now();
+  }, { passive: true });
+  addEventListener("pointerup", (e) => {
+    if (swipeY0 == null) return;
+    const dy = e.clientY - swipeY0;
+    const dt = performance.now() - swipeT0;
+    swipeY0 = null;
+    if (!started || doneShown) return;
+    if (dt < 600 && Math.abs(dy) > 36) setLane(laneTo + (dy < 0 ? -1 : 1));
   }, { passive: true });
 
   window.__repoFlight = {
-    t: 0, duration: function () { return DURATION; }, T, world: 0,
-    collected: 0, awarded: 0, jumped: function () { return jumpedTimes; },
+    t: 0, duration: function () { return DURATION; }, T,
+    world: 0, lane: 1, laneVisual: 1,
+    collected: 0, awarded: 0,
     started: false, done: false, skipped: false, debug: DEBUG, fast: FAST,
-    skip, jump, start,
-    spawnLoot: function (kind, x, y) { return spawnLoot(kind || "heart", x, y); },
-    collectAll: function () {
-      pickups.slice().forEach((p) => collectItem(p, p.x, p.y));
-    }
+    skip: skip, start: start, setLane: setLane,
+    spawnHeart: function (ln, x) { return spawnHeart(ln, x); },
+    music: !!musicSrc
   };
 
   function begin() {
+    resize();
+    setStackWorld(frontStack, 0);
     if (musicSrc && !FAST && !audioFailed) {
       tapStart.classList.add("show");
       const go = () => { tapStart.removeEventListener("click", go); start(); };
@@ -745,8 +866,8 @@
     start();
   }
 
-  const preload = WORLDS.map((w) => w.src).concat(["repo/vika.png", "repo/zhenya.png"]);
-  Promise.all(preload.map((src) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = src; }))).then(() => setTimeout(begin, 120));
+  const preload = WORLDS.map((w) => w.src).concat(["repo/car.png", "repo/wheel.png"]);
+  Promise.all(preload.map((src) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = src; }))).then(() => setTimeout(begin, 80));
 })();
 </script>
 </body>
