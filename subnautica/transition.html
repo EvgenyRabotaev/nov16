@@ -86,7 +86,8 @@
     #deeper {
       position: absolute;
       left: 50%;
-      bottom: 6.2%;
+      /* Над рядом HUD в нижнем углу, без подъёма счётчика и подсказки */
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px) + 52px);
       transform: translateX(-50%);
       z-index: 6;
       appearance: none;
@@ -240,13 +241,15 @@
     .pda-btn:hover { border-color: rgba(190, 235, 255, .7); background: rgba(16, 48, 70, .85); }
     .pda.q-pop {
       display: flex; flex-direction: column;
-      top: auto; bottom: 0; left: 50%;
-      width: min(560px, 100%);
+      top: auto;
+      bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+      left: 50%;
+      width: min(560px, calc(100% - 32px));
       max-height: min(280px, 34dvh);
-      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-      border-radius: 16px 16px 0 0;
+      padding: 12px 16px;
+      border-radius: 16px;
       transform: translate(-50%, 18px);
-      box-shadow: 0 -12px 36px rgba(0, 4, 12, .55), 0 0 0 1px rgba(255,255,255,.04) inset;
+      box-shadow: 0 12px 36px rgba(0, 4, 12, .55), 0 0 0 1px rgba(255,255,255,.04) inset;
     }
     .pda.q-pop.on { transform: translate(-50%, 0) scale(1); opacity: 1; }
     .pda.q-pop { background: #071820; }
@@ -274,17 +277,27 @@
       .pda { width: min(420px, calc(100vw - 24px)); padding: 14px 14px 12px; }
       .pda-text, .pda.q-pop .q-text { font-size: 14px; line-height: 1.4; }
       .pda.q-pop {
-        width: 100%;
-        max-height: min(270px, 32dvh);
-        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+        max-height: min(260px, 32dvh);
+        padding: 10px 14px;
       }
     }
     @media (min-width: 900px) {
-      .pda.q-pop { width: min(640px, 100%); max-height: min(250px, 31dvh); }
+      .pda.q-pop { width: min(640px, calc(100% - 32px)); max-height: min(250px, 31dvh); }
     }
-    html.qsheet-on .qhud {
-      bottom: calc(var(--qsheet-h, 260px) + 8px + env(safe-area-inset-bottom, 0px));
-      transition: bottom .25s ease;
+    /* На узком экране карточка оставляет правый нижний угол для счётчика и подсказки */
+    @media (max-width: 900px) {
+      .pda.q-pop {
+        left: 12px;
+        right: calc(12px + env(safe-area-inset-right, 0px) + var(--qhud-w, 168px) + 10px);
+        width: auto;
+        max-width: none;
+        transform: translateY(18px);
+      }
+      .pda.q-pop.on { transform: translateY(0) scale(1); }
+    }
+    .qhud {
+      right: calc(16px + env(safe-area-inset-right, 0px));
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     }
 
     #repair {
@@ -705,10 +718,10 @@
 
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p25"></script>
-<script src="../common/hud.js?v=20261115i" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
+<script src="../common/quest_config.js?v=20261115p26"></script>
+<script src="../common/hud.js?v=20261115j" data-screen="subnautica"></script>
 <style>
-  html.qsheet-on .qhud { bottom: calc(var(--qsheet-h, 260px) + 8px + env(safe-area-inset-bottom, 0px)) !important; }
+  /* HUD остаётся в нижнем углу; карточка сама оставляет ему место */
 </style>
 </head>
 <body>
@@ -897,6 +910,7 @@
       canvas.style.width = cssW + "px";
       canvas.style.height = cssH + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layoutQSheet();
     }
     window.addEventListener("resize", resize);
 
@@ -1397,11 +1411,10 @@
     function layoutQSheet() {
       const on = !!(qPop && qPop.classList.contains("on"));
       document.documentElement.classList.toggle("qsheet-on", on);
-      if (on) {
-        const h = Math.ceil(qPop.getBoundingClientRect().height);
-        document.documentElement.style.setProperty("--qsheet-h", h + "px");
-      } else {
-        document.documentElement.style.removeProperty("--qsheet-h");
+      const hud = document.querySelector(".qhud");
+      if (hud) {
+        const w = Math.ceil(hud.getBoundingClientRect().width) || 168;
+        document.documentElement.style.setProperty("--qhud-w", w + "px");
       }
     }
     function hideQuestion() {

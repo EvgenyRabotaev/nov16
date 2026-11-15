@@ -247,7 +247,7 @@
         var r = els[j].getBoundingClientRect();
         if (!r.width || !r.height) continue;
         var cs = getComputedStyle(els[j]);
-        if (cs.display === "none" || cs.visibility === "hidden") continue;
+        if (cs.display === "none" || cs.visibility === "hidden" || parseFloat(cs.opacity) === 0) continue;
         var hit = !(r.right <= hr.left - 6 || r.left >= hr.right + 6 || r.bottom <= hr.top - 6 || r.top >= hr.bottom + 6);
         if (hit) { root.style.bottom = (vh - r.top + 10) + "px"; moved = true; }
       }
