@@ -21,17 +21,56 @@
   .bg {
     position: fixed;
     inset: 0;
-    background: #071018 url("collage.jpg") center / cover no-repeat;
-  }
-  @media (orientation: portrait) {
-    .bg { background-image: url("collage_portrait.jpg"); }
+    overflow: hidden;
+    background: #071018;
   }
   .bg::after {
     content: "";
     position: absolute;
     inset: 0;
+    z-index: 1;
+    pointer-events: none;
     background:
       radial-gradient(ellipse at 50% 48%, rgba(6,10,24,.30) 0%, rgba(6,10,24,.48) 58%, rgba(4,8,16,.64) 100%);
+  }
+
+  /* 2×2 panels, the whole grid is 16:9 (landscape) or 9:16 (portrait) and covers the viewport like the old collage. */
+  .collage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0;
+    transform: translate(-50%, -50%);
+  }
+  @media (orientation: landscape) {
+    .collage {
+      width: max(100%, calc(100vh * 16 / 9));
+      height: max(100%, calc(100vw * 9 / 16));
+    }
+  }
+  @media (orientation: portrait) {
+    .collage {
+      width: max(100%, calc(100vh * 9 / 16));
+      height: max(100%, calc(100vw * 16 / 9));
+    }
+  }
+  .collage picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .collage img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 
   .stage {
@@ -184,7 +223,66 @@
 <script src="../common/hud.js?v=20261115d" data-screen="start"></script>
 </head>
 <body>
-  <div class="bg" aria-hidden="true"></div>
+  <div class="bg" aria-hidden="true">
+    <div class="collage">
+      <picture>
+        <source media="(orientation: portrait)" type="image/webp"
+          srcset="panels/pubg-port-1280.webp?v=20261115s1 720w, panels/pubg-port-2560.webp?v=20261115s1 1440w"
+          sizes="50vw">
+        <source media="(orientation: portrait)" type="image/jpeg"
+          srcset="panels/pubg-port-1280.jpg?v=20261115s1 720w, panels/pubg-port-2560.jpg?v=20261115s1 1440w"
+          sizes="50vw">
+        <source type="image/webp"
+          srcset="panels/pubg-land-1280.webp?v=20261115s1 1280w, panels/pubg-land-2560.webp?v=20261115s1 2560w"
+          sizes="50vw">
+        <img src="panels/pubg-land-1280.jpg?v=20261115s1"
+             srcset="panels/pubg-land-1280.jpg?v=20261115s1 1280w, panels/pubg-land-2560.jpg?v=20261115s1 2560w"
+             sizes="50vw" alt="" decoding="async" draggable="false">
+      </picture>
+      <picture>
+        <source media="(orientation: portrait)" type="image/webp"
+          srcset="panels/minecraft-port-1280.webp?v=20261115s1 720w, panels/minecraft-port-2560.webp?v=20261115s1 1440w"
+          sizes="50vw">
+        <source media="(orientation: portrait)" type="image/jpeg"
+          srcset="panels/minecraft-port-1280.jpg?v=20261115s1 720w, panels/minecraft-port-2560.jpg?v=20261115s1 1440w"
+          sizes="50vw">
+        <source type="image/webp"
+          srcset="panels/minecraft-land-1280.webp?v=20261115s1 1280w, panels/minecraft-land-2560.webp?v=20261115s1 2560w"
+          sizes="50vw">
+        <img src="panels/minecraft-land-1280.jpg?v=20261115s1"
+             srcset="panels/minecraft-land-1280.jpg?v=20261115s1 1280w, panels/minecraft-land-2560.jpg?v=20261115s1 2560w"
+             sizes="50vw" alt="" decoding="async" draggable="false">
+      </picture>
+      <picture>
+        <source media="(orientation: portrait)" type="image/webp"
+          srcset="panels/subnautica-port-1280.webp?v=20261115s1 720w, panels/subnautica-port-2560.webp?v=20261115s1 1440w"
+          sizes="50vw">
+        <source media="(orientation: portrait)" type="image/jpeg"
+          srcset="panels/subnautica-port-1280.jpg?v=20261115s1 720w, panels/subnautica-port-2560.jpg?v=20261115s1 1440w"
+          sizes="50vw">
+        <source type="image/webp"
+          srcset="panels/subnautica-land-1280.webp?v=20261115s1 1280w, panels/subnautica-land-2560.webp?v=20261115s1 2560w"
+          sizes="50vw">
+        <img src="panels/subnautica-land-1280.jpg?v=20261115s1"
+             srcset="panels/subnautica-land-1280.jpg?v=20261115s1 1280w, panels/subnautica-land-2560.jpg?v=20261115s1 2560w"
+             sizes="50vw" alt="" decoding="async" draggable="false">
+      </picture>
+      <picture>
+        <source media="(orientation: portrait)" type="image/webp"
+          srcset="panels/genshin-port-1280.webp?v=20261115s1 720w, panels/genshin-port-2560.webp?v=20261115s1 1440w"
+          sizes="50vw">
+        <source media="(orientation: portrait)" type="image/jpeg"
+          srcset="panels/genshin-port-1280.jpg?v=20261115s1 720w, panels/genshin-port-2560.jpg?v=20261115s1 1440w"
+          sizes="50vw">
+        <source type="image/webp"
+          srcset="panels/genshin-land-1280.webp?v=20261115s1 1280w, panels/genshin-land-2560.webp?v=20261115s1 2560w"
+          sizes="50vw">
+        <img src="panels/genshin-land-1280.jpg?v=20261115s1"
+             srcset="panels/genshin-land-1280.jpg?v=20261115s1 1280w, panels/genshin-land-2560.jpg?v=20261115s1 2560w"
+             sizes="50vw" alt="" decoding="async" draggable="false">
+      </picture>
+    </div>
+  </div>
   <main class="stage" id="start">
     <div class="panel">
       <h1>Сегодня наш день, булочка.</h1>
