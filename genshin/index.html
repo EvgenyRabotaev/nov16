@@ -374,7 +374,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115h">
-<script src="../common/quest_config.js?v=20261115p15"></script>
+<script src="../common/quest_config.js?v=20261115p16"></script>
 <script src="../common/hud.js?v=20261115h" data-screen="genshin"></script>
 </head>
 <body>
@@ -1033,8 +1033,7 @@
       mode = "done";
       if (window.QuestHUD) {
         QuestHUD.setStep("done");
-        const gachaUrl = new URL("gacha/index.html", QuestHUD.root).href;
-        const btn = QuestHUD.showNext("Молитва", { onClick: () => { location.href = gachaUrl; } });
+        const btn = QuestHUD.showNext("Молитва");
         if (btn) btn.classList.add("qhud-next--show");
       }
       setFlags();
@@ -1049,6 +1048,15 @@
     const first = WAYPOINTS[0];
     if (first) applyCam(first.x, first.y, mapScale());
     renderPins();
+    if (params.get("end") === "1" || params.get("done") === "1") {
+      if (WAYPOINTS.length) wi = WAYPOINTS.length - 1;
+      locReady = true;
+      const p = wp();
+      if (p) applyCam(p.x, p.y, mapScale());
+      renderPins();
+      finish();
+      return;
+    }
     const qDebug = Math.max(0, parseInt(params.get("q"), 10) || 0);
     if (qDebug >= 1 && WAYPOINTS.length) {
       wi = Math.min(qDebug, WAYPOINTS.length) - 1;

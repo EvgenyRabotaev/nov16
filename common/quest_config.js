@@ -17,9 +17,9 @@ window.QUEST_CONFIG = {
     { id: "boat",         path: "boat/index.html",        theme: "minecraft",  title: "Переход: плывём на лодке к капсуле" },
     { id: "subnautica",   path: "subnautica/transition.html", theme: "subnautica", title: "Подводный мир" },
     { id: "genshin",      path: "genshin/index.html",     theme: "genshin",    title: "Тейват" },
-    { id: "finale",       path: "finale/index.html",      theme: "quest",      title: "Финал" },
     { id: "trust",        path: "finale/trust.html",      theme: "quest",      title: "Ты веришь мне?" },
     { id: "gacha",        path: "gacha/index.html",       theme: "quest",      title: "Крутки" }
+    /* finale/index.html больше не в цепочке: после Тейвата — «Ты веришь мне?», затем крутки. */
   ],
 
   /* Вопросы и ответы. Правятся здесь.
@@ -477,7 +477,7 @@ window.QUEST_CONFIG = {
         { who: "Паймон", text: "Дальше — к финалу! Паймон ещё заглянет, если позовёшь. И если найдётся что-нибудь вкусненькое… Удачи!" }
       ]
     },
-    /* Финальная реплика Паймон в конце Тейвата, после неё кнопка «Молитва» (ведёт в крутки). */
+    /* Финальная реплика Паймон в конце Тейвата, после неё кнопка «Молитва» (ведёт на экран доверия, затем в крутки). */
     OUTRO: [
       { who: "Паймон", text: "Вот и подходит к концу наше путешествие… Но не сюрпризы! Хе-хе." },
       { who: "Паймон", text: "Пойдём посмотрим, на что можно потратить твои примогемы?" }
