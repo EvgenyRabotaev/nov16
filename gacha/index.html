@@ -157,7 +157,8 @@
     margin-top: 16px;
   }
 
-  #reveal { justify-content: center; justify-content: safe center; overflow-y: auto; z-index: 9; }
+  #reveal { justify-content: center; justify-content: safe center; overflow-y: auto; z-index: 9; gap: 0; }
+  #reveal #btnClose { position: relative; z-index: 5; flex-shrink: 0; }
   .card-stage {
     margin-bottom: 18px;
     position: relative;
@@ -175,9 +176,13 @@
   .card-enter {
     position: relative;
     z-index: 1;
-    width: min(300px, 68vw, max(170px, (100vh - 400px) * .75));   /* ниже экран — меньше карта, чтобы влез текст */
-    width: min(300px, 68vw, max(170px, (100dvh - 400px) * .75));
+    /* +50% к прежним 300px, но не больше, чем оставляет 260px на имя+описание+кнопку
+       (длинные тексты 5★, крупный шрифт). */
+    width: min(450px, calc(100vw - 16px), max(255px, (100vh - 260px) * .75));
+    width: min(450px, calc(100vw - 16px), max(255px, (100dvh - 260px) * .75));
     aspect-ratio: 3 / 4;
+    flex: 0 0 auto;
+    max-height: calc(100dvh - 260px);
     perspective: 1400px;
     opacity: 0;
     transform: scale(.42) translateY(36px);
@@ -231,7 +236,7 @@
   }
   .meta {
     text-align: center;
-    min-height: 92px;
+    min-height: 0;
     opacity: 0;
     transform: translateY(10px);
     transition: opacity .45s ease, transform .45s ease;
@@ -240,40 +245,32 @@
     text-shadow: 0 2px 12px rgba(0,0,0,.85), 0 0 18px rgba(0,0,0,.5);
   }
   .meta.on { opacity: 1; transform: none; }
-  .stars-ui {
-    font-size: 22px;
-    letter-spacing: .18em;
-    margin-bottom: 4px;
-    filter: drop-shadow(0 0 8px var(--glow, #8ec4ff));
-  }
-  .rarity-ui {
-    font-family: "Segoe UI", system-ui, sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: .2em;
-    text-transform: uppercase;
-    color: var(--glow, #8ec4ff);
-    margin-bottom: 4px;
-  }
   .cname {
-    font-size: 26px;
+    font-size: 30px;
     font-weight: 600;
   }
   .cnote {
     font-family: "Segoe UI", system-ui, sans-serif;
-    font-size: 15px;
-    line-height: 1.45;
+    font-size: 19px;
+    line-height: 1.5;
     color: #eef3ff;
-    margin: 8px auto 0;
-    max-width: min(460px, calc(100vw - 36px));
+    margin: 10px auto 0;
+    max-width: min(560px, calc(100vw - 32px));
     white-space: pre-line;          /* абзацы из card_texts.md */
     overflow-wrap: anywhere;
     text-wrap: pretty;
   }
   .cnote:empty { display: none; }
-  @media (max-width: 480px) { .cnote { font-size: 14px; line-height: 1.4; } .cname { font-size: 23px; } }
+  @media (max-width: 480px) { .cnote { font-size: 17px; line-height: 1.45; } .cname { font-size: 26px; } }
+  @media (max-height: 800px) {
+    .card-stage { margin-bottom: 10px; }
+    .cnote { font-size: 16px; line-height: 1.4; margin-top: 6px; }
+    .cname { font-size: 24px; }
+    #btnClose { margin-top: 12px; }
+    #reveal { padding: 12px 16px calc(16px + env(safe-area-inset-bottom)); }
+  }
   #btnClose {
-    margin-top: 22px;
+    margin-top: 18px;
     opacity: 0;
     pointer-events: none;
     transition: opacity .4s;
@@ -313,10 +310,10 @@
   body.approach #ground { opacity: 1; }
 
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115d"></script>
-<script src="../common/hud.js?v=20261115d" data-screen="gacha" data-counter="off"></script>
-<script src="card_texts.js?v=20261115e"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
+<link rel="stylesheet" href="../common/hud.css?v=20261115f">
+<script src="../common/quest_config.js?v=20261115f"></script>
+<script src="../common/hud.js?v=20261115f" data-screen="gacha" data-counter="off"></script>
+<script src="card_texts.js?v=20261115f"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
 </head>
 <body>
 <canvas id="fx"></canvas>
@@ -343,8 +340,6 @@
     </div>
   </div>
   <div class="meta" id="meta">
-    <div class="stars-ui" id="starsUi"></div>
-    <div class="rarity-ui" id="rarityUi"></div>
     <div class="cname" id="cardName"></div>
     <div class="cnote" id="cardNote"></div>
   </div>
@@ -1124,10 +1119,6 @@
     else (img.decode ? img.decode() : Promise.reject()).then(showImg, () => { img.onload = showImg; if (img.complete) showImg(); });
     document.getElementById('cardName').textContent = c.title;
     document.getElementById('cardNote').textContent = c.note || '';
-    document.getElementById('rarityUi').textContent = c.label;
-    document.getElementById('starsUi').textContent = '★'.repeat(c.stars);
-    document.getElementById('starsUi').style.color = c.c1;
-    document.getElementById('rarityUi').style.color = c.c1;
     glow.style.background = c.c1;
     glow.style.opacity = '0.85';
     document.documentElement.style.setProperty('--glow', c.c1);
@@ -1275,6 +1266,7 @@
   window.GACHA = {
     play,
     playMany,
+    showCard,
     finishPull,
     isBusy: () => busy,
     setAutoClose: (ms) => { window.__autoClose = ms; },

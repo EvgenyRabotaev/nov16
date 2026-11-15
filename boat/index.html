@@ -18,7 +18,7 @@
   .island { position: absolute; left: 0; top: 0; will-change: transform; filter: saturate(.85) brightness(1.04) drop-shadow(0 2px 2px rgba(0, 40, 90, .15)); }
   #water { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .clip { position: absolute; left: 0; top: 0; will-change: transform; }
-  .clip img { position: absolute; left: 0; top: 0; width: 100%; height: auto; display: block; }
+  .clip img { position: absolute; left: 0; top: 0; width: 100%; height: auto; display: block; transition: none; }
   #boat { clip-path: polygon(0 0, 100% 0, 100% 86.5%, 66% 92.5%, 15% 84%, 0 83.5%); }
   #pod { clip-path: inset(0 0 12% 0); }
   #fxTop { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -59,9 +59,9 @@
     background: linear-gradient(180deg, #8ff1ff, #3cc8ef); border: 0; border-radius: 999px; box-shadow: 0 0 18px rgba(90, 230, 255, .7); }
   .pda button:hover { filter: brightness(1.08); }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115d"></script>
-<script src="../common/hud.js?v=20261115d" data-screen="boat" data-counter="off"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115f">
+<script src="../common/quest_config.js?v=20261115f"></script>
+<script src="../common/hud.js?v=20261115f" data-screen="boat" data-counter="off"></script>
 </head>
 <body>
 <div id="scene">
@@ -154,11 +154,13 @@
     });
     warm.style.opacity = (Math.min(1, t / T.end) * 0.9).toFixed(3);
 
-    /* лодка: покачивание, гребок = смена кадров с мягким переходом */
+    /* лодка: покачивание, гребок = резкая смена двух кадров (без кроссфейда:
+       иначе весло и голова Жени видны в двух позах сразу и оставляют шлейф) */
     const rowing = t > 300 && arr < 0.8;
     const ph = rowing ? t / 1700 * Math.PI * 2 : 0;
-    const mix = rowing ? clamp((Math.sin(ph) + 0.25) / 0.5) : 0;
-    fb.style.opacity = mix.toFixed(3); fa.style.opacity = (1 - mix * 0.15).toFixed(3);
+    const useB = rowing && Math.sin(ph) > 0;
+    fa.style.opacity = useB ? "0" : "1";
+    fb.style.opacity = useB ? "1" : "0";
     const surge = rowing ? Math.sin(ph - 0.6) * W * 0.004 : 0;
     const bob = Math.sin(t / 900) * H * 0.006, rot = Math.sin(t / 1300) * 0.9;
     const cx = L.sailX + (L.endX - L.sailX) * ea + surge;
@@ -217,7 +219,7 @@
 
     if (t > T.end - 1500) caption.classList.add("on");
     if (t >= T.end && !doneShown) { doneShown = true; window.__boat.done = true; confirmEl.classList.add("show"); if (window.QuestHUD) QuestHUD.setStep("confirm"); }
-    Object.assign(window.__boat, { t, scroll, podX, arr, mix, boatX: cx });
+    Object.assign(window.__boat, { t, scroll, podX, arr, frame: useB ? "b" : "a", boatX: cx });
     requestAnimationFrame(frame);
   }
   function burst(p) { const k = H / 900; for (let i = 0; i < 12; i++) splash.push({ x: p.x + (Math.random() - 0.5) * 10 * k, y: p.y, vx: (Math.random() - 0.5) * 0.08 * k, vy: -(0.15 + Math.random() * 0.25) * k, a: 0.95, r: (1.5 + Math.random() * 2.5) * k }); }
