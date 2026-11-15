@@ -729,6 +729,18 @@
   let falling = null;
   let flightSpeed = 0;
   let flightTarget = 0;
+  /* Отладка: gacha/?primos=4300 — выставить баланс примогемов (параметр потом убирается из адреса). */
+  (function () {
+    try {
+      const q = new URLSearchParams(location.search);
+      const n = parseInt(q.get('primos'), 10);
+      if (!isNaN(n) && window.QuestHUD) {
+        QuestHUD.setPrimos(Math.max(0, n));
+        q.delete('primos');
+        history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
+      }
+    } catch (e) {}
+  })();
   let gems = window.QuestHUD ? QuestHUD.getPrimos() : 1800; // общий баланс квеста (localStorage nov16_primos)
   document.getElementById('pg').textContent = gems;
   let busy = false;
