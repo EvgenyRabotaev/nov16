@@ -115,6 +115,14 @@ window.QUEST_CONFIG = {
     EXIT: {
       question: { id: "mc-exit", text: "Двигаемся дальше?", parts: [{ accept: ["да"] }] },
       craft: "boat", hint: "Скрафти лодку"
+    },
+    /* Тосты «Новое достижение!» после крафта (0 примогемов). */
+    ACHIEVEMENTS: {
+      planks: "Первые доски",
+      crafting_table: "Свой верстак",
+      bed: "Сладкие сны",
+      blue_dye: "Голубые стены",
+      boat: "Мы плывём"
     }
   },
 

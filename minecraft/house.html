@@ -65,15 +65,53 @@
   }
   .btn:hover:not(:disabled) { background: #7c8fd4; box-shadow: inset 3px 3px 0 #a9b9f0, inset -3px -3px 0 #4a5a99; }
   .btn:disabled { opacity: .55; cursor: default; }
+
+  /* закат, кошка, светлячки, достижение */
+  #mcSky {
+    position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    background: linear-gradient(to top, rgba(255, 140, 60, .0), rgba(255, 160, 80, .0) 40%, rgba(80, 70, 140, .0));
+    opacity: 0; transition: opacity 1.6s ease, background 1.6s ease; mix-blend-mode: soft-light;
+  }
+  #mcSky.lv1 { opacity: .18; background: linear-gradient(to top, rgba(255, 200, 120, .18), transparent 55%); }
+  #mcSky.lv2 { opacity: .28; background: linear-gradient(to top, rgba(255, 170, 90, .22), rgba(255, 200, 140, .08) 50%, transparent 80%); }
+  #mcSky.lv3 { opacity: .4; background: linear-gradient(to top, rgba(255, 140, 70, .28), rgba(255, 180, 110, .12) 55%, transparent 85%); }
+  #mcSky.lv4 { opacity: .2; background: linear-gradient(to top, rgba(255, 120, 50, .12), transparent 60%); } /* закат уже на картинке */
+  #mcFireflies { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
+  #mcCat {
+    position: absolute; z-index: 4; width: 42px; height: 28px; pointer-events: none;
+    opacity: 0; transition: opacity 1s ease; image-rendering: pixelated;
+    filter: drop-shadow(0 3px 2px rgba(0,0,0,.35));
+  }
+  #mcCat.on { opacity: 1; animation: catBob 2.8s ease-in-out infinite; }
+  @keyframes catBob { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-2px); } }
+  .mc-ach {
+    position: fixed; left: 16px; top: 16px; z-index: 40;
+    display: flex; align-items: center; gap: 10px;
+    min-width: 240px; max-width: min(360px, calc(100vw - 32px));
+    padding: 8px 12px 8px 8px;
+    background: #212121; border: 3px solid #000;
+    box-shadow: inset 0 0 0 2px #555, 4px 4px 0 rgba(0,0,0,.35);
+    color: #fff; font: 700 13px/1.25 "Courier New", "DejaVu Sans Mono", monospace;
+    text-shadow: 2px 2px 0 #000; pointer-events: none;
+    animation: achIn .35s ease both;
+  }
+  .mc-ach.off { animation: achOut .4s ease forwards; }
+  .mc-ach .ico { width: 32px; height: 32px; image-rendering: pixelated; flex: 0 0 32px; background: #111; border: 2px solid #000; }
+  .mc-ach .kicker { color: #fcfc54; font-size: 11px; letter-spacing: .04em; }
+  @keyframes achIn { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes achOut { to { transform: translateY(-16px); opacity: 0; } }
+  @media (max-width: 600px) {
+    .mc-ach { left: 8px; top: auto; bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
+  }
   @media (max-width: 700px) {
     .panel { padding: 12px 12px 12px; }
     .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 10px; max-height: 32vh; }
   }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115d"></script>
-<script src="../common/hud.js?v=20261115d" data-screen="minecraft"></script>
-<script src="craft.js?v=20261115d"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115i">
+<script src="../common/quest_config.js?v=20261115i"></script>
+<script src="../common/hud.js?v=20261115i" data-screen="minecraft"></script>
+<script src="craft.js?v=20261115i"></script>
 </head>
 <body>
 <div class="scene" id="scene">
@@ -81,6 +119,9 @@
   <div id="bgWrap">
     <img class="layer" id="bg" src="bg_stage0.jpg" alt="">
     <div id="houseStages"></div><!-- этапы дома: MINECRAFT.HOUSE_STAGES в quest_config.js (bg_stage1…4.jpg) -->
+    <div id="mcSky" aria-hidden="true"></div>
+    <div id="mcCat" aria-hidden="true"></div>
+    <canvas id="mcFireflies" aria-hidden="true"></canvas>
   </div>
   <div class="char" id="vika"><div class="shadow"></div><img id="vikaImg" src="chars/vika_noflowers.png" alt="Вика"></div>
   <div class="char" id="zhenya"><div class="shadow"></div><img src="chars/zhenya.png" alt="Женя"></div>
@@ -160,10 +201,11 @@
       window.__mcHouse = { x: W / 2 - hw / 2, w: hw, h: hw * R, bottom: hb };
     }
     place(shown, 0);
+    placeCat();
   }
 
   /* Кадр фона 1280×720; дом на картинках этапов занимает примерно x 437…875, y 150…525. */
-  const IMG = { w: 1280, h: 720 }, HOUSE_BOX = { x0: 437, x1: 875, y0: 150, y1: 525 };
+  const IMG = { w: 1280, h: 720 }, HOUSE_BOX = { x0: 440, x1: 890, y0: 78, y1: 528 };
   const bgWrap = document.getElementById("bgWrap");
   let panelBottom = 0;      /* низ панели вопроса (меряется в render) */
   function placeBg(W, H, h, bottom) {
@@ -259,6 +301,7 @@
     });
     await new Promise((r) => setTimeout(r, 300));
     heartEl.classList.add("on"); window.__mcHeartOn = true;
+    startFireflies();
     setTimeout(() => sparkle(heartEl, 16), 250);
     setTimeout(() => sparkle(heartEl, 10), 900);
     await new Promise((r) => setTimeout(r, 1500));
@@ -278,6 +321,7 @@
     panel.classList.add("hidden");
     if (window.QuestHUD) QuestHUD.setStep("craft" + EXIT.craft);
     if (window.MCCraft) await MCCraft.open({ craft: EXIT.craft, hint: EXIT.hint });
+    if (EXIT.craft) achievement(EXIT.craft);
     sparkle(vika, 12); sparkle(zhenya, 12);
     window.__mcBoat = true;
     await new Promise((r) => setTimeout(r, 1100));
@@ -338,26 +382,94 @@
   let houseLevel = 0;
   const CODE_HOUSE = STAGES.some((st) => !st.img);           /* рисованный кодом домик — только если нет картинок */
   if (window.MCCraft && CODE_HOUSE) MCCraft.House.mount(houseStages);
-  STAGES.forEach((st) => { if (st.img) { const im = new Image(); im.src = st.img; } }); /* предзагрузка */
+  function stageSrc(img) { if (!img) return img; return img + (img.indexOf('?') >= 0 ? '&' : '?') + 'v=20261115i'; }
+  STAGES.forEach((st) => { if (st.img) { const im = new Image(); im.src = stageSrc(st.img); } }); /* предзагрузка */
   function stageAfter(qNum) { return STAGES.find((st) => st.after === qNum) || null; }
   function applyStage(st, instant) {
     const idx = STAGES.indexOf(st);
     houseLevel = Math.max(houseLevel, idx + 1);
     if (st.img) {
       const im = document.createElement("img");
-      im.className = "layer"; im.src = st.img; im.alt = "";
+      im.className = "layer"; im.src = stageSrc(st.img); im.alt = "";
       houseStages.appendChild(im);
       if (instant) im.classList.add("on"); else requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add("on")));
     } else if (window.MCCraft) {
       MCCraft.House.set(houseLevel, st.wallColor, instant);
     }
     window.__mcLevel = houseLevel;
+    tintSky(houseLevel);
+    if (houseLevel >= 2) showCat();
+  }
+  function tintSky(lv) {
+    const el = document.getElementById("mcSky");
+    if (!el) return;
+    el.className = lv ? ("lv" + Math.min(4, lv)) : "";
+  }
+  function showCat() {
+    const el = document.getElementById("mcCat");
+    if (!el || el.dataset.on) return;
+    el.dataset.on = "1";
+    el.innerHTML = '<svg viewBox="0 0 21 14" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="3" y="4" width="12" height="6" fill="#e8b84a"/><rect x="2" y="5" width="2" height="4" fill="#d4a43c"/><rect x="14" y="6" width="5" height="3" fill="#e8b84a"/><rect x="18" y="7" width="3" height="1" fill="#f0d080"/><rect x="3" y="3" width="3" height="2" fill="#e8b84a"/><rect x="8" y="3" width="3" height="2" fill="#e8b84a"/><rect x="4" y="3" width="1" height="1" fill="#3a2a10"/><rect x="9" y="3" width="1" height="1" fill="#3a2a10"/><rect x="13" y="6" width="1" height="1" fill="#3a2a10"/><rect x="5" y="10" width="2" height="3" fill="#d4a43c"/><rect x="11" y="10" width="2" height="3" fill="#d4a43c"/><rect x="15" y="5" width="2" height="1" fill="#f4c85a"/></svg>';
+    el.classList.add("on");
+    placeCat();
+  }
+  function placeCat() {
+    const el = document.getElementById("mcCat");
+    const b = window.__mcBg && window.__mcBg.house;
+    if (!el || !b) return;
+    const w = Math.max(36, Math.min(56, b.w * 0.1));
+    el.style.width = w + "px";
+    el.style.height = (w * 14 / 21) + "px";
+    el.style.left = (b.x + b.w * 0.78) + "px";
+    el.style.top = (b.y + b.h * 0.86) + "px";
+  }
+  function achievement(craft) {
+    const titles = (MC.ACHIEVEMENTS || {});
+    const title = titles[craft] || craft;
+    const t = document.createElement("div");
+    t.className = "mc-ach";
+    const ico = document.createElement("div"); ico.className = "ico";
+    if (window.MCCraft && MCCraft.icon) {
+      const img = document.createElement("img"); img.src = MCCraft.icon(craft); img.alt = ""; img.style.width = "100%"; img.style.height = "100%"; img.style.imageRendering = "pixelated";
+      ico.appendChild(img);
+    }
+    const tx = document.createElement("div");
+    tx.innerHTML = '<div class="kicker">Новое достижение!</div><div></div>';
+    tx.lastChild.textContent = title;
+    t.appendChild(ico); t.appendChild(tx);
+    document.body.appendChild(t);
+    setTimeout(() => t.classList.add("off"), 2800);
+    setTimeout(() => t.remove(), 3300);
+  }
+  function startFireflies() {
+    const c = document.getElementById("mcFireflies");
+    if (!c || c.dataset.on) return;
+    c.dataset.on = "1";
+    const ctx = c.getContext("2d");
+    const bugs = [];
+    function resize() { c.width = innerWidth; c.height = innerHeight; }
+    resize(); window.addEventListener("resize", resize);
+    for (let i = 0; i < 22; i++) bugs.push({ x: Math.random()*innerWidth, y: Math.random()*innerHeight*0.7+innerHeight*0.15, r: 2.2+Math.random()*2.4, vx: (Math.random()-.5)*.25, vy: (Math.random()-.5)*.2, p: Math.random()*Math.PI*2, s: .6+Math.random()*1.4 });
+    function tick(now) {
+      ctx.clearRect(0,0,c.width,c.height);
+      bugs.forEach((b) => {
+        b.x += b.vx; b.y += b.vy;
+        if (b.x < 0) b.x = c.width; if (b.x > c.width) b.x = 0;
+        if (b.y < 0) b.y = c.height; if (b.y > c.height) b.y = 0;
+        const a = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(now/400 * b.s + b.p));
+        ctx.fillStyle = "rgba(255, 230, 120," + a + ")";
+        ctx.fillRect(Math.round(b.x), Math.round(b.y), Math.ceil(b.r), Math.ceil(b.r));
+      });
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
   }
   async function craftEvent(qNum) {
     const st = stageAfter(qNum);
     if (!st) return;
     if (window.QuestHUD) QuestHUD.setStep("craft" + qNum);
     if (st.craft && window.MCCraft) await MCCraft.open(st);
+    if (st.craft) achievement(st.craft);
     applyStage(st, false);
     const hb = (window.MCCraft && MCCraft.House.el) || houseSpot();
     sparkle(hb, 22);
@@ -447,16 +559,25 @@
   window.__mc = { get state() { return { question, step, shown, busy, done, n: QUESTIONS.length, houseLevel }; }, layout };
 
   /* Отладка: house.html?craft=N (N = 2…5) — сразу крафт после вопроса N (предыдущие этапы дома уже стоят).
-     house.html?exit=1 — сразу вопрос «Двигаемся дальше?»; house.html?craft=boat — сразу крафт лодки. */
+     house.html?exit=1 — сразу вопрос «Двигаемся дальше?»; house.html?craft=boat — сразу крафт лодки.
+     house.html?stage=0…5 — сразу показать этапы дома без крафта. */
+  const STAGE_DEBUG = +((location.search.match(/[?&]stage=(\d)/) || [])[1] || -1);
   const CRAFT_DEBUG = +((location.search.match(/[?&]craft=(\d)/) || [])[1] || 0);
   const EXIT_DEBUG = EXIT && (/[?&]exit=1/.test(location.search) ? "q" : /[?&]craft=boat/.test(location.search) ? "craft" : "");
   if (EXIT_DEBUG) {
     question = QUESTIONS.length; step = shown = N; done = true;
     vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
     STAGES.forEach((st) => applyStage(st, true));
-    together = 1; layout(); heartEl.classList.add("on");
+    together = 1; layout(); heartEl.classList.add("on"); startFireflies();
     if (EXIT_DEBUG === "q") setTimeout(startExit, 500);
     else { exitMode = true; busy = true; setTimeout(exitCorrect, 500); }
+  } else if (STAGE_DEBUG >= 0) {
+    vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
+    const n = STAGE_DEBUG;
+    question = Math.min(n, QUESTIONS.length); step = shown = Math.min(n, N);
+    STAGES.filter((st) => st.after <= n).forEach((st) => applyStage(st, true));
+    if (n >= QUESTIONS.length) { together = 1; done = true; heartEl.classList.add("on"); startFireflies(); }
+    layout();
   } else if (CRAFT_DEBUG >= 2 && stageAfter(CRAFT_DEBUG)) {
     question = CRAFT_DEBUG - 1; step = shown = CRAFT_DEBUG;
     vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
