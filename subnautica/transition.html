@@ -324,16 +324,168 @@
     #radioPing.show { display: block; }
     @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(80, 220, 255, .6); } 100% { box-shadow: 0 0 0 18px rgba(80, 220, 255, 0); } }
 
-    @media (max-width: 600px) {
-      #o2 { width: 100px; top: 2.6%; right: 2.4%; }
-      .fish.kind-peeper { width: 88px; }
-      .fish.kind-boomerang { width: 70px; }
-      .fish.kind-reginald { width: 100px; }
-      #camBtn { width: 48px; height: 48px; bottom: 22%; }
+
+    /* ----- достижения ----- */
+    .sn-ach {
+      position: absolute; z-index: 30;
+      top: calc(58px + env(safe-area-inset-top, 0px));
+      left: 50%; transform: translateX(-50%) translateY(-8px);
+      display: flex; align-items: center; gap: 10px;
+      width: min(320px, calc(100vw - 24px));
+      padding: 10px 14px;
+      background: linear-gradient(180deg, rgba(10, 36, 44, .94), rgba(4, 16, 24, .94));
+      border: 1px solid rgba(90, 210, 200, .55);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset, 0 10px 28px rgba(0, 8, 16, .5), 0 0 22px rgba(40, 180, 170, .16);
+      border-radius: 10px; color: #e7f7ff;
+      opacity: 0; pointer-events: none;
+      animation: snAchIn .4s ease forwards;
     }
+    .sn-ach.off { animation: snAchOut .45s ease forwards; }
+    .sn-ach .ico {
+      flex: 0 0 40px; width: 40px; height: 40px; border-radius: 8px;
+      display: grid; place-items: center; font-size: 22px;
+      background: rgba(20, 60, 70, .7); border: 1px solid rgba(120, 220, 210, .35);
+    }
+    .sn-ach .kicker { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #7ad4c8; }
+    .sn-ach .ttl { font-size: 15px; font-weight: 600; margin-top: 1px; }
+    .sn-ach .pts { font-size: 12px; color: #9fe8dc; margin-top: 1px; }
+    @keyframes snAchIn { from { opacity: 0; transform: translateX(-50%) translateY(-14px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes snAchOut { from { opacity: 1; transform: translateX(-50%) translateY(0); } to { opacity: 0; transform: translateX(-50%) translateY(-12px); } }
+
+    /* ----- радио: настройка частоты ----- */
+    #radioTune {
+      position: absolute; left: 50%; top: 50%; z-index: 21;
+      width: min(420px, calc(100vw - 24px));
+      transform: translate(-50%, -50%) scale(.96);
+      background: linear-gradient(180deg, #0c2a36, #071820);
+      border: 1px solid rgba(80, 200, 210, .55);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset, 0 16px 40px rgba(0,0,0,.5);
+      border-radius: 10px; padding: 16px 16px 14px; color: #d7eef6;
+      opacity: 0; pointer-events: none; transition: opacity .3s ease, transform .3s ease;
+    }
+    #radioTune.on { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    #radioTune .pda-kicker { margin-bottom: 6px; }
+    #radioTune .radio-freq {
+      font: 500 28px/1.1 ui-monospace, "Cascadia Mono", "Segoe UI", monospace;
+      font-variant-numeric: tabular-nums; letter-spacing: .08em;
+      color: #8fe8dc; text-align: center; margin: 8px 0 10px;
+      text-shadow: 0 0 12px rgba(80, 220, 210, .35);
+      transition: color .2s, text-shadow .2s;
+    }
+    #radioTune.near .radio-freq { color: #c8fff6; text-shadow: 0 0 16px rgba(120, 255, 230, .55); }
+    #radioTune .radio-unit { font-size: 13px; letter-spacing: .16em; opacity: .7; margin-left: 6px; }
+    #radioWave {
+      display: block; width: 100%; height: 72px; border-radius: 6px;
+      background: #031018; border: 1px solid rgba(80, 200, 210, .28);
+      margin-bottom: 14px;
+    }
+    .radio-track {
+      position: relative; height: 44px; touch-action: none; cursor: pointer;
+      margin: 0 2px 8px;
+    }
+    .radio-track::before {
+      content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 8px;
+      transform: translateY(-50%); border-radius: 99px;
+      background: linear-gradient(90deg, #123 0%, #1a4a52 40%, #2a8a80 50%, #1a4a52 60%, #123 100%);
+      border: 1px solid rgba(120, 220, 210, .35);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.5);
+    }
+    .radio-thumb {
+      position: absolute; top: 50%; width: 28px; height: 28px; margin-left: -14px;
+      transform: translateY(-50%); border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #e7fffb, #4ad4c4 46%, #1a6a64 100%);
+      border: 2px solid #c8fff6;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 0 12px rgba(80, 230, 210, .45);
+      pointer-events: none;
+    }
+    #radioTune.near .radio-thumb { box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 0 18px 4px rgba(100, 255, 230, .55); }
+    .radio-status {
+      font-size: 13px; line-height: 1.4; color: #9ec8d0; text-align: center;
+      min-height: 1.4em; margin: 4px 0 12px;
+    }
+    #radioTune.near .radio-status { color: #c8fff0; }
+    #radioLock:disabled { opacity: .4; pointer-events: none; }
+
+    /* ----- фонарик: поиск входа в пещеру ----- */
+    #caveSearch {
+      position: absolute; inset: 0; z-index: 18; display: none;
+      touch-action: none; cursor: none; overflow: hidden;
+    }
+    #caveSearch.on { display: block; }
+    #caveMask {
+      position: absolute; inset: 0;
+      background: rgba(0, 2, 8, .93);
+      -webkit-mask-image: radial-gradient(circle at var(--lx, 50%) var(--ly, 45%),
+        transparent 0,
+        transparent calc(var(--beam, 78px) * .42),
+        rgba(0,0,0,.45) calc(var(--beam, 78px) * .78),
+        #000 calc(var(--beam, 78px) * 1.22));
+      mask-image: radial-gradient(circle at var(--lx, 50%) var(--ly, 45%),
+        transparent 0,
+        transparent calc(var(--beam, 78px) * .42),
+        rgba(0,0,0,.45) calc(var(--beam, 78px) * .78),
+        #000 calc(var(--beam, 78px) * 1.22));
+      pointer-events: none; transition: background .6s ease;
+    }
+    #caveSearch.found { --beam: 70vw; }
+    #caveSearch.found #caveMask { background: rgba(0, 8, 16, .35); }
+    #caveBeam {
+      position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px;
+      left: var(--lx, 50%); top: var(--ly, 45%);
+      border-radius: 50%; pointer-events: none;
+      background: radial-gradient(circle, rgba(220,255,250,.85), rgba(160,230,220,0) 70%);
+      box-shadow: 0 0 18px 8px rgba(160, 230, 220, .25);
+    }
+    #caveEntrance {
+      position: absolute; left: var(--ex, 72%); top: var(--ey, 68%);
+      width: 92px; height: 78px; margin: -39px 0 0 -46px;
+      border-radius: 50% 50% 42% 42%;
+      background:
+        radial-gradient(ellipse at 50% 42%, rgba(30, 70, 80, .15), rgba(0,0,0,.92) 68%),
+        radial-gradient(circle at 50% 80%, rgba(40, 90, 80, .12), transparent 50%);
+      box-shadow: inset 0 0 18px rgba(0,0,0,.85), 0 0 0 1px rgba(80, 160, 160, .12);
+      pointer-events: auto; opacity: .22;
+      transition: opacity .25s ease, box-shadow .25s ease, transform .25s ease;
+    }
+    #caveEntrance.lit {
+      opacity: 1;
+      background:
+        radial-gradient(ellipse at 50% 40%, rgba(200, 245, 230, .45), rgba(20, 50, 55, .55) 60%, rgba(0,0,0,.75) 100%);
+      box-shadow:
+        0 0 22px 8px rgba(120, 230, 210, .5),
+        inset 0 0 16px rgba(160, 240, 230, .25);
+      transform: scale(1.06);
+    }
+    #caveEntrance.hint:not(.lit) {
+      opacity: .7;
+      animation: caveShimmer 1.6s ease-in-out infinite;
+    }
+    #caveSearch.found #caveEntrance {
+      opacity: 1; transform: scale(1.15);
+      box-shadow: 0 0 36px 14px rgba(180, 255, 240, .65), inset 0 0 20px rgba(200, 255, 240, .35);
+    }
+    @keyframes caveShimmer {
+      0%, 100% { box-shadow: 0 0 8px 2px rgba(100, 200, 190, .15); }
+      50% { box-shadow: 0 0 22px 8px rgba(140, 240, 220, .45); }
+    }
+    #caveHud {
+      position: absolute; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px));
+      transform: translateX(-50%); z-index: 2; pointer-events: none;
+      text-align: center; width: min(360px, calc(100vw - 24px));
+      text-shadow: 0 1px 8px rgba(0,0,0,.8);
+    }
+    #caveHud .kicker { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #7ad4c8; margin-bottom: 4px; }
+    #caveHud .line { font-size: 14px; color: #d7eef6; }
+    @media (max-width: 600px) {
+      #radioTune .radio-freq { font-size: 24px; }
+      #radioWave { height: 60px; }
+      #caveEntrance { width: 84px; height: 72px; margin: -36px 0 0 -42px; }
+      .sn-ach { top: calc(70px + env(safe-area-inset-top, 0px)); }
+    }
+
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p16"></script>
+<script src="../common/quest_config.js?v=20261115p17"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
 </head>
 <body>
@@ -377,6 +529,27 @@
       <div class="ans-msg" id="ansMsg" aria-live="polite"></div>
       <button class="pda-btn" id="answerBtn" type="button">Ответить</button>
     </div>
+
+    <div id="radioTune" aria-hidden="true">
+      <div class="pda-kicker">Радио</div>
+      <div class="pda-title">Настройка частоты</div>
+      <div class="radio-freq"><span id="radioFreq">178.4</span><span class="radio-unit">МГц</span></div>
+      <canvas id="radioWave" width="760" height="144"></canvas>
+      <div class="radio-track" id="radioTrack" role="slider" aria-valuemin="100" aria-valuemax="200" aria-valuenow="178" tabindex="0" aria-label="Частота">
+        <div class="radio-thumb" id="radioThumb"></div>
+      </div>
+      <div class="radio-status" id="radioStatus">Шум… ищи чистый сигнал</div>
+      <button class="pda-btn" id="radioLock" type="button" disabled>Захватить</button>
+    </div>
+    <div id="caveSearch" aria-hidden="true">
+      <div id="caveMask"></div>
+      <div id="caveEntrance"></div>
+      <div id="caveBeam"></div>
+      <div id="caveHud">
+        <div class="kicker">КПК · Фонарь</div>
+        <div class="line" id="caveHudLine">Темно. Посвети вокруг и найди вход в пещеру.</div>
+      </div>
+    </div>
     <div id="boot"></div>
   </div>
   <script>
@@ -409,6 +582,8 @@
       const n = parseInt(params.get("loc") || "", 10);
       return Number.isFinite(n) ? Math.max(0, Math.min(6, n)) : 0;
     })();
+    const RADIO_DEBUG = params.get("radio") === "1";
+    const CAVE_DEBUG = params.get("cave") === "1";
     const ASSET_V = "20261115q";
     const FISH_SRC = {
       peeper: "fish_peeper.png?v=" + ASSET_V,
@@ -428,7 +603,7 @@
     let o2Last = 0, o2WarnShown = false;
     let scanned = {};
     let pdaAfter = null;
-    let repairDone = false, radioDone = false, photoDone = false, leviDone = false, leviQDone = false, heartQDone = false;
+    let repairDone = false, radioDone = false, photoDone = false, leviDone = false, leviQDone = false, heartQDone = false, caveDone = false;
     let airTimer = 0, o2Raf = 0, faunaRaf = 0, leviRaf = 0;
     let faunaState = [];
     let images = [];
@@ -750,6 +925,7 @@
     function goNext() {
       if (busy) return false;
       if (!locReady) return false;
+      if (needsCave()) { startCaveSearch(); return true; }
       if (index >= LOCS.length - 1) return false;
       busy = true;
       document.documentElement.dataset.busy = "1";
@@ -866,9 +1042,18 @@
       leviQDone = isQDone(leviQuestion());
       heartQDone = isQDone(heartQuestion());
     }
+    function caveLoc() {
+      const C = SUB.CAVE || {};
+      if (C.loc != null) return C.loc;
+      return (SUB.LEVIATHAN && SUB.LEVIATHAN.loc != null) ? SUB.LEVIATHAN.loc : 5;
+    }
+    function needsCave() {
+      return !!(SUB.CAVE && index === caveLoc() && !caveDone && (leviQDone || !leviQuestion()));
+    }
     function afterGate() {
       const q = pendingQuestion(index);
       if (q) showLeviQuestion(q, qStep(q));
+      else if (needsCave()) startCaveSearch();
       else setReady(true);
     }
     let currentQ = null;
@@ -909,7 +1094,7 @@
       currentQ = null;
       if (q && leviQuestion() && q.id === leviQuestion().id) {
         const L = SUB.LEVIATHAN || {};
-        showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => setReady(true));
+        showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => afterGate());
         return;
       }
       setReady(true);
@@ -1166,23 +1351,338 @@
       }, 350);
     }
 
-    /* ----- радио ----- */
+    /* ----- достижения ----- */
+    function showAchievement(title, primos, icon) {
+      document.querySelectorAll(".sn-ach").forEach((n) => n.remove());
+      const el = document.createElement("div");
+      el.className = "sn-ach";
+      el.innerHTML = '<div class="ico" aria-hidden="true">' + (icon || "✦") + '</div>' +
+        '<div><div class="kicker">Достижение</div><div class="ttl"></div><div class="pts"></div></div>';
+      el.querySelector(".ttl").textContent = title || "Достижение";
+      el.querySelector(".pts").textContent = primos ? ("+" + primos + " примогемов") : "";
+      (document.getElementById("stage") || document.body).appendChild(el);
+      const ms = FAST ? 1400 : 3200;
+      setTimeout(() => { el.classList.add("off"); setTimeout(() => el.remove(), 480); }, ms);
+    }
+    function awardEvent(id, primos, title, icon) {
+      const n = primos != null ? primos : 50;
+      if (window.QuestHUD) QuestHUD.award(id, n);
+      showAchievement(title || "Достижение", n, icon);
+    }
+
+    /* ----- радио: настройка частоты ----- */
+    const radioTune = document.getElementById("radioTune");
+    const radioFreqEl = document.getElementById("radioFreq");
+    const radioWave = document.getElementById("radioWave");
+    const radioTrack = document.getElementById("radioTrack");
+    const radioThumb = document.getElementById("radioThumb");
+    const radioStatus = document.getElementById("radioStatus");
+    const radioLock = document.getElementById("radioLock");
+    const radioWaveCtx = radioWave ? radioWave.getContext("2d") : null;
+    const RADIO_CFG = SUB.RADIO || {};
+    const FREQ_MIN = Number(RADIO_CFG.freqMin) || 100;
+    const FREQ_MAX = Number(RADIO_CFG.freqMax) || 200;
+    const FREQ_TARGET = Number(RADIO_CFG.target) || 142.6;
+    const FREQ_START = Number(RADIO_CFG.start) || 178.4;
+    const FREQ_SPAN = Math.max(1, FREQ_MAX - FREQ_MIN);
+    const FREQ_LOCK = FREQ_SPAN * 0.05; // ~5 MHz — удобно пальцем
+    let radioFreq = FREQ_START;
+    let radioDragging = false;
+    let radioWaveRaf = 0;
+    let radioLockTimer = 0;
+    let radioAudio = null;
+
+    function freqToPct(f) { return clamp((f - FREQ_MIN) / FREQ_SPAN, 0, 1); }
+    function pctToFreq(p) { return FREQ_MIN + clamp(p, 0, 1) * FREQ_SPAN; }
+    function radioCloseness() {
+      const d = Math.abs(radioFreq - FREQ_TARGET);
+      return clamp(1 - d / (FREQ_SPAN * 0.5), 0, 1);
+    }
+    function radioInRange() { return Math.abs(radioFreq - FREQ_TARGET) <= FREQ_LOCK; }
+
+    function setRadioFreq(f, fromUser) {
+      radioFreq = clamp(f, FREQ_MIN, FREQ_MAX);
+      const pct = freqToPct(radioFreq);
+      if (radioThumb) radioThumb.style.left = (pct * 100) + "%";
+      if (radioFreqEl) radioFreqEl.textContent = radioFreq.toFixed(1);
+      if (radioTrack) {
+        radioTrack.setAttribute("aria-valuenow", radioFreq.toFixed(1));
+        radioTrack.setAttribute("aria-valuemin", String(FREQ_MIN));
+        radioTrack.setAttribute("aria-valuemax", String(FREQ_MAX));
+      }
+      const close = radioCloseness();
+      const inR = radioInRange();
+      if (radioTune) radioTune.classList.toggle("near", close > 0.88 || inR);
+      if (radioLock) radioLock.disabled = !inR;
+      if (radioStatus) {
+        if (inR) radioStatus.textContent = "Сигнал чистый. Захватить?";
+        else if (close > 0.82) radioStatus.textContent = "Почти… ещё чуть-чуть";
+        else if (close > 0.5) radioStatus.textContent = "Сквозь шум пробивается голос…";
+        else radioStatus.textContent = "Шум… ищи чистый сигнал";
+      }
+      updateRadioAudio(close);
+      if (fromUser && inR) {
+        if (!radioLockTimer) radioLockTimer = setTimeout(() => lockRadio(), FAST ? 220 : 700);
+      } else if (!inR && radioLockTimer) {
+        clearTimeout(radioLockTimer); radioLockTimer = 0;
+      }
+    }
+
+    function drawRadioWave(now) {
+      if (!radioWave || !radioWaveCtx) return;
+      const w = radioWave.width, h = radioWave.height;
+      radioWaveCtx.fillStyle = "#031018";
+      radioWaveCtx.fillRect(0, 0, w, h);
+      const close = radioCloseness();
+      const t = (now || performance.now()) / 1000;
+      const mid = h / 2;
+      radioWaveCtx.beginPath();
+      radioWaveCtx.lineWidth = 2;
+      const alpha = 0.35 + close * 0.65;
+      radioWaveCtx.strokeStyle = "rgba(120, 230, 215, " + alpha + ")";
+      for (let x = 0; x <= w; x += 2) {
+        const nx = x / w;
+        const signal = Math.sin((nx * 10 + t * (1.4 + close * 2.2)) * Math.PI * 2);
+        const noise = (Math.sin(nx * 73.1 + t * 31) * 0.5 + Math.sin(nx * 191 + t * 47) * 0.35 + (Math.random() - 0.5) * 0.55);
+        const y = mid + (signal * close + noise * (1 - close)) * (h * 0.38);
+        if (x === 0) radioWaveCtx.moveTo(x, y); else radioWaveCtx.lineTo(x, y);
+      }
+      radioWaveCtx.stroke();
+      if (close > 0.7) {
+        radioWaveCtx.beginPath();
+        radioWaveCtx.strokeStyle = "rgba(200, 255, 245, " + ((close - 0.7) / 0.3 * 0.45) + ")";
+        radioWaveCtx.lineWidth = 1;
+        for (let x = 0; x <= w; x += 3) {
+          const y = mid + Math.sin((x / w * 10 + t * 3.6) * Math.PI * 2) * (h * 0.22) * close;
+          if (x === 0) radioWaveCtx.moveTo(x, y); else radioWaveCtx.lineTo(x, y);
+        }
+        radioWaveCtx.stroke();
+      }
+    }
+    function radioWaveLoop(now) {
+      drawRadioWave(now);
+      if (radioTune && radioTune.classList.contains("on")) radioWaveRaf = requestAnimationFrame(radioWaveLoop);
+      else radioWaveRaf = 0;
+    }
+
+    function startRadioAudio() {
+      if (radioAudio || params.get("mute") === "1") return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try {
+        const ac = new AC();
+        const n = ac.sampleRate * 1.2;
+        const buf = ac.createBuffer(1, n, ac.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+        const noise = ac.createBufferSource();
+        noise.buffer = buf; noise.loop = true;
+        const noiseGain = ac.createGain(); noiseGain.gain.value = 0.04;
+        const filter = ac.createBiquadFilter();
+        filter.type = "bandpass"; filter.frequency.value = 900; filter.Q.value = 1;
+        const osc = ac.createOscillator();
+        osc.type = "sine"; osc.frequency.value = 392;
+        const oscGain = ac.createGain(); oscGain.gain.value = 0;
+        noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(ac.destination);
+        osc.connect(oscGain); oscGain.connect(ac.destination);
+        noise.start(); osc.start();
+        radioAudio = { ac, noise, osc, noiseGain, oscGain, filter };
+        if (ac.state === "suspended") ac.resume().catch(() => {});
+      } catch (e) { radioAudio = null; }
+    }
+    function updateRadioAudio(close) {
+      if (!radioAudio) return;
+      const now = radioAudio.ac.currentTime;
+      radioAudio.noiseGain.gain.setTargetAtTime(0.045 * (1 - close * 0.92), now, 0.05);
+      radioAudio.oscGain.gain.setTargetAtTime(0.012 + close * 0.045, now, 0.05);
+      radioAudio.filter.Q.setTargetAtTime(1 + close * 10, now, 0.08);
+    }
+    function stopRadioAudio() {
+      if (!radioAudio) return;
+      try {
+        radioAudio.noise.stop(); radioAudio.osc.stop();
+        if (radioAudio.ac.state !== "closed") radioAudio.ac.close();
+      } catch (e) {}
+      radioAudio = null;
+    }
+
+    function freqFromEvent(e) {
+      const ev = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+      const r = radioTrack.getBoundingClientRect();
+      return pctToFreq((ev.clientX - r.left) / Math.max(1, r.width));
+    }
+    function onRadioPointer(e) {
+      if (!radioTune || !radioTune.classList.contains("on") || radioDone) return;
+      e.preventDefault();
+      radioDragging = true;
+      startRadioAudio();
+      setRadioFreq(freqFromEvent(e), true);
+    }
+    if (radioTrack) {
+      radioTrack.addEventListener("pointerdown", (e) => { radioTrack.setPointerCapture(e.pointerId); onRadioPointer(e); });
+      radioTrack.addEventListener("pointermove", (e) => { if (radioDragging) { e.preventDefault(); setRadioFreq(freqFromEvent(e), true); } });
+      const up = () => { radioDragging = false; };
+      radioTrack.addEventListener("pointerup", up);
+      radioTrack.addEventListener("pointercancel", up);
+      radioTrack.addEventListener("keydown", (e) => {
+        const step = (e.shiftKey ? 0.2 : 1.0);
+        if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); setRadioFreq(radioFreq - step, true); }
+        if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); setRadioFreq(radioFreq + step, true); }
+      });
+    }
+    if (radioLock) radioLock.addEventListener("click", (e) => { e.stopPropagation(); lockRadio(); });
+
+    function closeRadioTune() {
+      if (radioLockTimer) { clearTimeout(radioLockTimer); radioLockTimer = 0; }
+      if (radioWaveRaf) { cancelAnimationFrame(radioWaveRaf); radioWaveRaf = 0; }
+      if (radioTune) { radioTune.classList.remove("on", "near"); radioTune.setAttribute("aria-hidden", "true"); }
+      stopRadioAudio();
+    }
+
+    function openRadioTune() {
+      setReady(false);
+      if (window.QuestHUD) QuestHUD.setStep("radio");
+      startRadioAudio();
+      setRadioFreq(FREQ_START, false);
+      if (radioTune) { radioTune.classList.add("on"); radioTune.setAttribute("aria-hidden", "false"); }
+      if (!radioWaveRaf) radioWaveRaf = requestAnimationFrame(radioWaveLoop);
+      if (AUTO) setTimeout(() => { if (!radioDone) { setRadioFreq(FREQ_TARGET, false); lockRadio(); } }, FAST ? 200 : 600);
+    }
+
+    function lockRadio() {
+      if (radioDone) return;
+      if (!radioInRange() && !AUTO) return;
+      if (radioLockTimer) { clearTimeout(radioLockTimer); radioLockTimer = 0; }
+      radioDone = true;
+      closeRadioTune();
+      const primos = RADIO_CFG.primos != null ? RADIO_CFG.primos : 50;
+      awardEvent("sn-radio", primos, RADIO_CFG.toast || "Сигнал пойман", "📡");
+      const msg = SUB.RADIO_MESSAGE || RADIO_CFG.text || "Сигнал пойман.";
+      const title = RADIO_CFG.title || "Радиосигнал";
+      showPda("Радио", title, msg, "Дальше", () => afterGate());
+    }
+
     function startRadio() {
       if (radioDone) { afterGate(); return; }
       setReady(false);
       if (window.QuestHUD) QuestHUD.setStep("radio");
       radioPing.style.left = "58%"; radioPing.style.top = "46%";
       radioPing.classList.add("show");
-      if (AUTO || FAST) setTimeout(() => { if (!radioDone) radioPing.click(); }, FAST ? 200 : 800);
+      if (AUTO || FAST) setTimeout(() => { if (!radioDone && radioPing.classList.contains("show")) radioPing.click(); }, FAST ? 200 : 800);
     }
     radioPing.addEventListener("click", (e) => {
       e.stopPropagation();
       radioPing.classList.remove("show");
-      const R = SUB.RADIO || {};
-      showPda("Радио", R.title || "Радиосигнал", R.text || "Заглушка: послание", "Дальше", () => {
-        radioDone = true; afterGate();
-      });
+      openRadioTune();
     });
+
+    /* ----- фонарик: вход в пещеру ----- */
+    const caveSearch = document.getElementById("caveSearch");
+    const caveEntrance = document.getElementById("caveEntrance");
+    const caveHudLine = document.getElementById("caveHudLine");
+    const CAVE_CFG = SUB.CAVE || {};
+    let caveX = 50, caveY = 45, caveHintTimer = 0, caveDwell = 0, caveRaf = 0, caveSearching = false;
+
+    function cavePos() {
+      return { x: Number(CAVE_CFG.x) || 72, y: Number(CAVE_CFG.y) || 68 };
+    }
+    function setCaveBeam(px, py) {
+      if (!caveSearch) return;
+      const r = caveSearch.getBoundingClientRect();
+      caveX = clamp(((px - r.left) / Math.max(1, r.width)) * 100, 0, 100);
+      caveY = clamp(((py - r.top) / Math.max(1, r.height)) * 100, 0, 100);
+      caveSearch.style.setProperty("--lx", caveX + "%");
+      caveSearch.style.setProperty("--ly", caveY + "%");
+      updateCaveLit();
+    }
+    function caveHitRadius() {
+      const base = Number(CAVE_CFG.radius) || 8;
+      return base;
+    }
+    function caveDistance() {
+      const p = cavePos();
+      const dx = caveX - p.x, dy = caveY - p.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+    function updateCaveLit() {
+      if (!caveEntrance || !caveSearching) return;
+      const near = caveDistance() <= caveHitRadius();
+      caveEntrance.classList.toggle("lit", near);
+      if (near) {
+        if (!caveDwell) caveDwell = performance.now();
+        if (performance.now() - caveDwell > (FAST ? 180 : 450)) findCave();
+      } else {
+        caveDwell = 0;
+      }
+    }
+    function showCaveHint() {
+      if (!caveSearching || caveDone) return;
+      if (caveEntrance) caveEntrance.classList.add("hint");
+      if (caveHudLine) caveHudLine.textContent = "Кажется, впереди слабый просвет…";
+    }
+    function closeCaveSearch() {
+      caveSearching = false;
+      if (caveHintTimer) { clearTimeout(caveHintTimer); caveHintTimer = 0; }
+      if (caveRaf) { cancelAnimationFrame(caveRaf); caveRaf = 0; }
+      if (caveSearch) { caveSearch.classList.remove("on", "found"); caveSearch.setAttribute("aria-hidden", "true"); }
+      if (caveEntrance) caveEntrance.classList.remove("lit", "hint");
+    }
+    function startCaveSearch() {
+      if (caveDone) { setReady(true); return; }
+      if (caveSearching) return;
+      setReady(false);
+      caveSearching = true;
+      caveDwell = 0;
+      if (window.QuestHUD) QuestHUD.setStep("cave");
+      const p = cavePos();
+      if (caveSearch) {
+        caveSearch.style.setProperty("--ex", p.x + "%");
+        caveSearch.style.setProperty("--ey", p.y + "%");
+        caveSearch.style.setProperty("--lx", "50%");
+        caveSearch.style.setProperty("--ly", "42%");
+        caveSearch.classList.add("on");
+        caveSearch.setAttribute("aria-hidden", "false");
+      }
+      caveX = 50; caveY = 42;
+      if (caveHudLine) caveHudLine.textContent = "Темно. Посвети вокруг и найди вход в пещеру.";
+      if (caveEntrance) caveEntrance.classList.remove("lit", "hint");
+      const hintMs = (params.get("cavehint") === "1") ? 800 : (FAST ? Math.min(Number(CAVE_CFG.hintAfterMs) || 20000, 2500) : (Number(CAVE_CFG.hintAfterMs) || 20000));
+      caveHintTimer = setTimeout(showCaveHint, hintMs);
+      if (AUTO) setTimeout(() => { if (caveSearching && !caveDone) findCave(); }, FAST ? 250 : 800);
+    }
+    function findCave() {
+      if (caveDone || !caveSearching) return;
+      caveDone = true;
+      caveSearching = false;
+      if (caveHintTimer) { clearTimeout(caveHintTimer); caveHintTimer = 0; }
+      if (caveEntrance) caveEntrance.classList.add("lit");
+      if (caveSearch) caveSearch.classList.add("found");
+      if (caveHudLine) caveHudLine.textContent = "Вход найден. Плывём внутрь…";
+      const primos = CAVE_CFG.primos != null ? CAVE_CFG.primos : 50;
+      awardEvent("sn-cave", primos, CAVE_CFG.toast || "Вход в пещеру", "🔦");
+      setTimeout(() => {
+        closeCaveSearch();
+        locReady = true;
+        busy = false;
+        if (index < LOCS.length - 1) goNext();
+        else setReady(true);
+      }, FAST ? 280 : 900);
+    }
+    function onCavePointer(e) {
+      if (!caveSearching || caveDone) return;
+      const ev = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+      if (ev.clientX == null) return;
+      e.preventDefault();
+      setCaveBeam(ev.clientX, ev.clientY);
+    }
+    if (caveSearch) {
+      caveSearch.addEventListener("pointerdown", (e) => { caveSearch.setPointerCapture(e.pointerId); onCavePointer(e); });
+      caveSearch.addEventListener("pointermove", onCavePointer);
+      if (caveEntrance) caveEntrance.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (caveEntrance.classList.contains("lit") || caveDistance() <= caveHitRadius() * 1.25) findCave();
+      });
+    }
 
     /* ----- фото ----- */
     function startPhoto() {
@@ -1330,7 +1830,8 @@
 
     function forceComplete() {
       if (SUB.REPAIR && index === SUB.REPAIR.loc && !repairDone) { repairDone = true; repairEl.classList.remove("on"); }
-      if (SUB.RADIO && index === SUB.RADIO.loc && !radioDone) { radioDone = true; radioPing.classList.remove("show"); }
+      if (SUB.RADIO && index === SUB.RADIO.loc && !radioDone) { radioDone = true; radioPing.classList.remove("show"); closeRadioTune(); }
+      if (needsCave() || (caveSearch && caveSearch.classList.contains("on"))) { caveDone = true; closeCaveSearch(); }
       if (SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc && !leviDone) {
         leviDone = true;
         hideBtn.classList.remove("show"); cover.classList.remove("on");
@@ -1365,7 +1866,13 @@
     async function main() {
       resize();
       await preload();
-      if (Q_DEBUG >= 1 && !(parseInt(params.get("loc") || "", 10) >= 0)) {
+      if (RADIO_DEBUG) {
+        index = (SUB.RADIO && SUB.RADIO.loc != null) ? SUB.RADIO.loc : 2;
+      } else if (CAVE_DEBUG) {
+        index = caveLoc();
+        subQuestions().forEach((q) => { if (q.loc != null && q.loc <= index) markQDone(q); });
+        syncQFlags();
+      } else if (Q_DEBUG >= 1 && !(parseInt(params.get("loc") || "", 10) >= 0)) {
         const list = subQuestions();
         const qi = Math.min(Q_DEBUG, list.length) - 1;
         const qJump = list[qi];
@@ -1375,13 +1882,15 @@
       } else if (START_LOC > 0) {
         index = START_LOC;
       }
-      if (index > 0 || Q_DEBUG) {
-        if (SUB.REPAIR && (index > SUB.REPAIR.loc || Q_DEBUG)) repairDone = true;
+      if (index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG) {
+        if (SUB.REPAIR && (index > SUB.REPAIR.loc || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG)) repairDone = true;
         if (SUB.RADIO && (index > SUB.RADIO.loc || (Q_DEBUG && index === SUB.RADIO.loc))) radioDone = true;
         if (SUB.PHOTO && index > SUB.PHOTO.loc) photoDone = true;
         if (SUB.LEVIATHAN && index > SUB.LEVIATHAN.loc) { leviDone = true; leviQDone = true; }
-        if (Q_DEBUG && SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc) leviDone = true;
+        if ((Q_DEBUG || CAVE_DEBUG) && SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc) leviDone = true;
+        if (index > heartLoc() || (Q_DEBUG && index === heartLoc())) caveDone = true;
         if (index > heartLoc()) heartQDone = true;
+        if (CAVE_DEBUG) caveDone = false;
         syncQFlags();
       }
       layerCurrent.src = images[index].src;
@@ -1397,9 +1906,12 @@
       window.__ready = true;
       window.__goNext = goNext;
       window.__subnautica = {
-        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, scanned: Object.assign({}, scanned) }; },
+        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, radioFreq, scanned: Object.assign({}, scanned) }; },
         completeGate: forceComplete,
-        spawnBubble: spawnAirBubble
+        spawnBubble: spawnAirBubble,
+        radio: { target: FREQ_TARGET, min: FREQ_MIN, max: FREQ_MAX, closeness: radioCloseness, inRange: radioInRange, setFreq: setRadioFreq },
+        cave: { pos: cavePos, find: findCave, hint: showCaveHint, setBeam: setCaveBeam },
+        get beam() { return { x: caveX, y: caveY, dist: caveDistance() }; }
       };
       onArrive(index);
       startOxygen();
