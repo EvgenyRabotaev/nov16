@@ -306,6 +306,90 @@
     80%{transform:translate(-3px,2px)}
   }
 
+
+  /* ===== Паймон рассказывает про карточку (диалог как в genshin/index.html) ===== */
+  @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-cyrillic-ext.woff2") format("woff2"); font-weight: 400 700; font-display: swap; unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+  @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-cyrillic.woff2") format("woff2"); font-weight: 400 700; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+  @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-latin-ext.woff2") format("woff2"); font-weight: 400 700; font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+  @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-latin.woff2") format("woff2"); font-weight: 400 700; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  :root { --dlgH: clamp(150px, 25vh, 240px); }
+  body.paimon-on #reveal { padding-bottom: calc(var(--dlgH) + 6px); }
+  body.paimon-on .card-enter {
+    width: min(450px, calc(100vw - 16px), max(210px, (100vh - var(--dlgH) - 150px) * .75));
+    width: min(450px, calc(100vw - 16px), max(210px, (100dvh - var(--dlgH) - 150px) * .75));
+    max-height: calc(100dvh - var(--dlgH) - 150px);
+  }
+  body.paimon-on .card-stage { margin-bottom: 10px; }
+  body.paimon-on .meta, body.paimon-on .card-stage, body.paimon-on #btnClose { flex-shrink: 0; }
+  body.paimon-on .cnote { display: none; }
+  body.paimon-on #btnClose { margin-top: 10px; padding: 11px 40px; font-size: 16px; }
+  .chint { font-family: "Segoe UI", system-ui, sans-serif; font-size: 13px; color: #9ab0d0; margin-top: 2px; display: none; }
+  body.paimon-on .chint.has { display: block; }
+  .pdlg-wrap { position: fixed; inset: auto 0 0 0; height: var(--dlgH); z-index: 12; pointer-events: none; opacity: 0; transition: opacity .4s ease; }
+  .pdlg-wrap.on { opacity: 1; pointer-events: auto; }
+  .pdlg {
+    position: absolute; inset: 0;
+    padding: 46px max(7.5%, 140px) 24px 7.5%;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.82) 28%, rgba(0,0,0,.62) 58%, rgba(0,0,0,.28) 82%, rgba(0,0,0,0) 100%);
+    color: #f7f4ec; cursor: pointer;
+    font-family: "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif;
+  }
+  .pdlg-who { font-weight: 700; font-size: 18px; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 10px; color: #c9b0ff; text-shadow: 0 2px 8px rgba(0,0,0,.9), 0 0 12px rgba(0,0,0,.45); }
+  .pdlg-text { font-size: 23px; font-weight: 400; line-height: 1.5; min-height: 3em; max-width: 860px; text-shadow: 0 2px 8px rgba(0,0,0,.85); white-space: pre-line; }
+  .pdlg-cont { position: absolute; right: max(36px, calc(16px + env(safe-area-inset-right, 0px))); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 18px; height: 16px; opacity: 0; transition: opacity .18s ease; }
+  .pdlg-cont.show { opacity: 1; animation: contBob .75s ease-in-out infinite; }
+  .pdlg-cont::before { content: ""; display: block; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 11px solid #f3e2a8; filter: drop-shadow(0 0 6px rgba(243,226,168,.85)); }
+  @keyframes contBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+  .pfairy {
+    position: absolute; right: max(3vw, env(safe-area-inset-right, 0px)); bottom: calc(var(--dlgH) - 70px);
+    width: min(150px, 24vw); z-index: 2; pointer-events: none;
+    filter: drop-shadow(0 8px 16px rgba(20,16,40,.55)) drop-shadow(0 0 12px rgba(180,160,255,.3));
+    animation: fairyBob 3.2s ease-in-out infinite;
+  }
+  .pfairy img { width: 100%; height: auto; display: block; }
+  @keyframes fairyBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-9px) rotate(1.5deg); } }
+  @media (max-width: 700px) {
+    :root { --dlgH: clamp(170px, 27vh, 230px); }
+    .pdlg { padding: 38px 18px 22px 18px; padding-bottom: calc(26px + env(safe-area-inset-bottom, 0px)); }
+    .pdlg-text { font-size: 18px; }
+    .pdlg-who { font-size: 15px; margin-bottom: 8px; }
+    .pfairy { width: 84px; right: 4px; bottom: calc(var(--dlgH) - 34px); }
+    .pdlg-cont { right: 18px; }
+  }
+  /* обратная сторона карты после открытия: слова Жени */
+  .face.back .backtext { display: none; }
+  .card.texted .face.back::after { content: none; }
+  .card.texted .face.back {
+    background: radial-gradient(circle at 50% 30%, rgba(255,255,255,.14), transparent 60%), linear-gradient(160deg, var(--back1, #1a3a70) 0%, var(--back0, #0a152c) 100%);
+    align-items: center; justify-content: center; padding: 9% 9%;
+  }
+  .card.texted .face.back .backtext {
+    display: block; font-family: "Segoe UI", system-ui, sans-serif; color: #fff; text-align: center;
+    font-size: 19px; line-height: 1.45; white-space: pre-line; text-shadow: 0 1px 6px rgba(0,0,0,.6);
+    max-height: 100%; overflow: hidden;
+  }
+  .card.texted .face.back .backtext b { display: block; font-family: "Noto Serif", Georgia, serif; font-size: 1.25em; margin-bottom: .6em; }
+  .card.texted { cursor: pointer; }
+
+  /* ===== финальная секретная крутка ===== */
+  #mystery { display: none; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; margin-top: 8px; }
+  #mystery.on { display: flex; }
+  .orb { width: 120px; height: 120px; border-radius: 50%; position: relative;
+    background: radial-gradient(circle at 50% 45%, #fff 0%, #ffe3a0 18%, #ffb347 38%, rgba(255,120,20,.55) 58%, transparent 72%);
+    animation: orbPulse 1.8s ease-in-out infinite; filter: drop-shadow(0 0 30px rgba(255,150,40,.85)); }
+  .orb::before, .orb::after { content: ""; position: absolute; inset: -30px; border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 8%, rgba(255,210,120,.55) 10%, transparent 12% 33%, rgba(255,150,40,.5) 35%, transparent 37% 58%, rgba(255,210,120,.55) 60%, transparent 62% 83%, rgba(255,150,40,.5) 85%, transparent 87%);
+    animation: orbSpin 7s linear infinite; mask: radial-gradient(circle, transparent 30%, #000 45%, transparent 72%); -webkit-mask: radial-gradient(circle, transparent 30%, #000 45%, transparent 72%); }
+  .orb::after { animation-duration: 11s; animation-direction: reverse; opacity: .7; }
+  @keyframes orbPulse { 0%,100% { transform: scale(.92); } 50% { transform: scale(1.08); } }
+  @keyframes orbSpin { to { transform: rotate(360deg); } }
+  .mystery-t { font-size: clamp(26px, 5vw, 40px); font-weight: 600; color: #ffd9a6; letter-spacing: .04em; text-shadow: 0 0 22px rgba(255,140,30,.75); animation: mysteryT 2.4s ease-in-out infinite; }
+  @keyframes mysteryT { 0%,100% { opacity: .82; } 50% { opacity: 1; } }
+  body.mystery-mode #home .title, body.mystery-mode #home .sub, body.mystery-mode #btnPull, body.mystery-mode #poolStatus { display: none; }
+  body.mystery-mode #home { padding-bottom: calc(var(--dlgH) + 10px); }
+  .card-enter.special .face.front { box-shadow: 0 16px 50px rgba(0,0,0,.55), 0 0 0 2px rgba(255,170,60,.8), 0 0 60px rgba(255,130,30,.6); }
+
   body.flying #home { pointer-events: none; }
   body.approach #ground { opacity: 1; }
 
@@ -313,7 +397,9 @@
 <link rel="stylesheet" href="../common/hud.css?v=20261115f">
 <script src="../common/quest_config.js?v=20261115p2"></script>
 <script src="../common/hud.js?v=20261115f" data-screen="gacha" data-counter="off"></script>
-<script src="card_texts.js?v=20261115f"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
+<script src="card_texts.js?v=20261115z1"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
+<script src="card_texts_paimon.js?v=20261115z1"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
+<link rel="preload" as="image" href="../genshin/fairy.png">
 </head>
 <body>
 <canvas id="fx"></canvas>
@@ -327,6 +413,10 @@
   <p class="sub">Открытие за примогемы</p>
   <button class="btn-main" id="btnPull">Крутить · 100</button>
   <p id="poolStatus" aria-live="polite"></p>
+  <div id="mystery" role="button" tabindex="0" aria-label="Ой, что это?">
+    <div class="orb"></div>
+    <div class="mystery-t">Ой, что это?</div>
+  </div>
 </div>
 
 <div id="reveal" class="screen hidden">
@@ -334,7 +424,7 @@
     <div class="card-glow" id="cardGlow"></div>
     <div class="card-enter" id="cardEnter">
       <div class="card" id="card">
-        <div class="face back" id="cardBack"></div>
+        <div class="face back" id="cardBack"><div class="backtext" id="cardBackText"></div></div>
         <div class="face front"><img id="cardImg" alt=""></div>
       </div>
     </div>
@@ -342,8 +432,18 @@
   <div class="meta" id="meta">
     <div class="cname" id="cardName"></div>
     <div class="cnote" id="cardNote"></div>
+    <div class="chint" id="cardHint">Тап по карте — слова Жени</div>
   </div>
   <button class="btn-main" id="btnClose">Дальше</button>
+</div>
+
+<div class="pdlg-wrap" id="pdlgWrap" aria-live="polite">
+  <div class="pfairy"><img src="../genshin/fairy.png" alt="Паймон"></div>
+  <div class="pdlg" id="pdlg" role="button" tabindex="0">
+    <div class="pdlg-who">Паймон</div>
+    <div class="pdlg-text" id="pdlgText"></div>
+    <div class="pdlg-cont" id="pdlgCont" aria-hidden="true"></div>
+  </div>
 </div>
 
 <script>
@@ -352,7 +452,8 @@
   'use strict';
 
   const COST = 100;
-  const GRAY = { c1: '#8b93a8', c2: '#eef2f8', c3: '#4a5160' };
+  const GRAY_BASE = { c1: '#8b93a8', c2: '#eef2f8', c3: '#4a5160' };
+  const GRAY = GRAY_BASE;
   const GRAY_MS = 2000;
   const COLOR_MS = 2000;
   const STOP_MS = 550;
@@ -360,7 +461,7 @@
   const COLOR_FADE_MS = 650;
   const CRUISE = 0.68; // warp units per second
 
-  function approachMs(r) { return 1200 + (r - 3) * 220; }
+  function approachMs(r) { return 1200 + (r - 3) * 220 + (specialFlight ? 900 : 0); }
   function totalMs(r) { return GRAY_MS + COLOR_MS + STOP_MS + approachMs(r) + HANG_MS; }
 
   const FX = {
@@ -436,8 +537,22 @@
     { id: 'secret_577', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_577.jpg' },
     { id: 'secret_687', rarity: 3, secret: true, title: '', note: '', img: './cards/secret_687.jpg' }
   ];
+  // Финальная оранжевая карточка «Женя» — НЕ входит в 43, выпадает только особой круткой
+  // («Ой, что это?»), когда собраны все 43. Бесплатно, работает и при 0 примогемов.
+  // Текст: card_texts.md «## Женя (6★)», реплика Паймон: card_texts_paimon.md «## Женя (6★)».
+  const SPECIAL_CARD = { id: 'zhenya', rarity: 6, title: 'Женя', special: true, note: 'Заглушка: текст от Жени', img: './cards/zhenya_6star.jpg' };
   /* описания из card_texts.js (window.CARD_TEXTS: id → текст) перекрывают note */
-  if (window.CARD_TEXTS) CARDS.forEach(c => { if (window.CARD_TEXTS[c.id]) c.note = window.CARD_TEXTS[c.id]; });
+  if (window.CARD_TEXTS) CARDS.concat([SPECIAL_CARD]).forEach(c => { if (window.CARD_TEXTS[c.id]) c.note = window.CARD_TEXTS[c.id]; });
+  /* реплики Паймон (window.CARD_TEXTS_PAIMON: id → [реплики]) */
+  const PAIMON = window.CARD_TEXTS_PAIMON || {};
+  const PAIMON_FALLBACK = ['Ого, какая карточка! Паймон в восторге!'];
+  const PAIMON_INTRO = PAIMON.zhenya_intro || ['Ой, что это?', 'Все карточки собраны, а тут что-то светится… Оранжевым?! Нажми скорее!'];
+  function paimonLines(card) {
+    const L = PAIMON[card.id];
+    if (Array.isArray(L) && L.length) return L;
+    if (card.special) return ['Заглушка: реплика Паймон про карточку «Женя».'];
+    return PAIMON_FALLBACK;
+  }
 
     /* v2: набор из 43 карточек (39 + 4 секретные). Старые ключи (v1) игнорируются.
      Сброс для теста: gacha/?resetgacha=1 (только гача) или start/?newgame=1 (весь квест). */
@@ -449,6 +564,13 @@
       try { q.delete('resetgacha'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (e) {}
     })();
   const EMPTY_MSG = 'Все карточки из этого набора уже собраны';
+  // Финальная «Женя»: открыта ли (ключ содержит «gacha» → чистится и ?resetgacha=1).
+  const SPECIAL_KEY = 'nov16_gacha_zhenya_v1';
+  // Отладка: gacha/?allcollected=1 — как будто все 43 собраны, «Женя» ещё нет.
+  // Только в памяти: настоящий прогресс и примогемы в localStorage не трогаются.
+  const DEBUG_ALL = /[?&]allcollected=1/.test(location.search);
+  let specialDone = DEBUG_ALL ? false : (function () { try { return localStorage.getItem(SPECIAL_KEY) === '1'; } catch (e) { return false; } })();
+  function saveSpecialDone() { specialDone = true; if (DEBUG_ALL) return; try { localStorage.setItem(SPECIAL_KEY, '1'); } catch (e) {} }
 
   function cardView(card) {
     const v = Object.assign({}, FX[card.rarity], card);
@@ -468,9 +590,10 @@
     }
   }
 
-  let pulledIds = loadPulled();
+  let pulledIds = DEBUG_ALL ? CARDS.map(c => c.id) : loadPulled();
 
   function savePulled() {
+    if (DEBUG_ALL) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pulledIds)); } catch (e) {}
   }
 
@@ -534,7 +657,13 @@
     const btn = document.getElementById('btnPull');
     const status = document.getElementById('poolStatus');
     if (btn) btn.disabled = empty || gems < COST;
-    if (window.QuestHUD && empty) QuestHUD.showNext('К подаркам');
+    const mysteryNow = empty && !specialDone;
+    document.body.classList.toggle('mystery-mode', mysteryNow);
+    const mys = document.getElementById('mystery');
+    if (mys) mys.classList.toggle('on', mysteryNow);
+    if (mysteryNow && !busy && !document.getElementById('home').classList.contains('hidden') && !talkOn()) startTalk(PAIMON_INTRO, null, true);
+    if (!mysteryNow && talkIsIntro) stopTalk();
+    if (window.QuestHUD && empty && specialDone) QuestHUD.showNext('К подаркам');
     if (status) {
       if (empty) {
         status.textContent = EMPTY_MSG;
@@ -545,6 +674,49 @@
       }
     }
   }
+
+  /* ----- Паймон: диалог внизу (как в genshin/index.html) ----- */
+  const TYPE_MS = /[?&]fast=1/.test(location.search) ? 0 : 24;
+  const pWrap = document.getElementById('pdlgWrap');
+  const pText = document.getElementById('pdlgText');
+  const pCont = document.getElementById('pdlgCont');
+  let tLines = [], tIdx = 0, tTimer = 0, tTyping = false, tFull = '', tDone = null, talkIsIntro = false;
+  function talkOn() { return pWrap.classList.contains('on'); }
+  function tStop() { if (tTimer) { clearTimeout(tTimer); tTimer = 0; } tTyping = false; }
+  function tFinish() {
+    tStop(); pText.textContent = tFull;
+    const last = tIdx >= tLines.length - 1;
+    pCont.classList.toggle('show', !last || talkIsIntro);
+    if (last && tDone) { const f = tDone; tDone = null; f(); }
+  }
+  function tType(full) {
+    tStop(); tFull = full || ''; pText.textContent = ''; pCont.classList.remove('show');
+    if (!tFull || TYPE_MS <= 0) { tFinish(); return; }
+    tTyping = true; let i = 0;
+    const tick = () => { i += 1; pText.textContent = tFull.slice(0, i); if (i < tFull.length) tTimer = setTimeout(tick, TYPE_MS); else { tTimer = 0; tFinish(); } };
+    tTimer = setTimeout(tick, TYPE_MS);
+  }
+  // onLast — вызывается, когда последняя реплика допечатана (показываем «Дальше»).
+  function startTalk(lines, onLast, intro) {
+    tLines = (lines && lines.length) ? lines.slice() : []; tIdx = 0; tDone = onLast || null; talkIsIntro = !!intro;
+    if (!tLines.length) { stopTalk(); if (onLast) onLast(); return; }
+    pWrap.classList.add('on'); document.body.classList.add('paimon-on');
+    if (window.QuestHUD && QuestHUD.setVisible) QuestHUD.setVisible(false);
+    tType(tLines[0]);
+  }
+  function stopTalk() {
+    const was = talkOn();
+    tStop(); tDone = null; talkIsIntro = false; pWrap.classList.remove('on'); pCont.classList.remove('show'); document.body.classList.remove('paimon-on');
+    if (was && window.QuestHUD && QuestHUD.setVisible) QuestHUD.setVisible(true);
+  }
+  function advanceTalk() {
+    if (!talkOn()) return;
+    if (tTyping) { tFinish(); return; }
+    if (tIdx < tLines.length - 1) { tIdx += 1; tType(tLines[tIdx]); return; }
+    if (talkIsIntro) { startSpecial(); }
+  }
+  document.getElementById('pdlg').addEventListener('click', advanceTalk);
+  document.getElementById('pdlg').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advanceTalk(); } });
 
   const cvs = document.getElementById('fx');
   const ctx = cvs.getContext('2d');
@@ -655,8 +827,10 @@
     ctx.restore();
   }
 
+  let specialFlight = false; // финальная «Женя»: старт золотом (а не серым) → оранжевый
   function colorsAt(elapsed, rarity) {
     const c = FX[rarity];
+    const GRAY = specialFlight ? FX[5] : GRAY_BASE;
     let t = 0;
     if (elapsed > GRAY_MS) {
       t = Math.min(1, (elapsed - GRAY_MS) / COLOR_FADE_MS);
@@ -806,7 +980,7 @@
     flightSpeed = CRUISE * 0.35;
     flightTarget = CRUISE;
     document.body.classList.add('flying', 'falling');
-    document.getElementById('ground').style.setProperty('--glow', rgba(GRAY.c1, 0.35));
+    document.getElementById('ground').style.setProperty('--glow', rgba((specialFlight ? FX[5] : GRAY_BASE).c1, specialFlight ? 0.6 : 0.35));
   }
 
   function revealColor(rarity) {
@@ -865,6 +1039,16 @@
         color: i % 2 ? '#4ea8ff' : c.c1, decay: 0.006, type: 'heart',
         rot: (Math.random() - 0.5) * 0.5
       });
+    }
+    if (specialFlight) {
+      for (let i = 0; i < 46; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 1 + Math.random() * 4.5;
+        spawn(x, y, { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1, g: -0.004, size: 0.45 + Math.random() * 0.7,
+          color: i % 3 ? '#4ea8ff' : '#ffb347', decay: 0.004 + Math.random() * 0.004, type: 'heart', rot: (Math.random() - 0.5) * 0.6 });
+      }
+      shockwaves.push({ x, y, r: 6, max: Math.max(W, H), a: 0.8, w: 5, color: '#ffd27a', decay: 0.008 });
+      shockwaves.push({ x, y, r: 2, max: Math.max(W, H) * 0.8, a: 0.7, w: 3, color: '#7cc0ff', decay: 0.01 });
     }
     shockwaves.push({ x, y, r: 8, max: 220 + rarity * 40, a: 0.9, w: 3 + rarity * 0.5, color: c.c2, decay: 0.012 });
     shockwaves.push({ x, y, r: 4, max: 140 + rarity * 20, a: 0.7, w: 2, color: c.c1, decay: 0.016 });
@@ -1119,6 +1303,11 @@
     else (img.decode ? img.decode() : Promise.reject()).then(showImg, () => { img.onload = showImg; if (img.complete) showImg(); });
     document.getElementById('cardName').textContent = c.title;
     document.getElementById('cardNote').textContent = c.note || '';
+    const bt = document.getElementById('cardBackText');
+    bt.innerHTML = '';
+    if (c.note) { if (c.title) { const b = document.createElement('b'); b.textContent = c.title; bt.appendChild(b); } bt.appendChild(document.createTextNode(c.note)); }
+    document.getElementById('cardHint').classList.toggle('has', !!c.note);
+    document.getElementById('cardEnter').classList.toggle('special', !!card.special);
     glow.style.background = c.c1;
     glow.style.opacity = '0.85';
     document.documentElement.style.setProperty('--glow', c.c1);
@@ -1137,10 +1326,35 @@
       requestAnimationFrame(() => enter.classList.add('show'));
     });
     setTimeout(() => { cardEl.classList.add('flip'); }, 900);
-    setTimeout(() => { meta.classList.add('on'); close.classList.add('on'); }, 1200);
+    const myGen = gen;
+    setTimeout(() => {
+      if (myGen !== gen) return;
+      meta.classList.add('on');
+      if (c.note) { cardEl.classList.add('texted'); fitBackText(); }
+      // Паймон рассказывает; «Дальше» — когда допечатана последняя реплика
+      startTalk(paimonLines(card), () => { if (myGen === gen) close.classList.add('on'); });
+    }, 1200);
   }
 
+  // подгоняем шрифт текста на обороте под размер карты
+  function fitBackText() {
+    const bt = document.getElementById('cardBackText');
+    const box = document.getElementById('cardBack');
+    let fs = Math.max(13, Math.min(21, box.clientWidth / 19));
+    bt.style.fontSize = fs + 'px';
+    let guard = 0;
+    while (bt.scrollHeight > bt.clientHeight + 1 && fs > 11 && guard++ < 20) { fs -= 0.75; bt.style.fontSize = fs + 'px'; }
+  }
+  // тап по открытой карте — переворот на оборот со словами Жени и обратно
+  document.getElementById('card').addEventListener('click', () => {
+    const el = document.getElementById('card');
+    if (!el.classList.contains('texted')) return;
+    el.classList.toggle('flip');
+    if (!el.classList.contains('flip')) fitBackText();
+  });
+
   function hideReveal() {
+    stopTalk();
     document.getElementById('reveal').classList.add('hidden');
     document.getElementById('card').className = 'card';
     document.getElementById('cardEnter').className = 'card-enter';
@@ -1151,6 +1365,7 @@
     oldImg.style.visibility = 'hidden';
     oldImg.removeAttribute('src');
     document.body.classList.remove('r3', 'r4', 'r5', 'r6', 'shake-4', 'shake-5', 'shake-6', 'falling', 'flying', 'approach');
+    specialFlight = false;
     falling = null;
     flightTarget = 0;
     particles.length = 0;
@@ -1232,6 +1447,31 @@
     return batch;
   }
 
+  // Финальная особая крутка «Женя»: золото → оранжевый, без примогемов.
+  async function startSpecial() {
+    if (busy || specialDone || remainingCards().length) return;
+    const my = ++gen;
+    busy = true;
+    stopTalk();
+    impactResult = null;
+    document.getElementById('home').classList.add('hidden');
+    hideReveal();
+    saveSpecialDone();
+    specialFlight = true;
+    const card = SPECIAL_CARD;
+    const imgReady = preloadImg(card.img);
+    startFlight(6);
+    flashes.push({ a: 0.5, color: '#ffd27a', decay: 0.02, rad: Math.max(W, H) * 0.7 });
+    await waitUntil(() => impactResult || my !== gen, totalMs(6) + 2500);
+    if (my !== gen) return;
+    await wait(320);
+    await Promise.race([imgReady, wait(4000)]);
+    if (my !== gen) return;
+    showCard(card);
+  }
+  document.getElementById('mystery').addEventListener('click', startSpecial);
+  document.getElementById('mystery').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startSpecial(); } });
+
   function finishPull() {
     gen++;
     hideReveal();
@@ -1271,6 +1511,10 @@
     isBusy: () => busy,
     setAutoClose: (ms) => { window.__autoClose = ms; },
     remaining: remainingCards,
+    startSpecial,
+    specialDone: () => specialDone,
+    talk: () => ({ on: talkOn(), idx: tIdx, lines: tLines.slice(), text: pText.textContent }),
+    advanceTalk,
     pulled: () => pulledIds.slice(),
     cards: () => CARDS.slice(),
     drawFromPool,
