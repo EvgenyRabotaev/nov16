@@ -669,7 +669,7 @@
     }
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115p23"></script>
+<script src="../common/quest_config.js?v=20261115p24"></script>
 <script src="../common/hud.js?v=20261115d" data-screen="pubg-zone" data-avoid="#panel, #squadHud"></script>
 </head>
 <body>
@@ -1541,7 +1541,7 @@
       await wait(knMs(cfg.videoDelayMs != null ? cfg.videoDelayMs : 2000, 300));
       const src = cfg.video || "dance.mp4";
       if (winVid) {
-        winVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p23";
+        winVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p24";
         winVid.setAttribute("playsinline", "");
         winVid.muted = false;
       }
@@ -1990,6 +1990,8 @@
         };
         if (kind === "awm") {
           shot(t0, { boomFreq: 62, boomDur: 0.55, boomGain: 0.85, crackGain: 0.4, lp: 900 });
+        } else if (kind === "m24") {
+          shot(t0, { boomFreq: 80, boomDur: 0.42, boomGain: 0.7, crackGain: 0.34, lp: 1100 });
         } else if (kind === "m416") {
           for (let i = 0; i < 4; i++) {
             shot(t0 + i * 0.085, { boomFreq: 120, boomDur: 0.12, boomGain: 0.4, crackGain: 0.28, lp: 1600 });
@@ -2104,7 +2106,7 @@
       await wait(knMs(700, 220));
 
       /* 3) Вика нокает одного, через ~2 с Женя добивает второго */
-      playGunshot("awm");
+      playGunshot("m24");
       appendPubgFeed(feeds.vika);
       await wait(knMs(2000, 700));
       playGunshot("m416");
@@ -2116,7 +2118,7 @@
       stopRing();
 
       const src = cfg.video || "contusion.mp4";
-      knockVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p23";
+      knockVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p24";
       knockVid.setAttribute("playsinline", "");
       knockVid.muted = false;
       knockPlay.textContent = cfg.tapLabel || "Смотреть";

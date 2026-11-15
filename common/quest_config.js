@@ -275,7 +275,7 @@ window.QUEST_CONFIG = {
     reviveLabel: "Вика поднимает Женю…",
     feeds: {
       knock:  { killer: "Враг1", weapon: "AKM",  victim: "Женя", status: "нокаут" },
-      vika:   { killer: "Вика",  weapon: "AWM",  victim: "Враг1", status: "нокаут" },
+      vika:   { killer: "Вика",  weapon: "M24",  victim: "Враг1", status: "нокаут" },
       zhenya: { killer: "Женя",  weapon: "M416", victim: "Враг2", status: "убит" }
     },
     /* Карточка как у других событий: слева видео, справа рассказ Жени (правит Женя). */
