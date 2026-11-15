@@ -669,7 +669,7 @@
     }
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115p30"></script>
+<script src="../common/quest_config.js?v=20261115p31"></script>
 <script src="../common/hud.js?v=20261115d" data-screen="pubg-zone" data-avoid="#panel, #squadHud"></script>
 </head>
 <body>
@@ -1541,7 +1541,7 @@
       await wait(knMs(cfg.videoDelayMs != null ? cfg.videoDelayMs : 2000, 300));
       const src = cfg.video || "dance.mp4";
       if (winVid) {
-        winVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p30";
+        winVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p31";
         winVid.setAttribute("playsinline", "");
         winVid.muted = false;
       }
@@ -2118,7 +2118,7 @@
       stopRing();
 
       const src = cfg.video || "contusion.mp4";
-      knockVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p30";
+      knockVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p31";
       knockVid.setAttribute("playsinline", "");
       knockVid.muted = false;
       knockPlay.textContent = cfg.tapLabel || "Смотреть";

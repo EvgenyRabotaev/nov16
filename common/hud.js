@@ -111,6 +111,7 @@
   }
   /* -> "correct" | "almost" | "wrong" */
   function checkPart(part, value) {
+    if (part && (part.open || part.any)) return String(value || "").trim() ? "correct" : "wrong";
     var n = norm(value);
     if (!n) return "wrong";
     var acc = part.accept || [];
