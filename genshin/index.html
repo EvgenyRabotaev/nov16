@@ -205,7 +205,67 @@
   }
   @keyframes contBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
 
-  /* ----- записка / комиссия ----- */
+
+  /* ----- видео-вопрос ----- */
+  .gs-video {
+    position: fixed; inset: 0; z-index: 45;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    background: rgba(8, 10, 22, .55);
+    opacity: 0; pointer-events: none; visibility: hidden;
+    transition: opacity .3s ease, visibility 0s linear .3s;
+  }
+  .gs-video.on { opacity: 1; pointer-events: auto; visibility: visible; transition: opacity .3s ease, visibility 0s; }
+  .gs-video-card {
+    width: min(560px, calc(100vw - 28px));
+    background: rgba(243, 238, 228, .97);
+    border: 2px solid #d3bc8e; border-radius: 14px;
+    box-shadow: inset 0 0 0 6px rgba(243,238,228,.95), inset 0 0 0 7px rgba(211, 188, 142, .75), 0 16px 44px rgba(20, 20, 40, .5);
+    padding: 16px 16px 18px;
+    text-align: center;
+    font-family: "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif;
+  }
+  .gs-video-kicker {
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: #a8853f; font-weight: 600; margin-bottom: 12px;
+  }
+  .gs-video-stage {
+    position: relative;
+    background: #0b0c12;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(211, 188, 142, .55);
+  }
+  .gs-video-stage video {
+    display: block; width: 100%; height: auto;
+    max-height: min(52vh, 420px);
+    background: #000;
+  }
+  .gs-video-play {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 72px; height: 72px; border-radius: 50%;
+    border: 2px solid #d3bc8e;
+    background: rgba(20, 16, 30, .55);
+    color: #f7efd8; font-size: 28px; line-height: 1;
+    cursor: pointer; padding: 0 0 0 6px;
+    box-shadow: 0 0 0 6px rgba(211, 188, 142, .18), 0 8px 20px rgba(0,0,0,.35);
+  }
+  .gs-video-play[hidden] { display: none; }
+  .gs-video-card .btn { margin-top: 14px; }
+  .gs-rewatch {
+    appearance: none; cursor: pointer;
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1.5px solid #d3bc8e; background: #fffdf8;
+    color: #8a7040; font-size: 13px; line-height: 1; padding: 0 0 0 2px;
+    vertical-align: middle; margin-left: 8px;
+    box-shadow: 0 1px 4px rgba(40,30,10,.15);
+  }
+  .gs-rewatch[hidden] { display: none; }
+  .q-kicker { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .q-kicker-label { min-width: 0; }
+
+  /* ----- записка / огонёк ----- */
   .note {
     position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
     background: rgba(8, 10, 20, .45); opacity: 0; pointer-events: none; transition: opacity .3s ease;
@@ -313,7 +373,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115h">
-<script src="../common/quest_config.js?v=20261115p6"></script>
+<script src="../common/quest_config.js?v=20261115p7"></script>
 <script src="../common/hud.js?v=20261115h" data-screen="genshin"></script>
 </head>
 <body>
@@ -324,12 +384,25 @@
 <div class="vignette" aria-hidden="true"></div>
 
 <aside class="panel hidden" id="panel">
-  <div class="q-kicker" id="qNum">Мир 4 · Тейват</div>
+  <div class="q-kicker"><span class="q-kicker-label" id="qNum">Мир 4 · Тейват</span>
+    <button type="button" class="gs-rewatch" id="gsRewatch" hidden title="Посмотреть снова" aria-label="Посмотреть снова">▶</button>
+  </div>
   <div class="q-text" id="qText"></div>
   <div class="ans-inputs" id="answerInputs"></div>
   <div class="ans-msg" id="ansMsg" aria-live="polite"></div>
   <button class="btn" id="answerBtn" type="button">Ответить</button>
 </aside>
+
+<div class="gs-video" id="gsVideoPop">
+  <div class="gs-video-card">
+    <div class="gs-video-kicker" id="gsVideoKicker">Воспоминание</div>
+    <div class="gs-video-stage">
+      <video id="gsVideo" playsinline webkit-playsinline controls preload="metadata"></video>
+      <button type="button" class="gs-video-play" id="gsVideoPlay" aria-label="Смотреть">▶</button>
+    </div>
+    <button type="button" class="btn" id="gsVideoDone">Посмотрела</button>
+  </div>
+</div>
 
 <div class="talk" id="talk">
   <div class="fairy" id="fairy"><img id="fairyImg" alt="Паймон"></div>
@@ -378,6 +451,11 @@
   const WAYPOINTS = G.WAYPOINTS || [];
   const COMMISSIONS = G.COMMISSIONS || [];
   const COOKING = G.COOKING || {};
+  const SPOT = G.SPOT_NAME || { title: "Огоньки воспоминаний", one: "огонёк", many: "огоньки" };
+  function cap(s) { s = String(s || ""); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  function spotOne(c) { const s = SPOT.one || "огонёк"; return c ? cap(s) : s; }
+  function spotMany(c) { const s = SPOT.many || "огоньки"; return c ? cap(s) : s; }
+  function spotTitle() { return SPOT.title || "Огоньки воспоминаний"; }
   const params = new URLSearchParams(location.search);
   const FAST = params.get("fast") === "1";
   const TYPE_MS = FAST ? 0 : (Number(G.TYPE_MS) || 24);
@@ -393,6 +471,12 @@
   const answerInputs = document.getElementById("answerInputs");
   const ansMsg = document.getElementById("ansMsg");
   const answerBtn = document.getElementById("answerBtn");
+  const gsRewatch = document.getElementById("gsRewatch");
+  const gsVideoPop = document.getElementById("gsVideoPop");
+  const gsVideo = document.getElementById("gsVideo");
+  const gsVideoPlay = document.getElementById("gsVideoPlay");
+  const gsVideoDone = document.getElementById("gsVideoDone");
+  const gsVideoKicker = document.getElementById("gsVideoKicker");
   const talk = document.getElementById("talk");
   const dlg = document.getElementById("dlg");
   const dlgWho = document.getElementById("dlgWho");
@@ -534,7 +618,7 @@
       el.dataset.cm = c.id;
       pinAt(el, c.x, c.y);
       el.innerHTML = '<div class="cm-glyph"></div><div class="pin-name"></div>';
-      el.querySelector(".pin-name").textContent = c.name || "Комиссия";
+      el.querySelector(".pin-name").textContent = c.name || spotOne(true);
       if (!doneCommissions[c.id]) el.addEventListener("click", (e) => { e.stopPropagation(); openCommission(c); });
       pins.appendChild(el);
     });
@@ -622,7 +706,7 @@
     qi = Math.max(0, QUESTIONS.indexOf(q));
     mode = "question"; busy = false; wrongCount = 0;
     talk.classList.remove("on"); stopType();
-    qNum.textContent = (p && p.name ? p.name + " · " : "") + "Комиссия " + (qi + 1) + " из " + QUESTIONS.length;
+    qNum.textContent = (p && p.name ? p.name + " · " : "") + spotOne(true) + " " + (qi + 1) + " из " + QUESTIONS.length;
     qText.innerHTML = esc(q.text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
     ansMsg.textContent = ""; ansMsg.className = "ans-msg";
     answerInputs.innerHTML = "";
@@ -636,10 +720,66 @@
       answerInputs.appendChild(inp);
       if (i === 0) setTimeout(() => inp.focus(), 50);
     });
-    panel.classList.remove("hidden");
+    const hasVideo = !!q.video;
+    if (gsRewatch) gsRewatch.hidden = !hasVideo;
     setStep("q" + (qi + 1));
     if (window.QuestHUD) QuestHUD.hideNext && QuestHUD.hideNext();
-    armIdle(); setFlags();
+    if (hasVideo && !seenVideos[q.id || q.video]) {
+      panel.classList.add("hidden");
+      openVideoPopup(q, () => {
+        seenVideos[q.id || q.video] = true;
+        panel.classList.remove("hidden");
+        armIdle(); setFlags();
+        const inp = answerInputs.querySelector("input");
+        if (inp) setTimeout(() => inp.focus(), 50);
+      });
+    } else {
+      panel.classList.remove("hidden");
+      armIdle(); setFlags();
+    }
+  }
+
+  const seenVideos = Object.create(null);
+  let videoAfter = null;
+  function videoSrc(path) {
+    if (!path) return "";
+    if (/^https?:/i.test(path)) return path;
+    return path;
+  }
+  function syncVideoPlayBtn() {
+    if (!gsVideoPlay || !gsVideo) return;
+    gsVideoPlay.hidden = !gsVideo.paused;
+  }
+  function playQuestionVideo() {
+    if (!gsVideo) return;
+    gsVideo.play().then(syncVideoPlayBtn).catch(() => { syncVideoPlayBtn(); });
+  }
+  function openVideoPopup(q, after) {
+    videoAfter = after || null;
+    if (gsVideoKicker) gsVideoKicker.textContent = spotTitle();
+    if (gsVideo) {
+      gsVideo.setAttribute("playsinline", "");
+      gsVideo.setAttribute("webkit-playsinline", "");
+      gsVideo.playsInline = true;
+      gsVideo.controls = true;
+      gsVideo.preload = "metadata";
+      const src = videoSrc(q.video);
+      if (gsVideo.getAttribute("src") !== src) {
+        gsVideo.src = src;
+        try { gsVideo.load(); } catch (e) {}
+      } else {
+        try { gsVideo.currentTime = 0; } catch (e) {}
+      }
+    }
+    if (gsVideoPlay) gsVideoPlay.hidden = false;
+    if (gsVideoPop) gsVideoPop.classList.add("on");
+    setFlags();
+  }
+  function closeVideoPopup() {
+    if (gsVideo) { try { gsVideo.pause(); } catch (e) {} }
+    if (gsVideoPop) gsVideoPop.classList.remove("on");
+    const fn = videoAfter; videoAfter = null;
+    if (typeof fn === "function") fn();
   }
 
   function submit() {
@@ -668,7 +808,7 @@
     ansMsg.className = "ans-msg ok";
     ansMsg.textContent = (window.QuestHUD && QuestHUD.answerText("correct")) || "Верно";
     busy = true;
-    if (window.QuestHUD) QuestHUD.award(q.id || ("gs-q" + (qi + 1)), q.placeholder ? 0 : undefined);
+    if (window.QuestHUD) QuestHUD.award(q.id || ("gs-q" + (qi + 1)), q.placeholder ? 0 : (q.primos != null ? q.primos : undefined));
     setTimeout(() => startTalk(DIALOGUES[q.id] || [], afterLocationTalk), 550);
   }
 
@@ -686,7 +826,7 @@
     showQuestion();
   }
 
-  /* ----- сундуки и комиссии ----- */
+  /* ----- сундуки и огоньки ----- */
   function beginChest(p) {
     mode = "chest";
     panel.classList.add("hidden");
@@ -707,7 +847,7 @@
   }
   function openCommission(c) {
     if (!c || doneCommissions[c.id] || (mode !== "map" && mode !== "chest")) return;
-    showNote(c.name || "Комиссия", c.text || "Заглушка: записка", () => {
+    showNote(c.name || spotOne(true), c.text || "Заглушка: записка", () => {
       doneCommissions[c.id] = true;
       renderPins();
     });
@@ -908,6 +1048,15 @@
     const first = WAYPOINTS[0];
     if (first) applyCam(first.x, first.y, mapScale());
     renderPins();
+    const qDebug = Math.max(0, parseInt(params.get("q"), 10) || 0);
+    if (qDebug >= 1 && WAYPOINTS.length) {
+      wi = Math.min(qDebug, WAYPOINTS.length) - 1;
+      const p = wp();
+      if (p) applyCam(p.x, p.y, mapScale());
+      mode = "map"; setStep("map"); renderPins(); setFlags();
+      setTimeout(showQuestion, FAST ? 80 : 300);
+      return;
+    }
     const intro = G.INTRO || [];
     if (intro.length) {
       mode = "intro";
@@ -916,6 +1065,24 @@
       mode = "map"; setStep("map"); setFlags();
     }
   }
+
+  if (gsRewatch) gsRewatch.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const p = wp();
+    const q = p ? qById(p.question) : QUESTIONS[qi];
+    if (!q || !q.video) return;
+    clearIdle();
+    openVideoPopup(q, () => { panel.classList.remove("hidden"); armIdle(); setFlags(); });
+  });
+  if (gsVideoPlay) gsVideoPlay.addEventListener("click", (e) => { e.stopPropagation(); playQuestionVideo(); });
+  if (gsVideo) {
+    gsVideo.addEventListener("play", syncVideoPlayBtn);
+    gsVideo.addEventListener("pause", syncVideoPlayBtn);
+    gsVideo.addEventListener("ended", syncVideoPlayBtn);
+    gsVideo.addEventListener("click", (e) => e.stopPropagation());
+  }
+  if (gsVideoDone) gsVideoDone.addEventListener("click", (e) => { e.stopPropagation(); closeVideoPopup(); });
+  if (gsVideoPop) gsVideoPop.addEventListener("click", (e) => { if (e.target === gsVideoPop) closeVideoPopup(); });
 
   answerBtn.addEventListener("click", submit);
   talk.addEventListener("click", (e) => { e.stopPropagation(); advanceTalk(); });
