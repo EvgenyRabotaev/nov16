@@ -313,7 +313,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115h">
-<script src="../common/quest_config.js?v=20261115p2"></script>
+<script src="../common/quest_config.js?v=20261115p3"></script>
 <script src="../common/hud.js?v=20261115h" data-screen="genshin"></script>
 </head>
 <body>
@@ -888,11 +888,18 @@
     goNext.classList.remove("show");
     stopType(); hideHud(false);
     renderPins();
-    if (window.QuestHUD) {
-      QuestHUD.setStep("done");
-      const btn = QuestHUD.showNext("Дальше");
-      if (btn) btn.classList.add("qhud-next--show");
-    }
+    const showPray = () => {
+      mode = "done";
+      if (window.QuestHUD) {
+        QuestHUD.setStep("done");
+        const gachaUrl = new URL("gacha/index.html", QuestHUD.root).href;
+        const btn = QuestHUD.showNext("Молитва", { onClick: () => { location.href = gachaUrl; } });
+        if (btn) btn.classList.add("qhud-next--show");
+      }
+      setFlags();
+    };
+    const outro = fairyLines(G.OUTRO || []);
+    if (outro.length) startTalk(outro, showPray); else showPray();
     setFlags();
   }
 
