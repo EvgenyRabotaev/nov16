@@ -253,6 +253,28 @@
     box-shadow: 0 0 0 6px rgba(211, 188, 142, .18), 0 8px 20px rgba(0,0,0,.35);
   }
   .gs-video-play[hidden] { display: none; }
+  .gs-video-captions {
+    position: absolute;
+    left: 50%;
+    bottom: 11%;
+    transform: translateX(-50%);
+    z-index: 2;
+    max-width: 92%;
+    padding: 6px 14px 7px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .76);
+    color: #fff;
+    font: 600 17px/1.35 "QuestTeyvat", "Segoe UI", "Noto Sans", system-ui, sans-serif;
+    text-align: center;
+    text-shadow: 0 1px 2px #000, 0 0 8px rgba(0,0,0,.9);
+    pointer-events: none;
+    letter-spacing: .01em;
+    box-shadow: 0 2px 10px rgba(0,0,0,.35);
+  }
+  .gs-video-captions[hidden] { display: none !important; }
+  .gs-video-captions .cap-who { color: #ffe7a8; font-weight: 700; }
+  .gs-video-captions .cap-line { color: #fff; }
+
   .gs-video-card .btn { margin-top: 14px; }
   .gs-rewatch {
     appearance: none; cursor: pointer;
@@ -365,6 +387,7 @@
     .dlg-text { font-size: 18px; min-height: 3.3em; }
     .fairy { width: min(168px, 40vw); right: max(4px, env(safe-area-inset-right, 0px)); }
     .panel { padding: 14px 14px 12px; }
+    .gs-video-captions { font-size: 15px; padding: 5px 10px 6px; bottom: 12%; max-width: 94%; }
   }
   @media (max-height: 700px) {
     .q-text { font-size: 16px; max-height: 28vh; margin: 8px 0 10px; }
@@ -374,7 +397,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115m">
-<script src="../common/quest_config.js?v=20261115p34"></script>
+<script src="../common/quest_config.js?v=20261115p36"></script>
 <script src="../common/hud.js?v=20261115m" data-screen="genshin"></script>
 </head>
 <body>
@@ -399,6 +422,7 @@
     <div class="gs-video-kicker" id="gsVideoKicker">Воспоминание</div>
     <div class="gs-video-stage">
       <video id="gsVideo" playsinline webkit-playsinline controls preload="metadata"></video>
+      <div class="gs-video-captions" id="gsVideoCaptions" hidden></div>
       <button type="button" class="gs-video-play" id="gsVideoPlay" aria-label="Смотреть">▶</button>
     </div>
     <button type="button" class="btn" id="gsVideoDone">Посмотрела</button>
@@ -475,6 +499,7 @@
   const gsRewatch = document.getElementById("gsRewatch");
   const gsVideoPop = document.getElementById("gsVideoPop");
   const gsVideo = document.getElementById("gsVideo");
+  const gsVideoCaptions = document.getElementById("gsVideoCaptions");
   const gsVideoPlay = document.getElementById("gsVideoPlay");
   const gsVideoDone = document.getElementById("gsVideoDone");
   const gsVideoKicker = document.getElementById("gsVideoKicker");
@@ -751,13 +776,79 @@
     if (!gsVideoPlay || !gsVideo) return;
     gsVideoPlay.hidden = !gsVideo.paused;
   }
+  let videoCaptions = [];
+  let capRaf = 0;
+  function escapeCap(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function formatCaption(cue) {
+    if (!cue) return "";
+    const who = (cue.who || "").trim();
+    const text = (cue.text || "").trim();
+    const song = !!(cue.song || who === "♪");
+    if (song) {
+      const body = text.replace(/^♪\s*/, "");
+      return '<span class="cap-line">♪ «' + escapeCap(body) + '»</span>';
+    }
+    if (who && text) return '<span class="cap-who">' + escapeCap(who) + ':</span> <span class="cap-line">«' + escapeCap(text) + '»</span>';
+    if (text) return '<span class="cap-line">«' + escapeCap(text) + '»</span>';
+    return "";
+  }
+  function cueAt(t) {
+    for (let i = 0; i < videoCaptions.length; i++) {
+      const c = videoCaptions[i];
+      const a = Number(c.start) || 0, b = Number(c.end) || 0;
+      if (t >= a && t < b) return c;
+    }
+    return null;
+  }
+  function syncVideoCaptions() {
+    if (!gsVideoCaptions) return;
+    if (!videoCaptions.length || !gsVideo) {
+      gsVideoCaptions.hidden = true;
+      gsVideoCaptions.innerHTML = "";
+      delete gsVideoCaptions.dataset.key;
+      return;
+    }
+    const cue = cueAt(gsVideo.currentTime || 0);
+    const html = formatCaption(cue);
+    if (!html) {
+      gsVideoCaptions.hidden = true;
+      if (gsVideoCaptions.dataset.key) { gsVideoCaptions.innerHTML = ""; delete gsVideoCaptions.dataset.key; }
+      return;
+    }
+    if (gsVideoCaptions.dataset.key !== html) {
+      gsVideoCaptions.innerHTML = html;
+      gsVideoCaptions.dataset.key = html;
+    }
+    gsVideoCaptions.hidden = false;
+  }
+  function startCaptionLoop() {
+    if (capRaf) cancelAnimationFrame(capRaf);
+    const tick = () => {
+      syncVideoCaptions();
+      if (gsVideo && !gsVideo.paused && !gsVideo.ended) capRaf = requestAnimationFrame(tick);
+      else capRaf = 0;
+    };
+    capRaf = requestAnimationFrame(tick);
+  }
+  function stopCaptionLoop() {
+    if (capRaf) { cancelAnimationFrame(capRaf); capRaf = 0; }
+    syncVideoCaptions();
+  }
+  function setVideoCaptions(list) {
+    videoCaptions = Array.isArray(list) ? list : [];
+    syncVideoCaptions();
+  }
   function playQuestionVideo() {
     if (!gsVideo) return;
-    gsVideo.play().then(syncVideoPlayBtn).catch(() => { syncVideoPlayBtn(); });
+    gsVideo.play().then(() => { syncVideoPlayBtn(); startCaptionLoop(); }).catch(() => { syncVideoPlayBtn(); });
   }
   function openVideoPopup(q, after) {
     videoAfter = after || null;
     if (gsVideoKicker) gsVideoKicker.textContent = spotTitle();
+    setVideoCaptions((q && q.captions) || []);
     if (gsVideo) {
       gsVideo.setAttribute("playsinline", "");
       gsVideo.setAttribute("webkit-playsinline", "");
@@ -772,12 +863,15 @@
         try { gsVideo.currentTime = 0; } catch (e) {}
       }
     }
+    syncVideoCaptions();
     if (gsVideoPlay) gsVideoPlay.hidden = false;
     if (gsVideoPop) gsVideoPop.classList.add("on");
     setFlags();
   }
   function closeVideoPopup() {
     if (gsVideo) { try { gsVideo.pause(); } catch (e) {} }
+    stopCaptionLoop();
+    setVideoCaptions([]);
     if (gsVideoPop) gsVideoPop.classList.remove("on");
     const fn = videoAfter; videoAfter = null;
     if (typeof fn === "function") fn();
@@ -1085,9 +1179,11 @@
   });
   if (gsVideoPlay) gsVideoPlay.addEventListener("click", (e) => { e.stopPropagation(); playQuestionVideo(); });
   if (gsVideo) {
-    gsVideo.addEventListener("play", syncVideoPlayBtn);
-    gsVideo.addEventListener("pause", syncVideoPlayBtn);
-    gsVideo.addEventListener("ended", syncVideoPlayBtn);
+    gsVideo.addEventListener("play", () => { syncVideoPlayBtn(); startCaptionLoop(); });
+    gsVideo.addEventListener("pause", () => { syncVideoPlayBtn(); stopCaptionLoop(); });
+    gsVideo.addEventListener("ended", () => { syncVideoPlayBtn(); stopCaptionLoop(); });
+    gsVideo.addEventListener("seeked", syncVideoCaptions);
+    gsVideo.addEventListener("timeupdate", syncVideoCaptions);
     gsVideo.addEventListener("click", (e) => e.stopPropagation());
   }
   if (gsVideoDone) gsVideoDone.addEventListener("click", (e) => { e.stopPropagation(); closeVideoPopup(); });

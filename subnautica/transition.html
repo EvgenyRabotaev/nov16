@@ -204,13 +204,13 @@
       appearance: none; -webkit-appearance: none;
       background: transparent !important; border: none !important;
       padding: 0; margin: 0; box-shadow: none; outline: none;
-      width: 112px; height: auto;
+      width: 72px; height: auto;
       transform: translate(-50%, -50%);
       filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
     }
-    .fish.kind-peeper { width: 112px; }
-    .fish.kind-boomerang { width: 86px; }
-    .fish.kind-reginald { width: 130px; }
+    .fish.kind-peeper { width: 72px; }
+    .fish.kind-boomerang { width: 58px; }
+    .fish.kind-reginald { width: 84px; }
     .fish img { display: block; width: 100%; height: auto; pointer-events: none; background: transparent; border: none; }
     .fish.scanned { opacity: .45; cursor: default; filter: grayscale(.4) drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
     .fish-label {
@@ -240,74 +240,88 @@
     }
     .pda-btn:hover { border-color: rgba(190, 235, 255, .7); background: rgba(16, 48, 70, .85); }
     .pda.q-pop {
-      display: flex; flex-direction: column;
-      top: auto;
-      bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 12px));
-      left: 50%;
-      width: min(560px, calc(100% - 32px));
-      max-height: min(46dvh, 400px);
+      display: flex; flex-direction: column; gap: 0;
+      top: auto; left: 50%; right: auto;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px) + var(--qhud-h, 56px) + 12px);
+      width: min(540px, calc(100vw - 32px));
+      max-width: calc(100vw - 32px);
+      max-height: none;
       height: auto;
-      overflow: hidden;
-      padding: 10px 14px;
-      border-radius: 16px;
-      transform: translate(-50%, 18px);
-      box-shadow: 0 12px 36px rgba(0, 4, 12, .55), 0 0 0 1px rgba(255,255,255,.04) inset;
+      overflow: visible;
+      padding: 20px 22px 18px;
+      border-radius: 14px;
+      transform: translate(-50%, 16px);
+      background: linear-gradient(180deg, rgba(16, 52, 64, .78), rgba(6, 20, 30, .86));
+      border: 1px solid rgba(120, 220, 230, .55);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.06) inset,
+        0 18px 44px rgba(0, 8, 16, .5),
+        0 0 28px rgba(40, 180, 190, .14);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       scrollbar-width: none;
     }
     .pda.q-pop::-webkit-scrollbar { display: none; width: 0; height: 0; }
     .pda.q-pop.on { transform: translate(-50%, 0) scale(1); opacity: 1; }
-    .pda.q-pop { background: #071820; }
-    .pda.q-pop .pda-kicker { margin-bottom: 2px; }
-    .pda.q-pop .pda-title { font-size: 14px; margin-bottom: 4px; }
+    .pda.q-pop .pda-kicker { margin-bottom: 6px; font-size: 11px; letter-spacing: .22em; color: #7ad4c8; }
+    .pda.q-pop .pda-title {
+      font-size: 18px; font-weight: 650; margin-bottom: 8px;
+      color: #eef9ff; letter-spacing: .02em;
+    }
     .pda.q-pop .q-text {
-      margin-bottom: 8px; min-height: 0; flex: 0 0 auto;
-      overflow: hidden;
-      font-size: 13.5px; line-height: 1.35;
+      margin: 0 0 16px; min-height: 0; flex: 0 0 auto;
+      overflow: visible;
+      font-size: 16px; line-height: 1.45; color: #cfe7ee;
     }
     .ans-block {
-      display: flex; flex-direction: row; flex-wrap: wrap;
+      display: flex; flex-direction: row; flex-wrap: nowrap;
       gap: 8px; align-items: stretch; margin: 0; flex: 0 0 auto;
     }
-    .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0; flex: 1 1 160px; min-width: 0; }
+    .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0; flex: 1 1 auto; min-width: 0; }
     .ans-input {
-      width: 100%; padding: 10px 12px; border-radius: 8px;
-      border: 1px solid rgba(160, 220, 240, .42); background: rgba(4, 18, 28, .85);
+      width: 100%; padding: 12px 14px; border-radius: 10px;
+      border: 1px solid rgba(140, 220, 230, .45); background: rgba(4, 20, 30, .55);
       color: #e7f7ff; font: 16px/1.3 "Segoe UI", "Noto Sans", sans-serif; outline: none; user-select: text;
     }
-    .ans-input:focus { border-color: rgba(190, 235, 255, .8); }
+    .ans-input:focus { border-color: rgba(180, 245, 255, .9); box-shadow: 0 0 0 3px rgba(80, 200, 210, .2); }
     .ans-input.ok { border-color: #8ee8c8; }
     .ans-input.bad { animation: qshake .38s ease; }
     @keyframes qshake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
     .pda.q-pop .ans-block .pda-btn {
-      width: auto; flex: 0 0 auto; align-self: flex-end;
-      padding: 10px 16px; white-space: nowrap;
+      width: auto; flex: 0 0 auto; align-self: stretch;
+      padding: 12px 20px; white-space: nowrap; border-radius: 10px;
+      background: rgba(36, 140, 150, .38);
+      border: 1px solid rgba(150, 230, 230, .65);
+      letter-spacing: .1em; text-transform: uppercase; font-size: 13px;
     }
-    .ans-msg { min-height: 0; margin: 6px 0 0; font-size: 13px; color: #f0c060; }
+    .pda.q-pop .ans-block .pda-btn:hover { background: rgba(48, 170, 180, .5); }
+    .ans-msg { min-height: 0; margin: 8px 0 0; font-size: 13px; color: #f0c060; }
     .ans-msg:empty { display: none; margin: 0; }
     .ans-msg.ok { color: #8ee8c8; }
     @media (max-width: 600px) {
       .pda { width: min(420px, calc(100vw - 24px)); padding: 14px 14px 12px; }
-      .pda-text, .pda.q-pop .q-text { font-size: 13px; line-height: 1.35; }
+      .pda-text { font-size: 15px; line-height: 1.45; }
       .pda.q-pop {
-        max-height: min(46dvh, 400px);
-        padding: 10px 12px;
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        padding: 16px 16px 14px;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px) + var(--qhud-h, 54px) + 10px);
       }
+      .pda.q-pop .pda-title { font-size: 17px; }
+      .pda.q-pop .q-text { font-size: 15px; line-height: 1.42; margin-bottom: 14px; }
+      .ans-block { gap: 6px; }
+      .pda.q-pop .ans-block .pda-btn { padding: 12px 14px; }
     }
     @media (min-width: 900px) {
-      .pda.q-pop { width: min(640px, calc(100% - 32px)); max-height: min(40dvh, 360px); }
-      .pda.q-pop .q-text { font-size: 14px; line-height: 1.4; }
+      .pda.q-pop { width: min(560px, calc(100vw - 48px)); }
+      .pda.q-pop .pda-title { font-size: 19px; }
+      .pda.q-pop .q-text { font-size: 17px; line-height: 1.5; }
     }
-    /* На узком экране карточка оставляет правый нижний угол для счётчика и подсказки */
-    @media (max-width: 900px) {
-      .pda.q-pop {
-        left: 12px;
-        right: calc(12px + env(safe-area-inset-right, 0px) + var(--qhud-w, 168px) + 10px);
-        width: auto;
-        max-width: none;
-        transform: translateY(18px);
-      }
-      .pda.q-pop.on { transform: translateY(0) scale(1); }
+    @media (max-height: 700px) {
+      .pda.q-pop { padding: 16px 18px 14px; }
+      .pda.q-pop .q-text { margin-bottom: 12px; }
     }
+    /* Примогемы и подсказка — аккуратно в правом нижнем углу экрана, карточка над ними. */
     .qhud {
       right: calc(16px + env(safe-area-inset-right, 0px));
       bottom: calc(16px + env(safe-area-inset-bottom, 0px));
@@ -623,8 +637,8 @@
       box-shadow: 0 0 18px 6px rgba(100, 230, 210, .4);
     }
     #leviDiver {
-      position: absolute; z-index: 6; width: 58px; height: 58px;
-      margin: -29px 0 0 -29px; cursor: grab; touch-action: none;
+      position: absolute; z-index: 6; width: 112px; height: 112px;
+      margin: -56px 0 0 -56px; cursor: grab; touch-action: none;
       filter: drop-shadow(0 0 8px rgba(180, 255, 240, .6));
     }
     #leviDiver:active { cursor: grabbing; }
@@ -723,8 +737,8 @@
     }
 
     @media (max-width: 600px) {
-      .levi-hide { width: 78px; height: 78px; }
-      #leviDiver { width: 54px; height: 54px; margin: -27px 0 0 -27px; }
+      .levi-hide { width: 96px; height: 96px; }
+      #leviDiver { width: 104px; height: 104px; margin: -52px 0 0 -52px; }
       #leviWarn { font-size: 11px; padding: 5px 10px; }
       #leviFail .fail-text { font-size: 18px; }
     }
@@ -733,30 +747,35 @@
     /* ----- сюжетные дайверы, течение, карточка события ----- */
     #divePair { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
     .diver {
-      position: absolute; width: 76px; height: 76px;
+      position: absolute; width: 152px; height: 152px;
       transform: translate(-50%, -50%);
       filter: drop-shadow(0 8px 12px rgba(0,10,20,.45));
       animation: diverBob 3.4s ease-in-out infinite;
       transition: left 1.1s ease, top 1.1s ease, opacity .55s ease, transform 1.25s ease;
     }
-    #diverVika { left: 34%; top: 64%; animation-delay: 0s; }
-    #diverZhenya { left: 54%; top: 60%; animation-delay: -.8s; }
+    #diverVika { left: 32%; top: 48%; animation-delay: 0s; }
+    #diverZhenya { left: 56%; top: 44%; animation-delay: -.8s; }
     #divePair.solo #diverZhenya { opacity: 0; visibility: hidden; }
-    #divePair.solo #diverVika { left: 46%; top: 62%; }
+    #divePair.solo #diverVika { left: 46%; top: 46%; }
     #divePair.swept #diverZhenya {
       animation: none;
       transform: translate(70vw, 8vh) rotate(26deg);
       opacity: 0;
     }
-    #divePair.reunion #diverVika { left: 38%; top: 60%; }
-    #divePair.enter #diverZhenya { left: 112%; top: 70%; opacity: 0; visibility: visible; animation: none; }
-    #divePair.reunion #diverZhenya { left: 54%; top: 58%; opacity: 1; visibility: visible; animation: diverBob 3.4s ease-in-out infinite; }
+    #divePair.reunion #diverVika { left: 36%; top: 46%; }
+    #divePair.enter #diverZhenya { left: 112%; top: 50%; opacity: 0; visibility: visible; animation: none; }
+    #divePair.reunion #diverZhenya { left: 56%; top: 44%; opacity: 1; visibility: visible; animation: diverBob 3.4s ease-in-out infinite; }
+    html.qsheet-on #diverVika,
+    html.qsheet-on #divePair.solo #diverVika,
+    html.qsheet-on #divePair.reunion #diverVika { top: 36%; }
+    html.qsheet-on #diverZhenya,
+    html.qsheet-on #divePair.reunion #diverZhenya { top: 34%; }
     @keyframes diverBob {
       0%, 100% { margin-top: 0; }
-      50% { margin-top: -10px; }
+      50% { margin-top: -12px; }
     }
     @media (max-width: 640px) {
-      .diver { width: 64px; height: 64px; }
+      .diver { width: 128px; height: 128px; }
     }
     #currentFx {
       position: absolute; inset: 0; z-index: 7; pointer-events: none;
@@ -814,10 +833,10 @@
     }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115m">
-<script src="../common/quest_config.js?v=20261115p35"></script>
+<script src="../common/quest_config.js?v=20261115p36"></script>
 <script src="../common/hud.js?v=20261115m" data-screen="subnautica"></script>
 <style>
-  /* HUD остаётся в нижнем углу; карточка сама оставляет ему место */
+  /* HUD — правый нижний угол; карточка вопроса парит над ним по центру. */
 </style>
 </head>
 <body>
@@ -1556,18 +1575,12 @@
       document.documentElement.classList.toggle("qsheet-on", on);
       const hud = document.querySelector(".qhud");
       if (hud) {
-        const w = Math.ceil(hud.getBoundingClientRect().width) || 168;
-        document.documentElement.style.setProperty("--qhud-w", w + "px");
+        const r = hud.getBoundingClientRect();
+        document.documentElement.style.setProperty("--qhud-w", (Math.ceil(r.width) || 168) + "px");
+        document.documentElement.style.setProperty("--qhud-h", (Math.ceil(r.height) || 56) + "px");
       }
       const text = document.getElementById("qText");
-      if (on && qPop && text) {
-        text.style.fontSize = "";
-        for (let i = 0; i < 8; i++) {
-          if (qPop.scrollHeight <= qPop.clientHeight + 1) break;
-          const fs = Math.max(12, (parseFloat(getComputedStyle(text).fontSize) || 14) - 0.5);
-          text.style.fontSize = fs + "px";
-        }
-      }
+      if (text) text.style.fontSize = "";
     }
     function hideQuestion() {
       if (qPop) qPop.classList.remove("on");
