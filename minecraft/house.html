@@ -49,6 +49,7 @@
   }
   .panel.hidden { opacity: 0; transform: translate(-50%, -12px); pointer-events: none; }
   .q-num { font: 700 13px/1 "Courier New", "DejaVu Sans Mono", monospace; letter-spacing: .08em; color: #ffff55; text-shadow: 2px 2px 0 #3f3f00; }
+  .q-icon { display: inline-block; margin-left: .3em; letter-spacing: 0; text-shadow: none; font-style: normal; font-weight: 400; transform: translateY(-1px); }
   .q-text { margin: 10px 0 12px; font-size: 18px; line-height: 1.45; color: #f6f1e6; max-height: 38vh; min-height: 0; flex: 0 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; text-shadow: 1px 1px 0 #000; }
   .q-text i { font-style: italic; }
   .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; }
@@ -175,7 +176,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p9"></script>
+<script src="../common/quest_config.js?v=20261115p10"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="minecraft"></script>
 <script src="craft.js?v=20261115i"></script>
 </head>
@@ -672,7 +673,9 @@
 
   function render() {
     const q = curQ();
-    qNum.textContent = exitMode ? "Новый путь" : "Вопрос " + (question + 1) + " из " + QUESTIONS.length;
+    const qLabel = exitMode ? "Новый путь" : "Вопрос " + (question + 1) + " из " + QUESTIONS.length;
+    const ico = (!exitMode && q && q.icon) ? q.icon : "";
+    qNum.innerHTML = esc(qLabel) + (ico ? ' <span class="q-icon" aria-hidden="true">' + esc(ico) + "</span>" : "");
     answerInputs.innerHTML = ""; ansMsg.textContent = ""; ansMsg.className = "ans-msg";
     if (window.QuestHUD) QuestHUD.setStep(exitMode ? "exit" : "q" + (question + 1));
     if (!q) { qText.textContent = "(вопрос — заглушка)"; return; }
@@ -747,7 +750,7 @@
   /* Отладка: house.html?craft=N (N = 2…5) — сразу крафт после вопроса N (предыдущие этапы дома уже стоят).
      house.html?exit=1 — сразу вопрос «Двигаемся дальше?»; house.html?craft=boat — сразу крафт лодки.
      house.html?stage=0…5 — сразу показать этапы дома без крафта.
-     house.html?book=1 — стены уже стоят, сразу книга, затем вопрос 4.
+     house.html?book=1 — этапы до книги уже стоят (сейчас окна после вопроса 4), сразу книга, затем вопрос с book:true (сейчас 5).
      house.html?q=N — сразу вопрос N (1-based), пролог пропускается, предыдущие этапы дома уже стоят. */
   const STAGE_DEBUG = +((location.search.match(/[?&]stage=(\d)/) || [])[1] || -1);
   const CRAFT_DEBUG = +((location.search.match(/[?&]craft=(\d)/) || [])[1] || 0);
@@ -766,7 +769,12 @@
     if (question >= 1) { vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true; }
     STAGES.filter((st) => st.after <= question).forEach((st) => applyStage(st, true));
     layout();
-    setTimeout(render, 80);
+    if (QUESTIONS[question] && QUESTIONS[question].book) {
+      busy = true;
+      setTimeout(async () => { await showDiaryBook(); busy = false; render(); }, 80);
+    } else {
+      setTimeout(render, 80);
+    }
   } else if (STAGE_DEBUG >= 0) {
     vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
     const n = STAGE_DEBUG;
@@ -775,9 +783,11 @@
     if (n >= QUESTIONS.length) { together = 1; done = true; heartEl.classList.add("on"); startFireflies(); }
     layout();
   } else if (/[?&]book=1/.test(location.search)) {
+    const bi = QUESTIONS.findIndex((qq) => qq && qq.book);
+    const qi = bi >= 0 ? bi : Math.max(0, QUESTIONS.length - 1);
     vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
-    question = 3; step = shown = 3;
-    STAGES.filter((st) => st.after <= 3).forEach((st) => applyStage(st, true));
+    question = qi; step = shown = qi;
+    STAGES.filter((st) => st.after <= qi).forEach((st) => applyStage(st, true));
     layout(); busy = true;
     setTimeout(async () => { await showDiaryBook(); busy = false; render(); }, 400);
   } else if (CRAFT_DEBUG >= 2 && stageAfter(CRAFT_DEBUG)) {
