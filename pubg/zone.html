@@ -311,6 +311,151 @@
       .kill-feed { top: 84px; right: 10px; }
       .kf-line { font-size: 14px; padding: 4px 8px 3px; }
     }
+
+    /* ===== Нок / контузия (история Жени) ===== */
+    #knockTint {
+      position: fixed; inset: 0; z-index: 18; pointer-events: none; opacity: 0;
+      background:
+        radial-gradient(ellipse at 50% 42%, rgba(140, 12, 8, .12) 0%, rgba(50, 28, 28, .42) 58%, rgba(18, 14, 14, .62) 100%);
+      transition: opacity .55s ease;
+    }
+    #knockTint.on { opacity: 1; }
+    #knockTint.contusion { animation: knVignette 2.2s ease-in-out infinite; }
+    @keyframes knVignette { 50% { opacity: .82; filter: hue-rotate(-8deg); } }
+    body.knock-down #map, body.knock-down #overlay {
+      filter: grayscale(.42) saturate(.75) contrast(1.06);
+    }
+    body.knock-contusion #map, body.knock-contusion #overlay {
+      filter: blur(2.4px) grayscale(.22) contrast(1.08) brightness(.92);
+    }
+    #knockNarr {
+      position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%) translateY(12px);
+      z-index: 34; width: min(520px, calc(100vw - 28px));
+      background: rgba(10, 11, 12, .86); border: 1px solid rgba(255,255,255,.12);
+      border-left: 3px solid #c45a1c; border-radius: 2px 8px 8px 2px;
+      padding: 14px 16px 12px; color: #ece8dc; opacity: 0; pointer-events: none;
+      font-family: "Barlow Condensed", "Segoe UI", system-ui, sans-serif;
+      box-shadow: 0 12px 32px rgba(0,0,0,.5); backdrop-filter: blur(6px);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    #knockNarr.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+    #knockNarr .kn-who {
+      font-size: 13px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+      color: #c45a1c; margin-bottom: 6px;
+    }
+    #knockNarr .kn-text { font-size: 20px; line-height: 1.35; color: #f3efe6; }
+    #knockNarr .kn-next {
+      display: none; margin-top: 12px; appearance: none; cursor: pointer;
+      background: #f2c230; color: #1a1408; border: 0; border-radius: 2px;
+      font: 600 14px/1 "Barlow Condensed", "Segoe UI", sans-serif;
+      letter-spacing: .12em; text-transform: uppercase; padding: 8px 16px;
+    }
+    #knockNarr.has-next .kn-next { display: inline-block; }
+    #knockRevive {
+      position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%);
+      z-index: 33; width: min(340px, calc(100vw - 48px));
+      text-align: center; color: #f3efe6; opacity: 0; pointer-events: none;
+      font-family: "Barlow Condensed", "Segoe UI", sans-serif;
+      transition: opacity .3s ease;
+    }
+    #knockRevive.show { opacity: 1; }
+    #knockRevive .kn-rev-label {
+      font-size: 16px; letter-spacing: .06em; margin-bottom: 8px;
+      text-shadow: 0 1px 4px rgba(0,0,0,.8);
+    }
+    #knockRevive .kn-rev-bar {
+      height: 8px; background: rgba(8,9,12,.7); border: 1px solid rgba(255,255,255,.18);
+      overflow: hidden;
+    }
+    #knockRevive .kn-rev-bar i {
+      display: block; height: 100%; width: 0; background: linear-gradient(90deg, #d4a017, #f2c230);
+    }
+    #knockVideo {
+      position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+      background: rgba(4, 5, 7, .78); opacity: 0; pointer-events: none;
+      transition: opacity .4s ease; padding: 16px;
+    }
+    #knockVideo.show { opacity: 1; pointer-events: auto; }
+    .kn-vid-frame {
+      position: relative; width: min(360px, calc(100vw - 32px));
+      aspect-ratio: 688 / 1224; max-height: min(82vh, 820px);
+      background: #000; border: 1px solid rgba(242, 194, 48, .45);
+      box-shadow: 0 18px 50px rgba(0,0,0,.65); overflow: hidden;
+    }
+    .kn-vid-frame video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
+    #knockPlay, #knockVidNext {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      appearance: none; cursor: pointer; border: 0;
+      font: 600 16px/1 "Barlow Condensed", "Segoe UI", sans-serif;
+      letter-spacing: .14em; text-transform: uppercase;
+    }
+    #knockPlay {
+      top: 50%; transform: translate(-50%, -50%);
+      background: rgba(242, 194, 48, .95); color: #1a1408;
+      padding: 14px 26px; border-radius: 2px;
+    }
+    #knockVidNext {
+      display: none; bottom: 18px; background: #f2c230; color: #1a1408;
+      padding: 10px 22px; border-radius: 2px;
+    }
+    #knockVidNext.show { display: block; }
+    .kn-ach {
+      position: fixed; z-index: 45; left: 50%; top: calc(72px + env(safe-area-inset-top, 0px));
+      transform: translateX(-50%); min-width: 220px; max-width: min(86vw, 340px);
+      padding: 11px 16px; background: rgba(8, 9, 12, .88); color: #f3efe6;
+      border: 1px solid rgba(242, 194, 48, .5); font-family: "Barlow Condensed", "Segoe UI", sans-serif;
+      box-shadow: 0 10px 28px rgba(0,0,0,.45); animation: knAchIn .4s ease;
+    }
+    .kn-ach.off { animation: knAchOut .35s ease forwards; }
+    .kn-ach .kicker { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #f2c230; }
+    .kn-ach .ttl { font-size: 18px; font-weight: 600; margin-top: 2px; }
+    .kn-ach .pts { font-size: 13px; color: #f2c230; margin-top: 2px; }
+    @keyframes knAchIn { from { opacity: 0; transform: translate(-50%, -10px); } }
+    @keyframes knAchOut { to { opacity: 0; transform: translate(-50%, -10px); } }
+    .kf-line.kf-down { color: #e8b4b0; }
+    .kf-line.kf-down .kf-name { color: #ffd0cc; }
+    .kf-line.kf-pubg {
+      display: flex;
+      align-items: baseline;
+      gap: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .kf-pubg .kf-killer,
+    .kf-pubg .kf-victim { font-weight: 600; color: #f3efe6; }
+    .kf-pubg .kf-squad { color: #7ec8ff; }
+    .kf-pubg .kf-foe { color: #f0e6d8; }
+    .kf-pubg .kf-wep {
+      color: #d4cbb8;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 0 2px;
+    }
+    .kf-pubg .kf-wep::before,
+    .kf-pubg .kf-wep::after {
+      content: "▸";
+      margin: 0 7px;
+      color: rgba(230, 230, 220, 0.45);
+      font-weight: 400;
+    }
+    .kf-pubg .kf-status {
+      margin-left: 8px;
+      font-size: 0.86em;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+    }
+    .kf-pubg .kf-knocked { color: #f0c070; }
+    .kf-pubg .kf-killed { color: #ef8b82; }
+    .kf-line.kf-out { animation: kf-out 0.45s ease forwards; }
+    @keyframes kf-out {
+      to { opacity: 0; transform: translateX(12px); }
+    }
+    @media (max-width: 700px) {
+      #knockNarr .kn-text { font-size: 18px; }
+      .kn-vid-frame { width: min(92vw, 380px); max-height: 78vh; }
+    }
+
     /* ===== События на переходах (PUBG_EVENTS) ===== */
     #evRed { position: fixed; inset: 0; z-index: 9; pointer-events: none; opacity: 0; transition: opacity .8s ease;
       background: radial-gradient(ellipse at center, rgba(200, 20, 10, .18) 0%, rgba(150, 0, 0, .5) 100%); }
@@ -413,7 +558,7 @@
     }
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115p20"></script>
+<script src="../common/quest_config.js?v=20261115p22"></script>
 <script src="../common/hud.js?v=20261115d" data-screen="pubg-zone" data-avoid="#panel, #squadHud"></script>
 </head>
 <body>
@@ -455,6 +600,25 @@
     <div class="ans-msg" id="ansMsg" aria-live="polite"></div>
     <button class="btn" id="answerBtn" type="button">Ответить</button>
   </aside>
+
+
+  <div id="knockTint" aria-hidden="true"></div>
+  <div id="knockNarr" aria-live="polite">
+    <div class="kn-who" id="knockWho">Женя</div>
+    <div class="kn-text" id="knockText"></div>
+    <button type="button" class="kn-next" id="knockNarrNext">Дальше</button>
+  </div>
+  <div id="knockRevive" aria-hidden="true">
+    <div class="kn-rev-label" id="knockRevLabel">Вика поднимает Женю…</div>
+    <div class="kn-rev-bar"><i id="knockRevFill"></i></div>
+  </div>
+  <div id="knockVideo" aria-hidden="true">
+    <div class="kn-vid-frame">
+      <video id="knockVid" playsinline webkit-playsinline preload="metadata"></video>
+      <button type="button" id="knockPlay">Смотреть</button>
+      <button type="button" id="knockVidNext">Дальше</button>
+    </div>
+  </div>
 
   <div id="evRed" aria-hidden="true"></div>
   <div id="evCard" role="dialog" aria-hidden="true" aria-labelledby="evTitle">
@@ -653,6 +817,8 @@
     const killFeed = document.getElementById("killFeed");
 
     const AUTO = new URLSearchParams(location.search).get("auto") === "1";
+    const FAST = new URLSearchParams(location.search).get("fast") === "1";
+    if (FAST) document.documentElement.classList.add("fast");
 
     let viewW = 0, viewH = 0, dpr = 1;
     let transform = { scale: 1, ox: 0, oy: 0 };
@@ -1249,11 +1415,22 @@
       if (nextAlive != null) {
         aliveAnim = tickAliveTo(nextAlive, dur + SHRINK_MS);
       }
-      await animateValue(dur, (t) => {
-        travelT = t;
-        pos = pointAlong(pts, t);
+      const knockCfg = getKnockCfg();
+      const needKnock = !AUTO && knockCfg && k === (knockCfg.after || 3);
+      const mid = needKnock ? (knockCfg.at != null ? +knockCfg.at : 0.42) : 1;
+      await animateValue(dur * mid, (t) => {
+        travelT = mid * t;
+        pos = pointAlong(pts, travelT);
         draw();
       }, easeInOutCubic);
+      if (needKnock) {
+        await playKnockEvent();
+        await animateValue(dur * (1 - mid), (t) => {
+          travelT = mid + (1 - mid) * t;
+          pos = pointAlong(pts, travelT);
+          draw();
+        }, easeInOutCubic);
+      }
 
       pos = { ...toPos };
       travelT = 1;
@@ -1364,7 +1541,9 @@
       const startQ = parseInt(new URLSearchParams(location.search).get("q"), 10);
       const SNIPER_DEBUG = new URLSearchParams(location.search).get("sniper") === "1";
       const EVENT_DEBUG = parseInt(new URLSearchParams(location.search).get("event"), 10);
+      const KNOCK_DEBUG = new URLSearchParams(location.search).get("knock") === "1";
       if (SNIPER_DEBUG) jumpToSniper();
+      else if (KNOCK_DEBUG) jumpToKnock();
       else if (EVENT_DEBUG >= 1 && EVENT_DEBUG <= 7) jumpToEvent(EVENT_DEBUG);
       else if (startQ >= 2 && startQ <= 8) jumpToPhase(startQ);
       else if (window.QuestHUD) QuestHUD.setStep("q1");
@@ -1430,6 +1609,298 @@
       });
     }
     document.getElementById("evNext").addEventListener("click", hideEvent);
+
+
+    /* ===== Нок / контузия: история Жени (тексты — QUEST_CONFIG.PUBG_KNOCK) ===== */
+    const knockTint = document.getElementById("knockTint");
+    const knockNarr = document.getElementById("knockNarr");
+    const knockText = document.getElementById("knockText");
+    const knockWho = document.getElementById("knockWho");
+    const knockNarrNext = document.getElementById("knockNarrNext");
+    const knockRevive = document.getElementById("knockRevive");
+    const knockRevLabel = document.getElementById("knockRevLabel");
+    const knockRevFill = document.getElementById("knockRevFill");
+    const knockVideo = document.getElementById("knockVideo");
+    const knockVid = document.getElementById("knockVid");
+    const knockPlay = document.getElementById("knockPlay");
+    const knockVidNext = document.getElementById("knockVidNext");
+    let knockRing = null, knockVideoDone = null, knockPlayed = false;
+
+    function getKnockCfg() {
+      return (window.QUEST_CONFIG && window.QUEST_CONFIG.PUBG_KNOCK) || null;
+    }
+    function knMs(normal, fast) { return FAST ? fast : normal; }
+
+    function setKnockMode(mode) {
+      document.body.classList.toggle("knock-down", mode === "down" || mode === "contusion");
+      document.body.classList.toggle("knock-contusion", mode === "contusion");
+      knockTint.classList.toggle("on", !!mode);
+      knockTint.classList.toggle("contusion", mode === "contusion");
+    }
+    function hideNarration() {
+      knockNarr.classList.remove("show", "has-next");
+      if (knockNarrNext._fn) {
+        knockNarrNext.removeEventListener("click", knockNarrNext._fn);
+        knockNarrNext._fn = null;
+      }
+    }
+    function showNarration(cfg, text, withNext) {
+      if (!text) return Promise.resolve();
+      knockWho.textContent = (cfg && cfg.who) || "Женя";
+      knockText.textContent = text;
+      knockNarr.classList.toggle("has-next", !!withNext);
+      knockNarr.classList.add("show");
+      if (!withNext) return Promise.resolve();
+      return new Promise((resolve) => {
+        const done = () => {
+          if (knockNarrNext._fn) knockNarrNext.removeEventListener("click", knockNarrNext._fn);
+          knockNarrNext._fn = null;
+          resolve();
+        };
+        knockNarrNext._fn = (e) => { e.stopPropagation(); done(); };
+        knockNarrNext.addEventListener("click", knockNarrNext._fn);
+      });
+    }
+    function showKnockToast(title, pts) {
+      document.querySelectorAll(".kn-ach").forEach((n) => n.remove());
+      const el = document.createElement("div");
+      el.className = "kn-ach";
+      el.innerHTML = '<div class="kicker">Достижение</div><div class="ttl"></div>' + (pts ? '<div class="pts"></div>' : "");
+      el.querySelector(".ttl").textContent = title;
+      if (pts) el.querySelector(".pts").textContent = "+" + pts + " примогемов";
+      document.body.appendChild(el);
+      setTimeout(() => { el.classList.add("off"); setTimeout(() => el.remove(), 400); }, 2800);
+    }
+    function appendPlainFeed(text, cls) {
+      const line = document.createElement("div");
+      line.className = "kf-line" + (cls ? " " + cls : "");
+      line.textContent = text;
+      killFeed.appendChild(line);
+      return line;
+    }
+    function isSquadName(name) {
+      return /^(вика|женя|vika|zhenya)$/i.test(String(name || "").trim());
+    }
+    function appendPubgFeed(entry, stayMs) {
+      if (!entry) return null;
+      const killer = entry.killer || "";
+      const victim = entry.victim || "";
+      const weapon = entry.weapon || "";
+      const status = entry.status || "";
+      const isDown = /нок|knock/i.test(status);
+      const line = document.createElement("div");
+      line.className = "kf-line kf-pubg" + (isDown ? " kf-down" : "");
+      const kCls = isSquadName(killer) ? "kf-squad" : "kf-foe";
+      const vCls = isSquadName(victim) ? "kf-squad" : "kf-foe";
+      const sCls = isDown ? "kf-knocked" : "kf-killed";
+      line.innerHTML =
+        '<span class="kf-killer ' + kCls + '">' + escHtml(killer) + "</span>" +
+        (weapon ? '<span class="kf-wep">' + escHtml(weapon) + "</span>" : "") +
+        '<span class="kf-victim ' + vCls + '">' + escHtml(victim) + "</span>" +
+        (status ? '<span class="kf-status ' + sCls + '">' + escHtml(status) + "</span>" : "");
+      killFeed.appendChild(line);
+      const stay = stayMs != null ? stayMs : 4800;
+      if (stay > 0) {
+        setTimeout(() => {
+          line.classList.add("kf-out");
+          setTimeout(() => { if (line.parentNode) line.remove(); }, 500);
+        }, stay);
+      }
+      return line;
+    }
+    function startRing() {
+      stopRing();
+      try {
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        const f = ac.createBiquadFilter();
+        o.type = "sine"; o.frequency.value = 4280;
+        f.type = "highpass"; f.frequency.value = 2800;
+        g.gain.value = 0.03;
+        o.connect(f); f.connect(g); g.connect(ac.destination);
+        o.start();
+        if (ac.state === "suspended") ac.resume().catch(() => {});
+        knockRing = { ac, o, g, stop: function () { try { o.stop(); ac.close(); } catch (e) {} } };
+      } catch (e) { knockRing = null; }
+    }
+    function stopRing() {
+      if (knockRing && knockRing.stop) knockRing.stop();
+      knockRing = null;
+    }
+    function closeKnockVideo() {
+      try { knockVid.pause(); } catch (e) {}
+      knockVideo.classList.remove("show");
+      knockVideo.setAttribute("aria-hidden", "true");
+      knockVidNext.classList.remove("show");
+      knockPlay.style.display = "";
+    }
+    function cleanupKnock() {
+      hideNarration();
+      knockRevive.classList.remove("show");
+      closeKnockVideo();
+      setKnockMode(null);
+      stopRing();
+    }
+    function endKnockVideo() {
+      if (typeof knockVideoDone === "function") {
+        const fn = knockVideoDone; knockVideoDone = null; fn();
+      }
+      knockVidNext.classList.add("show");
+    }
+
+    async function playKnockEvent() {
+      const cfg = getKnockCfg() || {};
+      const narr = cfg.narration || {};
+      const feeds = cfg.feeds || {};
+      knockPlayed = true;
+      if (window.QuestHUD) QuestHUD.setStep("knock");
+      knockNarrNext.textContent = cfg.nextLabel || "Дальше";
+      hideNarration();
+
+      /* 1) Враг1 нокает Женю — килл-фид сверху справа, без рассказа */
+      setKnockMode("down");
+      appendPubgFeed(feeds.knock);
+      await wait(knMs(1200, 350));
+
+      /* 2) Вика поднимает, начинается контузия */
+      knockRevLabel.textContent = cfg.reviveLabel || "Вика поднимает Женю…";
+      knockRevFill.style.width = "0";
+      knockRevive.classList.add("show");
+      const revMs = knMs(2800, 600);
+      await animateValue(revMs, (t) => { knockRevFill.style.width = (t * 100) + "%"; });
+      knockRevive.classList.remove("show");
+      const primos = cfg.primos != null ? cfg.primos : 50;
+      const awardId = cfg.awardId || "pubg-knock";
+      if (window.QuestHUD && primos) {
+        const ok = QuestHUD.award(awardId, primos);
+        if (ok) showKnockToast(cfg.toast || "Спасла напарника", primos);
+      }
+      setKnockMode("contusion");
+      startRing();
+      await wait(knMs(700, 220));
+
+      /* 3) Вика нокает одного, Женя добивает второго */
+      appendPubgFeed(feeds.vika);
+      await wait(knMs(900, 260));
+      appendPubgFeed(feeds.zhenya);
+      await wait(knMs(1300, 350));
+
+      /* 4) Только после боя — рассказ Жени и ролик контузии */
+      const leadIn = narr.beforeVideo || narr.contusion || narr.revive || "";
+      await showNarration(cfg, leadIn, true);
+      hideNarration();
+
+      const src = cfg.video || "contusion.mp4";
+      knockVid.src = src + (/[?]/.test(src) ? "&" : "?") + "v=20261115p22";
+      knockVid.setAttribute("playsinline", "");
+      knockVid.muted = false;
+      knockPlay.textContent = cfg.tapLabel || "Смотреть";
+      knockVidNext.textContent = cfg.nextLabel || "Дальше";
+      knockVidNext.classList.remove("show");
+      knockPlay.style.display = "";
+      knockVideo.classList.add("show");
+      knockVideo.setAttribute("aria-hidden", "false");
+
+      await new Promise((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          knockVid.removeEventListener("ended", onEnded);
+          knockVid.removeEventListener("error", onEnded);
+          knockVidNext.removeEventListener("click", onNext);
+          knockPlay.removeEventListener("click", onPlay);
+          resolve();
+        };
+        function onEnded() {
+          endKnockVideo();
+        }
+        function onPlay(e) {
+          if (e) e.stopPropagation();
+          stopRing();
+          knockPlay.style.display = "none";
+          const pr = knockVid.play();
+          if (pr && pr.catch) pr.catch(() => { endKnockVideo(); });
+        }
+        function onNext(e) {
+          if (e) e.stopPropagation();
+          closeKnockVideo();
+          finish();
+        }
+        knockVideoDone = () => { endKnockVideo(); };
+        knockVid.addEventListener("ended", onEnded);
+        knockVid.addEventListener("error", onEnded);
+        knockPlay.addEventListener("click", onPlay);
+        knockVidNext.addEventListener("click", onNext);
+        window.__zoneKnockEnd = () => { endKnockVideo(); };
+      });
+
+      hideNarration();
+      if (narr.after) {
+        await showNarration(cfg, narr.after, false);
+        await wait(knMs(1400, 300));
+        hideNarration();
+      }
+      setKnockMode(null);
+      stopRing();
+      closeKnockVideo();
+    }
+
+    async function jumpToKnock() {
+      const cfg = getKnockCfg() || {};
+      const k = cfg.after || 3;
+      if (evOpen) hideEvent();
+      aliveGen++;
+      clearCrate();
+      finished = false;
+      animating = true;
+      victory.classList.remove("show");
+      victory.setAttribute("aria-hidden", "true");
+      killFeed.innerHTML = "";
+      panel.classList.add("hidden");
+      question = k;
+      setAlive(ALIVE_BY_PHASE[k - 1] != null ? ALIVE_BY_PHASE[k - 1] : 40);
+      blue = { ...(ZONES[k - 2] || ZONES[0]) };
+      white = { ...(ZONES[k - 1] || ZONES[k - 2] || ZONES[0]) };
+      whiteAlpha = 1;
+      const fromPos = (k >= 2) ? LANDINGS[k - 2] : START;
+      const toPos = { ...(LANDINGS[k - 1] || LANDINGS[LANDINGS.length - 1]) };
+      const pts = buildRoute(fromPos, ROUTES[k - 1] || [], toPos);
+      const mid = cfg.at != null ? +cfg.at : 0.42;
+      route = { points: pts, drawn: 1, alpha: 1 };
+      travelT = mid;
+      pos = pointAlong(pts, mid);
+      phase = "knock";
+      draw();
+      if (window.QuestHUD) QuestHUD.setStep("knock");
+      await playKnockEvent();
+      const dur = travelDuration(pts);
+      await animateValue(Math.max(600, dur * (1 - mid)), (t) => {
+        travelT = mid + (1 - mid) * t;
+        pos = pointAlong(pts, travelT);
+        draw();
+      }, easeInOutCubic);
+      pos = { ...toPos };
+      travelT = 1;
+      const targetBlue = { ...(ZONES[k - 1] || blue) };
+      const fromBlue = { ...blue };
+      phase = "shrink";
+      await animateValue(SHRINK_MS, (t) => {
+        blue = lerpCircle(fromBlue, targetBlue, t);
+        draw();
+      }, easeInOutCubic);
+      blue = { ...targetBlue };
+      question = k + 1;
+      renderQuestion();
+      if (window.QuestHUD) QuestHUD.setStep("q" + question);
+      fadeInWhite(ZONES[question - 1] || targetBlue);
+      animating = false;
+      phase = "idle";
+      panel.classList.remove("hidden");
+      answerBtn.disabled = false;
+      draw();
+    }
 
     /* Debug: zone.html?event=N — сразу карточка события после вопроса N (затем вопрос N+1). */
     function jumpToEvent(n) {
@@ -1888,6 +2359,9 @@
       get transform() { return { ...transform }; },
       ZONES, LANDINGS, START,
       jumpToEvent,
+      jumpToKnock,
+      playKnockEvent,
+      endKnockVideo,
       PUBG_EVENTS,
       get eventOpen() { return evOpen ? evOpen.k : 0; },
       Sniper,
