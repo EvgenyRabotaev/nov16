@@ -429,5 +429,27 @@ window.QUEST_CONFIG = {
     AWARDS_KEY: "nov16_primo_awards",
     START: 0,
     PER_QUESTION: 240
-  }
+  },
+
+  /* Звёздный блеск (валюта магазина после загадки в гаче).
+     Баланс и факт награды за загадку хранятся в localStorage, начисляется один раз. */
+  STARGLITTER: {
+    STORAGE_KEY: "nov16_starglitter",
+    AWARDED_KEY: "nov16_starglitter_awarded",
+    BOUGHT_KEY: "nov16_starglitter_bought",
+    PUZZLE_REWARD: 5
+  },
+
+  /* Магазин «Обмен звёздного блеска».
+     Как добавить награду: допишите ещё один объект в этот массив:
+       { id: "unique_id",        // уникальный ключ (пишется в localStorage при покупке)
+         name: "Название",
+         price: 2,               // цена в Звёздном блеске
+         paimon: "Реплика Паймон, когда Вика нажимает на награду" }
+     Необязательно: desc — короткий текст на карточке;
+     paimon может быть строкой или массивом строк. */
+  STARGLITTER_SHOP: [
+    { id: "intimate_tale", name: "Интимная сказка", price: 2,
+      paimon: "Ой-ой… Интимная сказка? Паймон даже спрашивать не будет, что там внутри! Хе-хе 😳" }
+  ]
 };
