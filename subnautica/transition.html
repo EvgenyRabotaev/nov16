@@ -333,7 +333,7 @@
     }
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p14"></script>
+<script src="../common/quest_config.js?v=20261115p15"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
 </head>
 <body>
@@ -389,7 +389,6 @@
       { src: "loc6.jpg", depth: 900 },
       { src: "loc7.jpg", depth: 1200 },
     ];
-    const TRANSITION_MS = 3200;
     const PAUSE_MS = 2000;
 
     const layerCurrent = document.getElementById("layerCurrent");
@@ -404,6 +403,7 @@
     const params = new URLSearchParams(location.search);
     const AUTO = params.get("auto") === "1";
     const FAST = params.get("fast") === "1";
+    const TRANSITION_MS = FAST ? 500 : 3200;
     const Q_DEBUG = Math.max(0, parseInt(params.get("q") || params.get("question") || "", 10) || 0);
     const START_LOC = (() => {
       const n = parseInt(params.get("loc") || "", 10);
@@ -841,14 +841,35 @@
 
     function subQuestions() { return (CFG.QUESTIONS && CFG.QUESTIONS.subnautica) || []; }
     function subQuestion(id) { return subQuestions().find((q) => q.id === id) || null; }
+    const qDone = Object.create(null);
+    function markQDone(q) { if (q && q.id) qDone[q.id] = true; }
+    function isQDone(q) { return !!(q && q.id && qDone[q.id]); }
     function leviQuestion() {
       const id = (SUB.LEVIATHAN && SUB.LEVIATHAN.question) || "sn-who";
-      return subQuestion(id) || subQuestions()[0] || null;
+      return subQuestion(id) || subQuestions().find((q) => q.loc === (SUB.LEVIATHAN && SUB.LEVIATHAN.loc)) || null;
     }
     function heartLoc() { return (SUB.HEART && SUB.HEART.loc != null) ? SUB.HEART.loc : (LOCS.length - 1); }
     function heartQuestion() {
       const id = (SUB.HEART && SUB.HEART.question) || "sn-maomao";
-      return subQuestion(id);
+      return subQuestion(id) || subQuestions().find((q) => q.loc === heartLoc()) || null;
+    }
+    function questionAt(i) { return subQuestions().find((q) => q.loc === i) || null; }
+    function pendingQuestion(i) {
+      const q = questionAt(i);
+      return (q && !isQDone(q)) ? q : null;
+    }
+    function qStep(q) {
+      const n = subQuestions().findIndex((x) => x.id === (q && q.id)) + 1;
+      return n > 0 ? ("q" + n) : "q";
+    }
+    function syncQFlags() {
+      leviQDone = isQDone(leviQuestion());
+      heartQDone = isQDone(heartQuestion());
+    }
+    function afterGate() {
+      const q = pendingQuestion(index);
+      if (q) showLeviQuestion(q, qStep(q));
+      else setReady(true);
     }
     let currentQ = null;
     function hideQuestion() {
@@ -878,7 +899,7 @@
       }
       if (answerBtn) answerBtn.disabled = false;
       qPop.classList.add("on");
-      if (window.QuestHUD) QuestHUD.setStep(step || (q && q.id === (heartQuestion() && heartQuestion().id) ? "q2" : "levi-q"));
+      if (window.QuestHUD) QuestHUD.setStep(step || qStep(q));
       const first = answerInputs && answerInputs.querySelector("input");
       if (first) setTimeout(() => first.focus({ preventScroll: true }), 250);
     }
@@ -886,12 +907,12 @@
     function afterQuestion(q) {
       hideQuestion();
       currentQ = null;
-      if (q && heartQuestion() && q.id === heartQuestion().id) {
-        setReady(true);
+      if (q && leviQuestion() && q.id === leviQuestion().id) {
+        const L = SUB.LEVIATHAN || {};
+        showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => setReady(true));
         return;
       }
-      const L = SUB.LEVIATHAN || {};
-      showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => setReady(true));
+      setReady(true);
     }
     function submitLeviQuestion() {
       const q = currentQ || leviQuestion();
@@ -914,8 +935,8 @@
       }
       if (ansMsg) { ansMsg.className = "ans-msg ok"; ansMsg.textContent = q.success || (window.QuestHUD && QuestHUD.answerText("correct")) || "Верно"; }
       if (answerBtn) answerBtn.disabled = true;
-      if (heartQuestion() && q.id === heartQuestion().id) heartQDone = true;
-      else leviQDone = true;
+      markQDone(q);
+      syncQFlags();
       if (window.QuestHUD) QuestHUD.award(q.id || "sn-q", q.placeholder ? 0 : (q.primos != null ? q.primos : undefined));
       setTimeout(() => afterQuestion(q), FAST ? 250 : 650);
     }
@@ -1089,7 +1110,7 @@
       wireSvg.innerHTML = lines;
     }
     function startRepair() {
-      if (repairDone) { setReady(true); return; }
+      if (repairDone) { afterGate(); return; }
       setReady(false);
       if (window.QuestHUD) QuestHUD.setStep("repair");
       const left = WIRE_COLORS;
@@ -1141,13 +1162,13 @@
         repairEl.classList.remove("on");
         showPda("КПК", (SUB.REPAIR && SUB.REPAIR.title) || "Ремонт капсулы",
           (SUB.REPAIR && SUB.REPAIR.done) || "Капсула в порядке.", "Дальше",
-          () => setReady(true));
+          () => afterGate());
       }, 350);
     }
 
     /* ----- радио ----- */
     function startRadio() {
-      if (radioDone) { setReady(true); return; }
+      if (radioDone) { afterGate(); return; }
       setReady(false);
       if (window.QuestHUD) QuestHUD.setStep("radio");
       radioPing.style.left = "58%"; radioPing.style.top = "46%";
@@ -1159,7 +1180,7 @@
       radioPing.classList.remove("show");
       const R = SUB.RADIO || {};
       showPda("Радио", R.title || "Радиосигнал", R.text || "Заглушка: послание", "Дальше", () => {
-        radioDone = true; setReady(true);
+        radioDone = true; afterGate();
       });
     });
 
@@ -1236,7 +1257,7 @@
       ctx.restore();
     }
     function startLeviathan() {
-      if (leviDone) { setReady(true); return; }
+      if (leviDone) { afterGate(); return; }
       setReady(false);
       if (window.QuestHUD) QuestHUD.setStep("leviathan");
       const L = SUB.LEVIATHAN || {};
@@ -1275,12 +1296,7 @@
         levi.style.opacity = "0";
         if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
         leviDone = true;
-        const q = leviQuestion();
-        if (q && !leviQDone) showLeviQuestion(q);
-        else {
-          const L = SUB.LEVIATHAN || {};
-          showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => setReady(true));
-        }
+        afterGate();
       }, FAST ? 400 : 1400);
     });
 
@@ -1304,14 +1320,10 @@
       const needRepair = SUB.REPAIR && i === SUB.REPAIR.loc && !repairDone;
       const needRadio = SUB.RADIO && i === SUB.RADIO.loc && !radioDone;
       const needLevi = SUB.LEVIATHAN && i === SUB.LEVIATHAN.loc && !leviDone;
-      const needLeviQ = SUB.LEVIATHAN && i === SUB.LEVIATHAN.loc && leviDone && !leviQDone && leviQuestion();
-      const needHeartQ = i === heartLoc() && !heartQDone && heartQuestion();
       if (needRepair) startRepair();
       else if (needRadio) startRadio();
       else if (needLevi) startLeviathan();
-      else if (needLeviQ) showLeviQuestion(leviQuestion(), "levi-q");
-      else if (needHeartQ) showLeviQuestion(heartQuestion(), "q2");
-      else setReady(true);
+      else afterGate();
       /* Фото на 500 м убрано (15.11): локация остаётся, шаг со снимком больше не запускается. */
       document.documentElement.dataset.index = String(i);
     }
@@ -1319,11 +1331,16 @@
     function forceComplete() {
       if (SUB.REPAIR && index === SUB.REPAIR.loc && !repairDone) { repairDone = true; repairEl.classList.remove("on"); }
       if (SUB.RADIO && index === SUB.RADIO.loc && !radioDone) { radioDone = true; radioPing.classList.remove("show"); }
-      if (SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc && (!leviDone || !leviQDone)) {
-        leviDone = true; leviQDone = true;
-        hideBtn.classList.remove("show"); cover.classList.remove("on"); hideQuestion();
+      if (SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc && !leviDone) {
+        leviDone = true;
+        hideBtn.classList.remove("show"); cover.classList.remove("on");
+        levi.style.opacity = "0";
+        if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
       }
-      if (index === heartLoc() && !heartQDone) { heartQDone = true; hideQuestion(); }
+      const qHere = questionAt(index);
+      if (qHere) markQDone(qHere);
+      syncQFlags();
+      hideQuestion();
       pda.classList.remove("on");
       setReady(true);
     }
@@ -1348,21 +1365,24 @@
     async function main() {
       resize();
       await preload();
-      if (Q_DEBUG >= 2) {
-        index = heartLoc();
-      } else if (Q_DEBUG >= 1 && !(parseInt(params.get("loc") || "", 10) >= 0)) {
-        index = (SUB.LEVIATHAN && SUB.LEVIATHAN.loc != null) ? SUB.LEVIATHAN.loc : 5;
+      if (Q_DEBUG >= 1 && !(parseInt(params.get("loc") || "", 10) >= 0)) {
+        const list = subQuestions();
+        const qi = Math.min(Q_DEBUG, list.length) - 1;
+        const qJump = list[qi];
+        if (qJump && qJump.loc != null) index = qJump.loc;
+        list.slice(0, Math.max(0, qi)).forEach(markQDone);
+        syncQFlags();
       } else if (START_LOC > 0) {
         index = START_LOC;
       }
       if (index > 0 || Q_DEBUG) {
-        if (SUB.REPAIR && index > SUB.REPAIR.loc) repairDone = true;
-        if (SUB.RADIO && index > SUB.RADIO.loc) radioDone = true;
+        if (SUB.REPAIR && (index > SUB.REPAIR.loc || Q_DEBUG)) repairDone = true;
+        if (SUB.RADIO && (index > SUB.RADIO.loc || (Q_DEBUG && index === SUB.RADIO.loc))) radioDone = true;
         if (SUB.PHOTO && index > SUB.PHOTO.loc) photoDone = true;
         if (SUB.LEVIATHAN && index > SUB.LEVIATHAN.loc) { leviDone = true; leviQDone = true; }
-        if (Q_DEBUG >= 1 && SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc) leviDone = true;
-        if (Q_DEBUG >= 2) { leviDone = true; leviQDone = true; }
+        if (Q_DEBUG && SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc) leviDone = true;
         if (index > heartLoc()) heartQDone = true;
+        syncQFlags();
       }
       layerCurrent.src = images[index].src;
       applyLayer(layerCurrent, 0, 0, 1, 1, 1);
