@@ -183,7 +183,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115m">
-<script src="../common/quest_config.js?v=20261115p33"></script>
+<script src="../common/quest_config.js?v=20261115p34"></script>
 <script src="../common/hud.js?v=20261115m" data-screen="repo-flight"></script>
 </head>
 <body>
@@ -803,7 +803,7 @@ function alreadyAwarded() {
     audio = new Audio();
     audio.preload = "auto";
     audio.setAttribute("playsinline", "");
-    audio.src = musicSrc + (/[?]/.test(musicSrc) ? "&" : "?") + "v=20261115p33";
+    audio.src = musicSrc + (/[?]/.test(musicSrc) ? "&" : "?") + "v=20261115p34";
     audio.addEventListener("error", () => { audioFailed = true; });
     audio.addEventListener("loadedmetadata", () => {
       if (!FAST && isFinite(audio.duration) && audio.duration > 0) {
