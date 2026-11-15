@@ -240,9 +240,24 @@
     .pda-btn:hover { border-color: rgba(190, 235, 255, .7); background: rgba(16, 48, 70, .85); }
     .pda.q-pop {
       display: flex; flex-direction: column;
-      max-height: calc(100dvh - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      top: auto; bottom: 0; left: 50%;
+      width: min(560px, 100%);
+      max-height: min(280px, 34dvh);
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+      border-radius: 16px 16px 0 0;
+      transform: translate(-50%, 18px);
+      box-shadow: 0 -12px 36px rgba(0, 4, 12, .55), 0 0 0 1px rgba(255,255,255,.04) inset;
     }
-    .pda.q-pop .q-text { margin-bottom: 12px; min-height: 0; flex: 0 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    .pda.q-pop.on { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    .pda.q-pop { background: #071820; }
+    .pda.q-pop .pda-kicker { margin-bottom: 4px; }
+    .pda.q-pop .pda-title { font-size: 15px; margin-bottom: 6px; }
+    .pda.q-pop .q-text {
+      margin-bottom: 8px; min-height: 0; flex: 1 1 auto;
+      overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+      font-size: 14px; line-height: 1.4;
+    }
+    .pda.q-pop .pda-btn { width: 100%; }
     .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; }
     .ans-input {
       width: 100%; padding: 10px 12px; border-radius: 8px;
@@ -257,7 +272,19 @@
     .ans-msg.ok { color: #8ee8c8; }
     @media (max-width: 600px) {
       .pda { width: min(420px, calc(100vw - 24px)); padding: 14px 14px 12px; }
-      .pda-text, .pda.q-pop .q-text { font-size: 14px; line-height: 1.45; }
+      .pda-text, .pda.q-pop .q-text { font-size: 14px; line-height: 1.4; }
+      .pda.q-pop {
+        width: 100%;
+        max-height: min(270px, 32dvh);
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+      }
+    }
+    @media (min-width: 900px) {
+      .pda.q-pop { width: min(640px, 100%); max-height: min(250px, 31dvh); }
+    }
+    html.qsheet-on .qhud {
+      bottom: calc(var(--qsheet-h, 260px) + 8px + env(safe-area-inset-bottom, 0px));
+      transition: bottom .25s ease;
     }
 
     #repair {
@@ -483,10 +510,128 @@
       .sn-ach { top: calc(70px + env(safe-area-inset-top, 0px)); }
     }
 
+
+    /* ----- мини-игра: укрыться от левиафана ----- */
+    #leviGame {
+      position: absolute; inset: 0; z-index: 17; display: none;
+      touch-action: none; overflow: hidden;
+    }
+    #leviGame.on { display: block; }
+    #leviGame::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+      background:
+        radial-gradient(ellipse at 50% 42%, rgba(80,0,0,0) 28%, rgba(50,0,0,.38) 100%);
+      box-shadow: inset 0 0 90px rgba(140, 0, 0, .35);
+      animation: sonarPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes sonarPulse {
+      0%, 100% { opacity: .75; }
+      50% { opacity: 1; }
+    }
+    #leviShake { position: absolute; inset: 0; z-index: 2; }
+    #leviShake.shaking { animation: leviShake .28s linear infinite; }
+    @keyframes leviShake {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(-5px, 3px); }
+      50% { transform: translate(6px, -3px); }
+      75% { transform: translate(-3px, 2px); }
+    }
+    #leviWarn {
+      position: absolute; left: 50%; top: calc(54px + env(safe-area-inset-top, 0px));
+      transform: translateX(-50%); z-index: 4; pointer-events: none;
+      padding: 6px 14px; border-radius: 8px;
+      background: rgba(60, 8, 8, .82); border: 1px solid rgba(255, 90, 70, .7);
+      color: #ffd0c8; font: 700 12px/1.2 "Segoe UI", sans-serif;
+      letter-spacing: .16em; text-transform: uppercase;
+      text-align: center; white-space: nowrap;
+      animation: warnBlink 1s ease-in-out infinite;
+      box-shadow: 0 0 16px rgba(255, 40, 20, .35);
+    }
+    @keyframes warnBlink { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
+    #leviTimer {
+      position: absolute; left: 50%; top: calc(88px + env(safe-area-inset-top, 0px));
+      transform: translateX(-50%); z-index: 4; pointer-events: none;
+      font: 600 22px/1 ui-monospace, "Segoe UI", monospace;
+      letter-spacing: .08em; color: #ffd8d0;
+      text-shadow: 0 0 12px rgba(255, 60, 40, .5);
+    }
+    #leviTimer.low { color: #ff8a78; animation: warnBlink .5s ease-in-out infinite; }
+    #leviHint {
+      position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%); z-index: 4; pointer-events: none;
+      width: min(360px, calc(100vw - 24px)); text-align: center;
+      font-size: 14px; color: #e7f7ff; text-shadow: 0 1px 8px #000;
+    }
+    .levi-hide {
+      position: absolute; z-index: 5; transform: translate(-50%, -50%);
+      width: 86px; height: 86px; pointer-events: none;
+    }
+    .levi-hide .spot {
+      position: absolute; inset: 8px; border-radius: 50% 50% 40% 40%;
+      background: radial-gradient(ellipse at 50% 40%, rgba(10, 30, 36, .2), rgba(0, 0, 0, .75));
+      border: 1px dashed rgba(120, 220, 210, .45);
+      box-shadow: 0 0 14px rgba(60, 180, 170, .2), inset 0 0 16px rgba(0,0,0,.5);
+    }
+    .levi-hide.kelp .spot {
+      border-radius: 40% 40% 16px 16px;
+      background:
+        radial-gradient(ellipse at 50% 80%, rgba(20, 60, 40, .35), rgba(0, 10, 8, .7));
+    }
+    .levi-hide .frond {
+      position: absolute; bottom: 14px; width: 10px; height: 46px; border-radius: 20px;
+      background: linear-gradient(180deg, #3d8a5a, #173a28);
+      transform-origin: 50% 100%;
+      animation: kelpSway 2.4s ease-in-out infinite;
+    }
+    .levi-hide .frond:nth-child(2) { left: 28px; height: 54px; animation-delay: -.6s; }
+    .levi-hide .frond:nth-child(3) { left: 48px; height: 42px; animation-delay: -1.1s; }
+    .levi-hide .frond:nth-child(4) { left: 38px; width: 8px; height: 38px; left: 18px; animation-delay: -.2s; }
+    @keyframes kelpSway { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(9deg); } }
+    .levi-hide .lab {
+      position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px);
+      font-size: 11px; letter-spacing: .06em; color: #c8fff0;
+      text-shadow: 0 1px 6px #000; white-space: nowrap;
+    }
+    .levi-hide.near .spot, .levi-hide.in .spot {
+      border-style: solid; border-color: rgba(140, 255, 230, .85);
+      box-shadow: 0 0 18px 6px rgba(100, 230, 210, .4);
+    }
+    #leviDiver {
+      position: absolute; z-index: 6; width: 58px; height: 58px;
+      margin: -29px 0 0 -29px; cursor: grab; touch-action: none;
+      filter: drop-shadow(0 0 8px rgba(180, 255, 240, .6));
+    }
+    #leviDiver:active { cursor: grabbing; }
+    #leviDiver.hidden { filter: drop-shadow(0 0 6px rgba(80, 200, 180, .35)); opacity: .92; }
+    #leviFail {
+      position: absolute; inset: 0; z-index: 8; display: none;
+      align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+      background: rgba(10, 0, 0, .45);
+    }
+    #leviFail.on { display: flex; }
+    #leviFail .fail-text {
+      font: 700 20px/1.3 "Segoe UI", sans-serif; color: #ffe0d8;
+      text-align: center; padding: 0 20px;
+      text-shadow: 0 2px 12px #000;
+    }
+    #leviGame .levi {
+      z-index: 3; width: min(160vw, 1600px); top: 18%; left: 0; opacity: 0;
+      filter: blur(.6px) brightness(.62) saturate(.7) contrast(1.1) drop-shadow(0 16px 24px rgba(0,0,0,.55));
+    }
+    @media (max-width: 600px) {
+      .levi-hide { width: 78px; height: 78px; }
+      #leviDiver { width: 54px; height: 54px; margin: -27px 0 0 -27px; }
+      #leviWarn { font-size: 11px; padding: 5px 10px; }
+      #leviFail .fail-text { font-size: 18px; }
+    }
+
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p17"></script>
+<script src="../common/quest_config.js?v=20261115p18"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
+<style>
+  html.qsheet-on .qhud { bottom: calc(var(--qsheet-h, 260px) + 8px + env(safe-area-inset-bottom, 0px)) !important; }
+</style>
 </head>
 <body>
   <div id="stage">
@@ -507,8 +652,37 @@
     <button id="camBtn" type="button" title="Сделать снимок">📷</button>
     <div id="flash"></div>
     <div id="cover"></div>
-    <div class="levi" id="levi" aria-hidden="true"></div>
     <button id="hideBtn" type="button">Спрятаться</button>
+    <div id="leviGame" aria-hidden="true">
+      <div id="leviShake">
+        <div class="levi" id="levi" aria-hidden="true"></div>
+        <div id="leviWarn">СОНАР · Крупная биоформа</div>
+        <div id="leviTimer">0:16</div>
+        <div id="leviHides"></div>
+        <div id="leviDiver" aria-label="Вика">
+          <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
+            <defs>
+              <radialGradient id="dvGlow" cx="50%" cy="45%" r="50%">
+                <stop offset="0%" stop-color="#dff" stop-opacity=".9"/>
+                <stop offset="100%" stop-color="#8fd" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#dvGlow)" opacity=".55"/>
+            <ellipse cx="32" cy="44" rx="9" ry="14" fill="#16323a" stroke="#7ad4c8" stroke-width="1.4"/>
+            <circle cx="32" cy="24" r="10" fill="#1b3d46" stroke="#9eeae0" stroke-width="1.6"/>
+            <ellipse cx="32" cy="23" rx="6.2" ry="5.2" fill="#7fe0ff"/>
+            <rect x="22" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
+            <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
+            <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div id="leviHint">Перетащи себя в укрытие!</div>
+      </div>
+      <div id="leviFail">
+        <div class="fail-text" id="leviFailText">Левиафан тебя заметил!</div>
+        <button class="pda-btn" id="leviRetry" type="button">Ещё раз</button>
+      </div>
+    </div>
     <div id="repair">
       <h2 id="repairTitle">Ремонт капсулы</h2>
       <div class="wires" id="wires">
@@ -584,6 +758,7 @@
     })();
     const RADIO_DEBUG = params.get("radio") === "1";
     const CAVE_DEBUG = params.get("cave") === "1";
+    const LEVI_DEBUG = params.get("leviathan") === "1" || params.get("levi") === "1";
     const ASSET_V = "20261115q";
     const FISH_SRC = {
       peeper: "fish_peeper.png?v=" + ASSET_V,
@@ -982,6 +1157,14 @@
     const cover = document.getElementById("cover");
     const levi = document.getElementById("levi");
     const radioPing = document.getElementById("radioPing");
+    const leviGame = document.getElementById("leviGame");
+    const leviShake = document.getElementById("leviShake");
+    const leviHides = document.getElementById("leviHides");
+    const leviDiver = document.getElementById("leviDiver");
+    const leviTimerEl = document.getElementById("leviTimer");
+    const leviFail = document.getElementById("leviFail");
+    const leviFailText = document.getElementById("leviFailText");
+    const leviRetry = document.getElementById("leviRetry");
 
     function setReady(v) {
       locReady = !!v;
@@ -1057,8 +1240,19 @@
       else setReady(true);
     }
     let currentQ = null;
+    function layoutQSheet() {
+      const on = !!(qPop && qPop.classList.contains("on"));
+      document.documentElement.classList.toggle("qsheet-on", on);
+      if (on) {
+        const h = Math.ceil(qPop.getBoundingClientRect().height);
+        document.documentElement.style.setProperty("--qsheet-h", h + "px");
+      } else {
+        document.documentElement.style.removeProperty("--qsheet-h");
+      }
+    }
     function hideQuestion() {
       if (qPop) qPop.classList.remove("on");
+      layoutQSheet();
     }
     function showLeviQuestion(q, step) {
       if (!q || !qPop) { afterQuestion(q); return; }
@@ -1084,6 +1278,8 @@
       }
       if (answerBtn) answerBtn.disabled = false;
       qPop.classList.add("on");
+      layoutQSheet();
+      requestAnimationFrame(layoutQSheet);
       if (window.QuestHUD) QuestHUD.setStep(step || qStep(q));
       const first = answerInputs && answerInputs.querySelector("input");
       if (first) setTimeout(() => first.focus({ preventScroll: true }), 250);
@@ -1093,8 +1289,7 @@
       hideQuestion();
       currentQ = null;
       if (q && leviQuestion() && q.id === leviQuestion().id) {
-        const L = SUB.LEVIATHAN || {};
-        showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => afterGate());
+        afterGate();
         return;
       }
       setReady(true);
@@ -1758,47 +1953,268 @@
     }
     function startLeviathan() {
       if (leviDone) { afterGate(); return; }
-      setReady(false);
-      if (window.QuestHUD) QuestHUD.setStep("leviathan");
-      const L = SUB.LEVIATHAN || {};
-      buildLeviathan();
-      levi.style.top = "10%";
-      levi.style.left = "0";
-      levi.style.opacity = "0";
-      const dur = FAST ? 2200 : 14000;
-      const t0 = performance.now();
-      const tick = (now) => {
-        const p = Math.min(1, (now - t0) / dur);
-        const vw = cssW || window.innerWidth;
-        const lw = levi.offsetWidth || Math.min(vw, 1320);
-        const x = -lw * 0.92 + p * (vw + lw * 1.05);
-        const bob = Math.sin(now / 1100) * 8;
-        levi.style.transform = "translate(" + x + "px, " + bob + "px)";
-        if (p < 0.06) levi.style.opacity = String((p / 0.06) * 0.9);
-        else levi.style.opacity = "0.9";
-        drawLeviathan(now);
-        if (p < 1 && !leviDone) leviRaf = requestAnimationFrame(tick);
-        else leviRaf = 0;
-      };
-      if (leviRaf) cancelAnimationFrame(leviRaf);
-      leviRaf = requestAnimationFrame(tick);
-      showPda("КПК", "Предупреждение", L.warning || "Крупная биоформа поблизости.", "Понятно", () => {
-        hideBtn.classList.add("show");
-        if (AUTO || FAST) setTimeout(() => hideBtn.click(), FAST ? 200 : 700);
+      startLeviGame();
+    }
+
+    let leviPlaying = false, leviHidden = false, leviDrag = false;
+    let leviDx = 50, leviDy = 46, leviT0 = 0, leviDur = 16000;
+    let leviAudio = null;
+
+    function leviCfg() { return SUB.LEVIATHAN || {}; }
+    function leviStartPos() {
+      const s = leviCfg().start || {};
+      return { x: s.x != null ? s.x : 50, y: s.y != null ? s.y : 46 };
+    }
+    function leviHideList() {
+      return (leviCfg().hides && leviCfg().hides.length) ? leviCfg().hides : [
+        { x: 14, y: 66, type: "crevice" },
+        { x: 50, y: 82, type: "kelp" },
+        { x: 86, y: 62, type: "crevice" }
+      ];
+    }
+    function setDiverPos(x, y) {
+      leviDx = clamp(x, 4, 96);
+      leviDy = clamp(y, 8, 92);
+      if (leviDiver) {
+        leviDiver.style.left = leviDx + "%";
+        leviDiver.style.top = leviDy + "%";
+      }
+    }
+    function hideRadius() { return 9; }
+    function nearestHide() {
+      let best = null, bestD = 1e9;
+      leviHideList().forEach((h, i) => {
+        const d = Math.hypot(leviDx - h.x, leviDy - h.y);
+        if (d < bestD) { bestD = d; best = { i, h, d }; }
+      });
+      return best;
+    }
+    function updateHideHighlight() {
+      if (!leviHides) return;
+      const n = nearestHide();
+      const r = hideRadius();
+      [...leviHides.children].forEach((el, i) => {
+        el.classList.toggle("near", !!(n && n.i === i && n.d <= r && !leviHidden));
+        el.classList.toggle("in", !!(leviHidden && n && n.i === i));
+      });
+      if (leviDiver) leviDiver.classList.toggle("hidden", leviHidden);
+    }
+    function tryHide() {
+      const n = nearestHide();
+      leviHidden = !!(n && n.d <= hideRadius());
+      if (leviHidden && n) setDiverPos(n.h.x, n.h.y);
+      updateHideHighlight();
+    }
+    function buildHides() {
+      if (!leviHides) return;
+      leviHides.innerHTML = "";
+      leviHideList().forEach((h) => {
+        const el = document.createElement("div");
+        el.className = "levi-hide " + (h.type === "kelp" ? "kelp" : "crevice");
+        el.style.left = h.x + "%";
+        el.style.top = h.y + "%";
+        el.innerHTML = (h.type === "kelp"
+          ? '<span class="frond"></span><span class="frond"></span><span class="frond"></span><span class="frond"></span><div class="spot"></div><div class="lab">Водоросли</div>'
+          : '<div class="spot"></div><div class="lab">Расщелина</div>');
+        leviHides.appendChild(el);
       });
     }
-    hideBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
+    function startLeviAudio() {
+      if (leviAudio || params.get("mute") === "1") return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try {
+        const ac = new AC();
+        const osc = ac.createOscillator();
+        osc.type = "sawtooth"; osc.frequency.value = 55;
+        const g = ac.createGain(); g.gain.value = 0.0001;
+        const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 180;
+        osc.connect(f); f.connect(g); g.connect(ac.destination);
+        osc.start();
+        const now = ac.currentTime;
+        g.gain.exponentialRampToValueAtTime(0.06, now + 0.15);
+        g.gain.exponentialRampToValueAtTime(0.018, now + 1.6);
+        leviAudio = { ac, osc, g };
+        if (ac.state === "suspended") ac.resume().catch(() => {});
+      } catch (e) { leviAudio = null; }
+    }
+    function stopLeviAudio() {
+      if (!leviAudio) return;
+      try {
+        const now = leviAudio.ac.currentTime;
+        leviAudio.g.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+        setTimeout(() => {
+          try { leviAudio && leviAudio.osc.stop(); leviAudio && leviAudio.ac.close(); } catch (e) {}
+          leviAudio = null;
+        }, 400);
+      } catch (e) { leviAudio = null; }
+    }
+    function closeLeviGame() {
+      leviPlaying = false;
+      if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
+      if (leviGame) { leviGame.classList.remove("on"); leviGame.setAttribute("aria-hidden", "true"); }
+      if (leviFail) leviFail.classList.remove("on");
+      if (leviShake) leviShake.classList.remove("shaking");
+      if (levi) levi.style.opacity = "0";
       hideBtn.classList.remove("show");
-      cover.classList.add("on");
+      cover.classList.remove("on");
+      stopLeviAudio();
+    }
+    function resetLeviRound() {
+      const p = leviStartPos();
+      leviHidden = false; leviDrag = false;
+      setDiverPos(p.x, p.y);
+      updateHideHighlight();
+      if (leviFail) leviFail.classList.remove("on");
+      if (leviShake) leviShake.classList.remove("shaking");
+    }
+    function startLeviGame() {
+      if (leviDone) { afterGate(); return; }
+      setReady(false);
+      leviPlaying = true;
+      if (window.QuestHUD) QuestHUD.setStep("leviathan");
+      const L = leviCfg();
+      leviDur = FAST ? Math.min(Number(L.timerMs) || 16000, 8000) : (Number(L.timerMs) || 16000);
+      buildHides();
+      buildLeviathan();
+      resetLeviRound();
+      if (leviFailText) leviFailText.textContent = L.fail || "Левиафан тебя заметил!";
+      if (leviGame) { leviGame.classList.add("on"); leviGame.setAttribute("aria-hidden", "false"); }
+      startLeviAudio();
+      levi.style.top = "16%";
+      levi.style.left = "0";
+      levi.style.opacity = "0";
+      leviT0 = performance.now();
+      if (leviRaf) cancelAnimationFrame(leviRaf);
+      leviRaf = requestAnimationFrame(tickLeviGame);
+      if (AUTO) setTimeout(() => {
+        if (!leviPlaying || leviDone) return;
+        const h = leviHideList()[0];
+        setDiverPos(h.x, h.y); tryHide();
+      }, FAST ? 200 : 600);
+    }
+    function leviProgress(now) {
+      return clamp((now - leviT0) / leviDur, 0, 1);
+    }
+    function tickLeviGame(now) {
+      if (!leviPlaying || leviDone) { leviRaf = 0; return; }
+      const p = leviProgress(now);
+      const left = Math.max(0, Math.ceil((leviDur - (now - leviT0)) / 1000));
+      if (leviTimerEl) {
+        leviTimerEl.textContent = "0:" + String(left).padStart(2, "0");
+        leviTimerEl.classList.toggle("low", left <= 5);
+      }
+      const vw = cssW || window.innerWidth;
+      const lw = levi.offsetWidth || Math.min(vw * 1.4, 1600);
+      // Enters quickly, sweeps across most of the timer
+      const enter = clamp((p - 0.06) / 0.88, 0, 1);
+      const x = -lw * 0.95 + enter * (vw + lw * 1.1);
+      const bob = Math.sin(now / 900) * 10;
+      levi.style.transform = "translate(" + x + "px, " + bob + "px)";
+      const vis = clamp((p - 0.04) / 0.08, 0, 1);
+      levi.style.opacity = p > 0.92 ? String(1 - (p - 0.92) / 0.08) : String(0.92 * vis);
+      drawLeviathan(now);
+      const mid = enter > 0.12 && enter < 0.88;
+      if (leviShake) leviShake.classList.toggle("shaking", mid);
+      if (diverInLeviSweep(x, lw, vw) && !leviHidden) {
+        failLeviGame();
+        return;
+      }
+      if (p >= 1) {
+        if (leviHidden) succeedLeviGame();
+        else failLeviGame();
+        return;
+      }
+      leviRaf = requestAnimationFrame(tickLeviGame);
+    }
+    function diverInLeviSweep(leviX, lw, vw) {
+      if (!leviDiver || !levi) return false;
+      const dr = leviDiver.getBoundingClientRect();
+      const lr = levi.getBoundingClientRect();
+      if (lr.width < 8 || dr.width < 4) return false;
+      // body hitbox: shrink the sprite, mid band
+      const hit = {
+        left: lr.left + lr.width * 0.12,
+        right: lr.left + lr.width * 0.88,
+        top: lr.top + lr.height * 0.22,
+        bottom: lr.top + lr.height * 0.78
+      };
+      const cx = dr.left + dr.width / 2, cy = dr.top + dr.height / 2;
+      return cx > hit.left && cx < hit.right && cy > hit.top && cy < hit.bottom;
+    }
+    function failLeviGame() {
+      if (!leviPlaying || leviDone) return;
+      leviPlaying = false;
+      if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
+      if (leviShake) leviShake.classList.remove("shaking");
+      if (leviFail) leviFail.classList.add("on");
+      document.documentElement.dataset.levi = "fail";
+      const wait = FAST ? 700 : 1400;
+      setTimeout(() => { if (!leviDone && leviFail && leviFail.classList.contains("on")) retryLeviGame(); }, wait);
+    }
+    function retryLeviGame() {
+      if (leviDone) return;
+      resetLeviRound();
+      leviPlaying = true;
+      document.documentElement.dataset.levi = "play";
+      levi.style.opacity = "0";
+      leviT0 = performance.now();
+      if (leviRaf) cancelAnimationFrame(leviRaf);
+      leviRaf = requestAnimationFrame(tickLeviGame);
+    }
+    function succeedLeviGame() {
+      if (leviDone) return;
+      leviPlaying = false;
+      leviDone = true;
+      if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
+      if (leviShake) leviShake.classList.remove("shaking");
+      document.documentElement.dataset.levi = "ok";
+      const L = leviCfg();
+      const primos = L.primos != null ? L.primos : 50;
+      awardEvent("sn-hide", primos, L.toast || "Спряталась", "🦑");
       setTimeout(() => {
-        cover.classList.remove("on");
-        levi.style.opacity = "0";
-        if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
-        leviDone = true;
+        closeLeviGame();
         afterGate();
-      }, FAST ? 400 : 1400);
-    });
+      }, FAST ? 280 : 800);
+    }
+    function diverFromEvent(e) {
+      const ev = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+      if (!leviGame || ev.clientX == null) return;
+      const r = leviGame.getBoundingClientRect();
+      setDiverPos(((ev.clientX - r.left) / Math.max(1, r.width)) * 100, ((ev.clientY - r.top) / Math.max(1, r.height)) * 100);
+      const n = nearestHide();
+      leviHidden = false;
+      if (n && n.d <= hideRadius()) {
+        /* preview snap while holding in the spot */
+        updateHideHighlight();
+      } else updateHideHighlight();
+    }
+    if (leviDiver) {
+      leviDiver.addEventListener("pointerdown", (e) => {
+        if (!leviPlaying || leviDone) return;
+        e.preventDefault(); e.stopPropagation();
+        leviDrag = true;
+        leviHidden = false;
+        leviDiver.setPointerCapture(e.pointerId);
+        diverFromEvent(e);
+      });
+      leviDiver.addEventListener("pointermove", (e) => {
+        if (!leviDrag) return;
+        e.preventDefault();
+        diverFromEvent(e);
+      });
+      const end = (e) => {
+        if (!leviDrag) return;
+        leviDrag = false;
+        diverFromEvent(e);
+        tryHide();
+      };
+      leviDiver.addEventListener("pointerup", end);
+      leviDiver.addEventListener("pointercancel", end);
+    }
+    if (leviRetry) leviRetry.addEventListener("click", (e) => { e.stopPropagation(); retryLeviGame(); });
+    /* старая кнопка «Спрятаться» больше не используется */
+    if (hideBtn) hideBtn.addEventListener("click", (e) => { e.stopPropagation(); });
 
     function clearLocExtras() {
       cancelFauna();
@@ -1808,8 +2224,11 @@
       hideBtn.classList.remove("show");
       repairEl.classList.remove("on");
       cover.classList.remove("on");
-      levi.style.opacity = "0";
-      if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
+      if (leviPlaying || (leviGame && leviGame.classList.contains("on"))) closeLeviGame();
+      else {
+        levi.style.opacity = "0";
+        if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
+      }
       pda.classList.remove("on");
       hideQuestion();
     }
@@ -1834,9 +2253,7 @@
       if (needsCave() || (caveSearch && caveSearch.classList.contains("on"))) { caveDone = true; closeCaveSearch(); }
       if (SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc && !leviDone) {
         leviDone = true;
-        hideBtn.classList.remove("show"); cover.classList.remove("on");
-        levi.style.opacity = "0";
-        if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
+        closeLeviGame();
       }
       const qHere = questionAt(index);
       if (qHere) markQDone(qHere);
@@ -1868,6 +2285,10 @@
       await preload();
       if (RADIO_DEBUG) {
         index = (SUB.RADIO && SUB.RADIO.loc != null) ? SUB.RADIO.loc : 2;
+      } else if (LEVI_DEBUG) {
+        index = (SUB.LEVIATHAN && SUB.LEVIATHAN.loc != null) ? SUB.LEVIATHAN.loc : 5;
+        subQuestions().forEach((q) => { if (q.loc != null && q.loc < index) markQDone(q); });
+        syncQFlags();
       } else if (CAVE_DEBUG) {
         index = caveLoc();
         subQuestions().forEach((q) => { if (q.loc != null && q.loc <= index) markQDone(q); });
@@ -1882,15 +2303,16 @@
       } else if (START_LOC > 0) {
         index = START_LOC;
       }
-      if (index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG) {
-        if (SUB.REPAIR && (index > SUB.REPAIR.loc || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG)) repairDone = true;
-        if (SUB.RADIO && (index > SUB.RADIO.loc || (Q_DEBUG && index === SUB.RADIO.loc))) radioDone = true;
+      if (index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG) {
+        if (SUB.REPAIR && (index > SUB.REPAIR.loc || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG)) repairDone = true;
+        if (SUB.RADIO && (index > SUB.RADIO.loc || (Q_DEBUG && index === SUB.RADIO.loc) || ((CAVE_DEBUG || LEVI_DEBUG) && index >= SUB.RADIO.loc))) radioDone = true;
         if (SUB.PHOTO && index > SUB.PHOTO.loc) photoDone = true;
         if (SUB.LEVIATHAN && index > SUB.LEVIATHAN.loc) { leviDone = true; leviQDone = true; }
         if ((Q_DEBUG || CAVE_DEBUG) && SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc) leviDone = true;
+        if (LEVI_DEBUG) { leviDone = false; caveDone = false; }
         if (index > heartLoc() || (Q_DEBUG && index === heartLoc())) caveDone = true;
         if (index > heartLoc()) heartQDone = true;
-        if (CAVE_DEBUG) caveDone = false;
+        if (CAVE_DEBUG) { leviDone = true; caveDone = false; }
         syncQFlags();
       }
       layerCurrent.src = images[index].src;
@@ -1906,11 +2328,20 @@
       window.__ready = true;
       window.__goNext = goNext;
       window.__subnautica = {
-        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, radioFreq, scanned: Object.assign({}, scanned) }; },
+        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, radioFreq, leviPlaying, leviHidden, scanned: Object.assign({}, scanned) }; },
         completeGate: forceComplete,
         spawnBubble: spawnAirBubble,
         radio: { target: FREQ_TARGET, min: FREQ_MIN, max: FREQ_MAX, closeness: radioCloseness, inRange: radioInRange, setFreq: setRadioFreq },
         cave: { pos: cavePos, find: findCave, hint: showCaveHint, setBeam: setCaveBeam },
+        levi: {
+          hides: leviHideList,
+          fail: failLeviGame,
+          retry: retryLeviGame,
+          succeed: succeedLeviGame,
+          setDiver: setDiverPos,
+          tryHide: tryHide,
+          get pos() { return { x: leviDx, y: leviDy, hidden: leviHidden, playing: leviPlaying }; }
+        },
         get beam() { return { x: caveX, y: caveY, dist: caveDistance() }; }
       };
       onArrive(index);

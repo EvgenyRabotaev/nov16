@@ -133,7 +133,7 @@
     .loot-row, .slot {
       position: relative;
       flex: 0 0 auto;
-      width: min(100%, calc((100cqh - var(--gap)) / 2 * 2560 / 624));
+      width: min(100%, calc((100cqh - 3 * var(--gap)) / 4 * 2560 / 624));
       aspect-ratio: var(--aspect);
       margin-inline: auto;
       border-radius: 6px;
@@ -146,6 +146,15 @@
       cursor: grab;
       touch-action: none;
       -webkit-user-drag: none;
+      opacity: 0;
+      transform: translateY(14px) scale(.97);
+      pointer-events: none;
+    }
+    .loot-row.is-revealed {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+      transition: opacity .45s ease, transform .45s cubic-bezier(.2, .8, .2, 1);
     }
     .loot-row:hover, .loot-row:focus-visible {
       border-color: rgba(240, 208, 120, 0.85);
@@ -328,7 +337,7 @@
     }
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115p17"></script>
+<script src="../common/quest_config.js?v=20261115p18"></script>
 <script src="../common/hud.js?v=20261115d" data-screen="pubg-airdrop" data-theme="pubg" data-avoid="#nextBtn"></script>
 </head>
 <body>
@@ -348,6 +357,20 @@
           <div class="loot-meta">
             <span class="loot-name">AWM</span>
             <span class="loot-sub">.300 Magnum × 20</span>
+          </div>
+        </article>
+        <article class="loot-row" data-id="helmet" tabindex="0">
+          <img class="loot-img" src="loot/helmet_loot.jpg" alt="Шлем 3 уровня" draggable="false">
+          <div class="loot-meta">
+            <span class="loot-name">Шлем 3 уровня</span>
+            <span class="loot-sub">Ур. 3</span>
+          </div>
+        </article>
+        <article class="loot-row" data-id="vest" tabindex="0">
+          <img class="loot-img" src="loot/vest_loot.jpg" alt="Бронежилет 3 уровня" draggable="false">
+          <div class="loot-meta">
+            <span class="loot-name">Бронежилет 3 уровня</span>
+            <span class="loot-sub">Ур. 3</span>
           </div>
         </article>
         <article class="loot-row" data-id="primo" tabindex="0">
@@ -395,11 +418,13 @@
           <rect x="9.2" y="14.2" width="5.6" height="4.2" rx="0.8" stroke="currentColor" stroke-width="1.5"/>
         </svg>
         <h1>Рюкзак</h1>
-        <span class="hint" id="packCount">0 / 2</span>
+        <span class="hint" id="packCount">0 / 4</span>
       </div>
       <div class="list" id="slotList">
-<div class="slot" data-slot="0"><span class="empty-note">пусто</span></div>
+        <div class="slot" data-slot="0"><span class="empty-note">пусто</span></div>
         <div class="slot" data-slot="1"><span class="empty-note">пусто</span></div>
+        <div class="slot" data-slot="2"><span class="empty-note">пусто</span></div>
+        <div class="slot" data-slot="3"><span class="empty-note">пусто</span></div>
       </div>
       <div class="next-wrap">
         <button class="btn" id="nextBtn" type="button" hidden>Дальше</button>
@@ -410,8 +435,11 @@
   <script>
     /* Количество бонусных примогемов в аирдропе. Подставить нужное число позже. */
     const PRIMO_COUNT = 160;
+    const LOOT_ORDER = ["awm", "helmet", "vest", "primo"];
+    const LOOT_TOTAL = LOOT_ORDER.length;
 
     const AUTO = new URLSearchParams(location.search).get("auto") === "1";
+    const FAST = new URLSearchParams(location.search).get("fast") === "1";
     const TAP_PX = 10;
     const SNAP_MS = 340;
 
@@ -449,13 +477,13 @@
     function updateChrome() {
       const n = placed.size;
       if (placed.has("primo") && window.QuestHUD) QuestHUD.award("pubg-airdrop", PRIMO_COUNT);
-      packCount.textContent = n + " / 2";
+      packCount.textContent = n + " / " + LOOT_TOTAL;
       slotList.classList.toggle("has-items", n > 0);
-      const empty = n >= 2;
+      const empty = n >= LOOT_TOTAL;
       dropEmpty.classList.toggle("show", empty);
       dropList.style.display = empty ? "none" : "";
       dropHint.textContent = empty ? "лут собран" : "перетащи в рюкзак";
-      if (n >= 2) {
+      if (n >= LOOT_TOTAL) {
         nextBtn.hidden = false;
         requestAnimationFrame(() => nextBtn.classList.add("show"));
         if (window.QuestHUD) setTimeout(QuestHUD.layout, 600);
@@ -611,9 +639,26 @@
     function bindRow(row) {
       row.addEventListener("pointerdown", (ev) => {
         if (ev.button != null && ev.button !== 0) return;
+        if (!row.classList.contains("is-revealed")) return;
         ev.preventDefault();
         startDrag(row, ev);
       });
+    }
+
+    async function revealLoot() {
+      const step = FAST ? 140 : (AUTO ? 280 : 560);
+      const first = FAST ? 80 : 400;
+      dropHint.textContent = "лут появляется…";
+      for (let i = 0; i < LOOT_ORDER.length; i++) {
+        await new Promise((r) => setTimeout(r, i === 0 ? first : step));
+        const row = document.querySelector('#dropList .loot-row[data-id="' + LOOT_ORDER[i] + '"]');
+        if (row) row.classList.add("is-revealed");
+        document.body.dataset.revealed = String(i + 1);
+        const name = row && row.querySelector(".loot-name");
+        dropHint.textContent = name ? ("+" + name.textContent) : "лут появляется…";
+      }
+      dropHint.textContent = "перетащи в рюкзак";
+      document.body.dataset.lootReady = "1";
     }
 
     document.querySelectorAll("#dropList .loot-row").forEach(bindRow);
@@ -692,14 +737,13 @@
     (async function boot() {
       await waitImages();
       updateChrome();
+      await revealLoot();
       if (!AUTO) return;
       document.body.dataset.auto = "1";
-      const awm = document.querySelector('[data-id="awm"]');
-      const primo = document.querySelector('[data-id="primo"]');
-      await new Promise((r) => setTimeout(r, 1200));
-      await autoDragRow(awm);
-      await new Promise((r) => setTimeout(r, 520));
-      await autoDragRow(primo);
+      for (const id of LOOT_ORDER) {
+        const row = document.querySelector('#dropList .loot-row[data-id="' + id + '"]');
+        if (row) await autoDragRow(row, FAST ? 80 : 400);
+      }
     })();
   </script>
 </body>
