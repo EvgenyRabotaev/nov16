@@ -313,7 +313,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115h">
-<script src="../common/quest_config.js?v=20261115p1"></script>
+<script src="../common/quest_config.js?v=20261115p2"></script>
 <script src="../common/hud.js?v=20261115h" data-screen="genshin"></script>
 </head>
 <body>
@@ -332,7 +332,7 @@
 </aside>
 
 <div class="talk" id="talk">
-  <div class="fairy" id="fairy"><img id="fairyImg" alt="Феечка"></div>
+  <div class="fairy" id="fairy"><img id="fairyImg" alt="Паймон"></div>
   <div class="dlg" id="dlg" role="button" tabindex="0" aria-live="polite">
     <div class="dlg-who" id="dlgWho"></div>
     <div class="dlg-text" id="dlgText"></div>
@@ -372,8 +372,8 @@
   const CFG = window.QUEST_CONFIG || {};
   const QUESTIONS = (CFG.QUESTIONS && CFG.QUESTIONS.genshin) || [];
   const G = CFG.GENSHIN || {};
-  const FAIRY = G.FAIRY || { name: "Феечка", img: "fairy.png", color: "#c9b0ff" };
-  const COLORS = Object.assign({ "Вика": "#f5c542", "Феечка": "#c9b0ff", "Женя": "#c45a1c" }, G.COLORS || {});
+  const FAIRY = G.FAIRY || { name: "Паймон", img: "fairy.png", color: "#c9b0ff" };
+  const COLORS = Object.assign({ "Вика": "#f5c542", "Паймон": "#c9b0ff", "Женя": "#c45a1c" }, G.COLORS || {});
   const DIALOGUES = G.DIALOGUES || {};
   const WAYPOINTS = G.WAYPOINTS || [];
   const COMMISSIONS = G.COMMISSIONS || [];
@@ -416,7 +416,7 @@
   const goNext = document.getElementById("goNext");
 
   fairyImg.src = FAIRY.img || "fairy.png";
-  fairyImg.alt = FAIRY.name || "Феечка";
+  fairyImg.alt = FAIRY.name || "Паймон";
 
   let mode = "boot";
   let qi = 0, wi = 0, busy = false;
@@ -463,7 +463,7 @@
   function colorOf(who) {
     if (!who) return "";
     if (COLORS[who]) return COLORS[who];
-    if (/фееч|фен|fairy/i.test(who)) return FAIRY.color || COLORS["Феечка"];
+    if (/фееч|паймон|фен|fairy/i.test(who)) return FAIRY.color || COLORS["Паймон"];
     return "";
   }
 
@@ -601,8 +601,8 @@
 
   function fairyLines(arr, whoFallback) {
     if (!arr) return [];
-    if (typeof arr === "string") return [{ who: whoFallback || FAIRY.name || "Феечка", text: arr }];
-    return arr.map((L) => (typeof L === "string" ? { who: whoFallback || FAIRY.name || "Феечка", text: L } : L));
+    if (typeof arr === "string") return [{ who: whoFallback || FAIRY.name || "Паймон", text: arr }];
+    return arr.map((L) => (typeof L === "string" ? { who: whoFallback || FAIRY.name || "Паймон", text: L } : L));
   }
 
   function showEncourage(kind) {
