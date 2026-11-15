@@ -136,10 +136,130 @@
       opacity: 0;
       pointer-events: none;
     }
+
+    /* ----- кислород, КПК, рыбы, ремонт, левиафан, фото ----- */
+    #o2 {
+      position: absolute; top: 3.4%; right: 3.2%; z-index: 8;
+      width: 140px; pointer-events: none;
+      text-shadow: 0 1px 8px rgba(0, 10, 20, 0.7);
+    }
+    #o2 .label { display: block; font-size: 10px; font-weight: 600; letter-spacing: .18em; opacity: .62; margin-bottom: 4px; }
+    #o2 .bar { height: 8px; border-radius: 99px; background: rgba(0, 20, 30, .45); border: 1px solid rgba(160, 220, 240, .35); overflow: hidden; }
+    #o2 .fill { height: 100%; width: 100%; background: linear-gradient(90deg, #2aa9a0, #8ee8c8); transform-origin: left; transition: width .25s linear, background .3s; }
+    #o2.warn .fill { background: linear-gradient(90deg, #c45a2a, #f0c060); }
+    #o2 .val { font-size: 11px; margin-top: 3px; letter-spacing: .08em; opacity: .8; }
+    .air-bubble {
+      position: absolute; z-index: 7; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.8), rgba(160, 230, 255, .35) 45%, rgba(80, 180, 220, .15));
+      border: 1px solid rgba(200, 240, 255, .5);
+      cursor: pointer; pointer-events: auto;
+      animation: airUp 7s linear forwards;
+    }
+    @keyframes airUp { from { transform: translateY(0) scale(1); opacity: .9; } to { transform: translateY(-120vh) scale(.6); opacity: 0; } }
+
+    .fish {
+      position: absolute; z-index: 6; cursor: pointer; pointer-events: auto;
+      width: 54px; height: 28px; transform: translate(-50%, -50%);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
+    }
+    .fish svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .fish.scanned { opacity: .45; cursor: default; filter: grayscale(.4) drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
+    .fish-label {
+      position: absolute; left: 50%; top: 110%; transform: translateX(-50%);
+      white-space: nowrap; font-size: 11px; color: #e7f7ff; letter-spacing: .04em;
+      text-shadow: 0 1px 4px #000; pointer-events: none; opacity: 0; transition: opacity .2s;
+    }
+    .fish:hover .fish-label, .fish:focus .fish-label { opacity: 1; }
+
+    .pda {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.96);
+      z-index: 20; width: min(420px, calc(100vw - 28px));
+      background: linear-gradient(180deg, #0c2a36, #071820);
+      border: 1px solid rgba(80, 200, 210, .55);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset, 0 16px 40px rgba(0,0,0,.5);
+      border-radius: 10px; padding: 18px 18px 16px; color: #d7eef6;
+      opacity: 0; pointer-events: none; transition: opacity .3s ease, transform .3s ease;
+    }
+    .pda.on { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .pda-kicker { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #7ad4c8; margin-bottom: 8px; }
+    .pda-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; color: #e7f7ff; }
+    .pda-text { font-size: 15px; line-height: 1.5; margin-bottom: 16px; color: #cfe7ee; }
+    .pda-btn {
+      appearance: none; cursor: pointer; border-radius: 999px; padding: 10px 20px;
+      border: 1px solid rgba(160, 220, 240, .42); background: rgba(8, 28, 44, .7);
+      color: #e7f7ff; font: 600 14px/1 "Segoe UI", sans-serif; letter-spacing: .08em;
+    }
+    .pda-btn:hover { border-color: rgba(190, 235, 255, .7); background: rgba(16, 48, 70, .85); }
+
+    #repair {
+      position: absolute; inset: 0; z-index: 16; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(2, 8, 16, .55);
+      opacity: 0; pointer-events: none; transition: opacity .35s ease;
+    }
+    #repair.on { opacity: 1; pointer-events: auto; }
+    #repair h2 { font-size: 17px; letter-spacing: .16em; text-transform: uppercase; color: #9eefe4; margin-bottom: 14px; text-shadow: 0 2px 8px #000; background: rgba(0,12,22,.55); padding: 8px 16px; border-radius: 8px; }
+    .wires {
+      position: relative; width: min(420px, calc(100vw - 32px)); height: 220px;
+    }
+    .wires svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .term, .sock {
+      position: absolute; width: 54px; height: 36px; border-radius: 8px; cursor: pointer;
+      border: 2px solid rgba(255,255,255,.35); box-shadow: 0 4px 12px rgba(0,0,0,.35);
+    }
+    .term { left: 0; } .sock { right: 0; }
+    .term.done, .sock.done { cursor: default; opacity: .7; }
+    .term.active { box-shadow: 0 0 0 3px rgba(255,255,255,.35), 0 4px 12px rgba(0,0,0,.35); }
+
+    #camBtn {
+      position: absolute; right: 3.2%; bottom: 18%; z-index: 8;
+      appearance: none; cursor: pointer; width: 56px; height: 56px; border-radius: 50%;
+      border: 2px solid rgba(160, 220, 240, .6); background: rgba(8, 28, 44, .62);
+      color: #e7f7ff; font-size: 22px; box-shadow: 0 8px 20px rgba(0,0,0,.35);
+      display: none;
+    }
+    #camBtn.show { display: block; }
+    #flash { position: absolute; inset: 0; z-index: 18; background: #fff; opacity: 0; pointer-events: none; }
+
+    #hideBtn {
+      position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%);
+      z-index: 12; appearance: none; cursor: pointer; display: none;
+      padding: 13px 28px; border-radius: 999px;
+      border: 1px solid rgba(230, 120, 80, .7); background: rgba(40, 12, 8, .62);
+      color: #ffe8d8; font: 600 16px/1 "Segoe UI", sans-serif; letter-spacing: .1em;
+    }
+    #hideBtn.show { display: block; }
+    #cover {
+      position: absolute; inset: 0; z-index: 11; pointer-events: none;
+      background: radial-gradient(circle at 50% 80%, transparent 20%, rgba(0, 4, 10, 0) 21%, rgba(0, 4, 10, .92) 100%);
+      opacity: 0; transition: opacity .5s ease;
+    }
+    #cover.on { opacity: 1; }
+    .levi {
+      position: absolute; z-index: 5; pointer-events: none;
+      width: min(70vw, 760px); height: auto; opacity: 0;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,.5));
+    }
+
+    #radioPing {
+      position: absolute; z-index: 8; cursor: pointer; display: none;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: radial-gradient(circle, #8ff, #2aa 40%, transparent 70%);
+      box-shadow: 0 0 16px 6px rgba(80, 220, 255, .6);
+      animation: ping 1.4s ease-out infinite;
+    }
+    #radioPing.show { display: block; }
+    @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(80, 220, 255, .6); } 100% { box-shadow: 0 0 0 18px rgba(80, 220, 255, 0); } }
+
+    @media (max-width: 600px) {
+      #o2 { width: 100px; top: 2.6%; right: 2.4%; }
+      .fish { width: 48px; height: 24px; }
+      #camBtn { width: 48px; height: 48px; bottom: 22%; }
+    }
   </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115d"></script>
-<script src="../common/hud.js?v=20261115d" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115i">
+<script src="../common/quest_config.js?v=20261115i"></script>
+<script src="../common/hud.js?v=20261115i" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
 </head>
 <body>
   <div id="stage">
@@ -153,6 +273,27 @@
       <span class="value"><span id="depthVal">10</span> м</span>
     </div>
     <button id="deeper" type="button">Глубже <span class="arrow">↓</span></button>
+    
+    <div id="o2"><span class="label">O₂</span><div class="bar"><div class="fill" id="o2fill"></div></div><div class="val"><span id="o2val">100</span>%</div></div>
+    <div id="fauna"></div>
+    <div id="radioPing" title="Радиосигнал"></div>
+    <button id="camBtn" type="button" title="Сделать снимок">📷</button>
+    <div id="flash"></div>
+    <div id="cover"></div>
+    <svg class="levi" id="levi" viewBox="0 0 800 220" aria-hidden="true"></svg>
+    <button id="hideBtn" type="button">Спрятаться</button>
+    <div id="repair">
+      <h2 id="repairTitle">Ремонт капсулы</h2>
+      <div class="wires" id="wires">
+        <svg id="wireSvg"></svg>
+      </div>
+    </div>
+    <div class="pda" id="pda">
+      <div class="pda-kicker" id="pdaKicker">КПК</div>
+      <div class="pda-title" id="pdaTitle"></div>
+      <div class="pda-text" id="pdaText"></div>
+      <button class="pda-btn" id="pdaBtn" type="button">Закрыть</button>
+    </div>
     <div id="boot"></div>
   </div>
   <script>
@@ -179,9 +320,20 @@
 
     const params = new URLSearchParams(location.search);
     const AUTO = params.get("auto") === "1";
+    const FAST = params.get("fast") === "1";
+    const SUB = (window.QUEST_CONFIG && window.QUEST_CONFIG.SUBNAUTICA) || {};
+    const O2CFG = Object.assign({ max: 100, drainPerSec: 1.1, warnAt: 28, bubbleHeal: 26, minFloor: 16 }, SUB.OXYGEN || {});
+    const PHOTO_KEY = (SUB.PHOTO && SUB.PHOTO.storageKey) || "nov16_sub_photo";
 
     let index = 0;
     let busy = false;
+    let locReady = true;
+    let oxygen = O2CFG.max;
+    let o2Last = 0, o2WarnShown = false;
+    let scanned = {};
+    let pdaAfter = null;
+    let repairDone = false, radioDone = false, photoDone = false, leviDone = false;
+    let airTimer = 0, o2Raf = 0;
     let images = [];
     let bubbles = [];
     let vents = [];
@@ -495,18 +647,12 @@
       window.__progress = 0;
       document.documentElement.dataset.index = String(index);
       if (window.QuestHUD) { QuestHUD.award("sub-q" + index); QuestHUD.setStep("loc" + (index + 1)); }
-      if (index >= LOCS.length - 1) {
-        deeper.classList.add("hidden");
-        deeper.disabled = true;
-        if (window.QuestHUD) QuestHUD.showNext("Дальше");
-      } else {
-        deeper.classList.remove("hidden");
-        deeper.disabled = false;
-      }
+      onArrive(index);
     }
 
     function goNext() {
       if (busy) return false;
+      if (!locReady) return false;
       if (index >= LOCS.length - 1) return false;
       busy = true;
       document.documentElement.dataset.busy = "1";
@@ -544,6 +690,336 @@
       return true;
     }
 
+
+    const faunaBox = document.getElementById("fauna");
+    const pda = document.getElementById("pda");
+    const pdaKicker = document.getElementById("pdaKicker");
+    const pdaTitle = document.getElementById("pdaTitle");
+    const pdaText = document.getElementById("pdaText");
+    const pdaBtn = document.getElementById("pdaBtn");
+    const repairEl = document.getElementById("repair");
+    const wiresEl = document.getElementById("wires");
+    const wireSvg = document.getElementById("wireSvg");
+    const o2el = document.getElementById("o2");
+    const o2fill = document.getElementById("o2fill");
+    const o2val = document.getElementById("o2val");
+    const camBtn = document.getElementById("camBtn");
+    const flash = document.getElementById("flash");
+    const hideBtn = document.getElementById("hideBtn");
+    const cover = document.getElementById("cover");
+    const levi = document.getElementById("levi");
+    const radioPing = document.getElementById("radioPing");
+
+    function setReady(v) {
+      locReady = !!v;
+      document.documentElement.dataset.locReady = locReady ? "1" : "0";
+      if (index >= LOCS.length - 1) {
+        deeper.classList.add("hidden"); deeper.disabled = true;
+        if (locReady && window.QuestHUD) QuestHUD.showNext("Дальше");
+      } else if (locReady && !busy) {
+        deeper.classList.remove("hidden"); deeper.disabled = false;
+        const label = (SUB.RADIO && index === SUB.RADIO.loc && radioDone && SUB.RADIO.nextLabel) ? SUB.RADIO.nextLabel : "Глубже";
+        const arrow = deeper.querySelector(".arrow");
+        deeper.textContent = "";
+        deeper.appendChild(document.createTextNode(label + " "));
+        if (arrow) deeper.appendChild(arrow);
+        else {
+          const sp = document.createElement("span"); sp.className = "arrow"; sp.textContent = "↓";
+          deeper.appendChild(sp);
+        }
+      } else {
+        deeper.classList.add("hidden"); deeper.disabled = true;
+      }
+    }
+
+    function showPda(kicker, title, text, btn, after) {
+      pdaKicker.textContent = kicker || "КПК";
+      pdaTitle.textContent = title || "";
+      pdaText.textContent = text || "";
+      pdaBtn.textContent = btn || "Закрыть";
+      pdaAfter = after || null;
+      pda.classList.add("on");
+      if (window.QuestHUD) QuestHUD.setStep(kicker === "Сканер" ? "scan" : (kicker || "pda").toLowerCase());
+    }
+    function closePda() {
+      pda.classList.remove("on");
+      const fn = pdaAfter; pdaAfter = null;
+      if (typeof fn === "function") fn();
+    }
+    pdaBtn.addEventListener("click", (e) => { e.stopPropagation(); closePda(); });
+
+    /* ----- кислород ----- */
+    function renderO2() {
+      const pct = Math.max(0, Math.min(100, oxygen));
+      o2fill.style.width = pct + "%";
+      o2val.textContent = String(Math.round(pct));
+      o2el.classList.toggle("warn", pct <= O2CFG.warnAt);
+    }
+    function addO2(n) {
+      oxygen = Math.min(O2CFG.max, oxygen + n);
+      renderO2();
+    }
+    function spawnAirBubble() {
+      const b = document.createElement("div");
+      b.className = "air-bubble";
+      const size = 18 + Math.random() * 18;
+      b.style.width = b.style.height = size + "px";
+      b.style.left = (10 + Math.random() * 80) + "%";
+      b.style.bottom = (-4 + Math.random() * 8) + "%";
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        addO2(O2CFG.bubbleHeal);
+        b.remove();
+      });
+      document.getElementById("stage").appendChild(b);
+      setTimeout(() => b.remove(), 7000);
+    }
+    function startOxygen() {
+      renderO2();
+      o2Last = performance.now();
+      const tick = (now) => {
+        const dt = Math.min(0.1, (now - o2Last) / 1000);
+        o2Last = now;
+        if (!busy && !pda.classList.contains("on") && !repairEl.classList.contains("on")) {
+          const drain = (FAST ? O2CFG.drainPerSec * 1.6 : O2CFG.drainPerSec) * dt;
+          oxygen = Math.max(O2CFG.minFloor, oxygen - drain);
+          renderO2();
+          if (oxygen <= O2CFG.warnAt + 1 && !o2WarnShown) {
+            o2WarnShown = true;
+            spawnAirBubble(); spawnAirBubble();
+          }
+          if (oxygen <= O2CFG.minFloor + 1) {
+            oxygen = Math.min(O2CFG.max, oxygen + O2CFG.bubbleHeal * 0.35);
+            renderO2();
+          }
+        }
+        o2Raf = requestAnimationFrame(tick);
+      };
+      o2Raf = requestAnimationFrame(tick);
+      const bubbleLoop = () => {
+        if (!busy && Math.random() < 0.65) spawnAirBubble();
+        airTimer = setTimeout(bubbleLoop, FAST ? 2200 : 4500 + Math.random() * 2500);
+      };
+      airTimer = setTimeout(bubbleLoop, FAST ? 800 : 2500);
+    }
+
+    /* ----- сканер ----- */
+    function fishSvg(color) {
+      color = color || "#4aa3d8";
+      return '<svg viewBox="0 0 64 32"><ellipse cx="28" cy="16" rx="20" ry="11" fill="'+color+'" /><polygon points="48,16 64,4 64,28" fill="'+color+'" /><circle cx="18" cy="14" r="2.2" fill="#102028" /><path d="M8 16 Q14 8 22 12" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.4"/></svg>';
+    }
+    function renderFauna() {
+      faunaBox.innerHTML = "";
+      const list = (SUB.SCANNER || []).filter((f) => f.loc === index);
+      list.forEach((f, i) => {
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "fish" + (scanned[f.id] ? " scanned" : "");
+        el.style.left = f.x + "%";
+        el.style.top = f.y + "%";
+        el.style.animation = "fishSwim "+(3.2+i*0.4)+"s ease-in-out "+(i*0.4)+"s infinite alternate";
+        const colors = ["#3d8ed8", "#e0a03a", "#4cbfa6", "#d46aa0"];
+        el.innerHTML = fishSvg(colors[i % colors.length]) + '<span class="fish-label"></span>';
+        el.querySelector(".fish-label").textContent = f.name || "Сканировать";
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (scanned[f.id]) return;
+          scanned[f.id] = true;
+          el.classList.add("scanned");
+          showPda("Сканер", f.name || "Существо", f.comment || "Заглушка: запись КПК.", "Закрыть");
+        });
+        faunaBox.appendChild(el);
+      });
+    }
+    const styleFish = document.createElement("style");
+    styleFish.textContent = "@keyframes fishSwim { from { transform: translate(-50%,-50%) translateX(-8px); } to { transform: translate(-50%,-50%) translateX(10px) scaleX(-1); } }";
+    document.head.appendChild(styleFish);
+
+    /* ----- ремонт ----- */
+    const WIRE_COLORS = [
+      { color: "#e25555", name: "красный" },
+      { color: "#3d8ae0", name: "синий" },
+      { color: "#e0c04a", name: "жёлтый" }
+    ];
+    let wireState = { from: null, links: [] };
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+    function drawWires() {
+      const terms = [...wiresEl.querySelectorAll(".term")];
+      const socks = [...wiresEl.querySelectorAll(".sock")];
+      const wr = wiresEl.getBoundingClientRect();
+      let lines = "";
+      wireState.links.forEach((L) => {
+        const a = terms.find((t) => t.dataset.color === L);
+        const b = socks.find((t) => t.dataset.color === L);
+        if (!a || !b) return;
+        const ar = a.getBoundingClientRect(), br = b.getBoundingClientRect();
+        const x1 = ar.right - wr.left, y1 = ar.top + ar.height/2 - wr.top;
+        const x2 = br.left - wr.left, y2 = br.top + br.height/2 - wr.top;
+        lines += '<path d="M'+x1+' '+y1+' C '+(x1+60)+' '+y1+', '+(x2-60)+' '+y2+', '+x2+' '+y2+'" stroke="'+L+'" stroke-width="6" fill="none" stroke-linecap="round"/>';
+      });
+      wireSvg.innerHTML = lines;
+    }
+    function startRepair() {
+      if (repairDone) { setReady(true); return; }
+      setReady(false);
+      if (window.QuestHUD) QuestHUD.setStep("repair");
+      const left = WIRE_COLORS;
+      const right = shuffle(WIRE_COLORS);
+      [...wiresEl.querySelectorAll(".term, .sock")].forEach((n) => n.remove());
+      wireState = { from: null, links: [] };
+      wireSvg.innerHTML = "";
+      left.forEach((w, i) => {
+        const t = document.createElement("div");
+        t.className = "term"; t.dataset.color = w.color;
+        t.style.background = w.color; t.style.top = (18 + i * 64) + "px";
+        t.title = w.name;
+        t.addEventListener("click", () => onTerm(t));
+        wiresEl.appendChild(t);
+      });
+      right.forEach((w, i) => {
+        const t = document.createElement("div");
+        t.className = "sock"; t.dataset.color = w.color;
+        t.style.background = w.color; t.style.top = (18 + i * 64) + "px";
+        t.title = w.name;
+        t.addEventListener("click", () => onSock(t));
+        wiresEl.appendChild(t);
+      });
+      document.getElementById("repairTitle").textContent = (SUB.REPAIR && SUB.REPAIR.title) || "Ремонт капсулы";
+      repairEl.classList.add("on");
+      if (AUTO || FAST) setTimeout(() => { wireState.links = WIRE_COLORS.map((w) => w.color); finishRepair(); }, FAST ? 200 : 600);
+    }
+    function onTerm(t) {
+      if (t.classList.contains("done") || repairDone) return;
+      wiresEl.querySelectorAll(".term").forEach((n) => n.classList.remove("active"));
+      t.classList.add("active"); wireState.from = t;
+    }
+    function onSock(t) {
+      if (!wireState.from || t.classList.contains("done") || repairDone) return;
+      if (wireState.from.dataset.color === t.dataset.color) {
+        wireState.links.push(t.dataset.color);
+        wireState.from.classList.add("done"); t.classList.add("done");
+        wireState.from.classList.remove("active"); wireState.from = null;
+        drawWires();
+        if (wireState.links.length >= WIRE_COLORS.length) finishRepair();
+      } else {
+        wireState.from.classList.remove("active"); wireState.from = null;
+      }
+    }
+    function finishRepair() {
+      repairDone = true;
+      drawWires();
+      setTimeout(() => {
+        repairEl.classList.remove("on");
+        showPda("КПК", (SUB.REPAIR && SUB.REPAIR.title) || "Ремонт капсулы",
+          (SUB.REPAIR && SUB.REPAIR.done) || "Капсула в порядке.", "Дальше",
+          () => setReady(true));
+      }, 350);
+    }
+
+    /* ----- радио ----- */
+    function startRadio() {
+      if (radioDone) { setReady(true); return; }
+      setReady(false);
+      if (window.QuestHUD) QuestHUD.setStep("radio");
+      radioPing.style.left = "58%"; radioPing.style.top = "46%";
+      radioPing.classList.add("show");
+      if (AUTO || FAST) setTimeout(() => { if (!radioDone) radioPing.click(); }, FAST ? 200 : 800);
+    }
+    radioPing.addEventListener("click", (e) => {
+      e.stopPropagation();
+      radioPing.classList.remove("show");
+      const R = SUB.RADIO || {};
+      showPda("Радио", R.title || "Радиосигнал", R.text || "Заглушка: послание", "Дальше", () => {
+        radioDone = true; setReady(true);
+      });
+    });
+
+    /* ----- фото ----- */
+    function startPhoto() {
+      camBtn.classList.add("show");
+      if (window.QuestHUD) QuestHUD.setStep("photo");
+      if (AUTO || FAST) setTimeout(() => { if (!photoDone) takePhoto(); }, FAST ? 250 : 900);
+    }
+    function takePhoto() {
+      if (photoDone) return;
+      photoDone = true;
+      camBtn.classList.remove("show");
+      flash.style.transition = "none"; flash.style.opacity = "1";
+      requestAnimationFrame(() => {
+        flash.style.transition = "opacity .45s ease"; flash.style.opacity = "0";
+      });
+      const P = SUB.PHOTO || {};
+      const src = LOCS[index] && LOCS[index].src;
+      try { localStorage.setItem(PHOTO_KEY, JSON.stringify({ src: src, title: P.title || "Заглушка: фото", loc: index })); } catch (e) {}
+      showPda("Камера", P.title || "Заглушка: фото", "Снимок сохранён. Он появится в финале.", "Дальше");
+    }
+    camBtn.addEventListener("click", (e) => { e.stopPropagation(); takePhoto(); });
+
+    /* ----- левиафан ----- */
+    function startLeviathan() {
+      if (leviDone) { setReady(true); return; }
+      setReady(false);
+      if (window.QuestHUD) QuestHUD.setStep("leviathan");
+      const L = SUB.LEVIATHAN || {};
+      levi.innerHTML = '<path d="M40 130 C 140 60, 260 40, 400 80 C 520 110, 620 90, 740 50 L 780 70 C 640 130, 520 160, 400 140 C 260 120, 140 150, 40 150 Z" fill="rgba(4,16,28,.82)"/><ellipse cx="720" cy="58" rx="18" ry="10" fill="rgba(4,16,28,.82)"/>';
+      levi.style.top = "8%"; levi.style.left = "-60%"; levi.style.opacity = "0.9";
+      levi.animate([{ transform: "translateX(0)" }, { transform: "translateX(160vw)" }], { duration: FAST ? 1800 : 7000, easing: "linear", fill: "forwards" });
+      showPda("КПК", "Предупреждение", L.warning || "Крупная биоформа поблизости.", "Понятно", () => {
+        hideBtn.classList.add("show");
+        if (AUTO || FAST) setTimeout(() => hideBtn.click(), FAST ? 200 : 700);
+      });
+    }
+    hideBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      hideBtn.classList.remove("show");
+      cover.classList.add("on");
+      setTimeout(() => {
+        cover.classList.remove("on");
+        levi.style.opacity = "0";
+        leviDone = true;
+        const L = SUB.LEVIATHAN || {};
+        showPda("КПК", "КПК", L.after || "Опасность миновала.", "Дальше", () => setReady(true));
+      }, FAST ? 400 : 1400);
+    });
+
+    function clearLocExtras() {
+      faunaBox.innerHTML = "";
+      camBtn.classList.remove("show");
+      radioPing.classList.remove("show");
+      hideBtn.classList.remove("show");
+      repairEl.classList.remove("on");
+      cover.classList.remove("on");
+      levi.style.opacity = "0";
+      pda.classList.remove("on");
+    }
+
+    function onArrive(i) {
+      clearLocExtras();
+      renderFauna();
+      const needRepair = SUB.REPAIR && i === SUB.REPAIR.loc && !repairDone;
+      const needRadio = SUB.RADIO && i === SUB.RADIO.loc && !radioDone;
+      const needLevi = SUB.LEVIATHAN && i === SUB.LEVIATHAN.loc && !leviDone;
+      if (needRepair) startRepair();
+      else if (needRadio) startRadio();
+      else if (needLevi) startLeviathan();
+      else setReady(true);
+      if (SUB.PHOTO && i === SUB.PHOTO.loc && !photoDone) startPhoto();
+      document.documentElement.dataset.index = String(i);
+    }
+
+    function forceComplete() {
+      if (SUB.REPAIR && index === SUB.REPAIR.loc && !repairDone) { repairDone = true; repairEl.classList.remove("on"); }
+      if (SUB.RADIO && index === SUB.RADIO.loc && !radioDone) { radioDone = true; radioPing.classList.remove("show"); }
+      if (SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc && !leviDone) { leviDone = true; hideBtn.classList.remove("show"); cover.classList.remove("on"); }
+      if (SUB.PHOTO && index === SUB.PHOTO.loc && !photoDone) takePhoto();
+      pda.classList.remove("on");
+      setReady(true);
+    }
+
     deeper.addEventListener("click", () => goNext());
 
     async function preload() {
@@ -570,11 +1046,18 @@
       document.documentElement.dataset.busy = "0";
       window.__ready = true;
       window.__goNext = goNext;
+      window.__subnautica = {
+        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, scanned: Object.assign({}, scanned) }; },
+        completeGate: forceComplete
+      };
+      onArrive(0);
+      startOxygen();
 
       if (AUTO) {
         const run = async () => {
           while (index < LOCS.length - 1) {
-            await new Promise((r) => setTimeout(r, PAUSE_MS));
+            forceComplete();
+            await new Promise((r) => setTimeout(r, FAST ? 200 : PAUSE_MS));
             if (!goNext()) break;
             await new Promise((r) => {
               const iv = setInterval(() => {

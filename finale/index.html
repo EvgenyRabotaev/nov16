@@ -6,9 +6,15 @@
 <title>Наш путь — заглушка</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115d"></script>
-<script src="../common/hud.js?v=20261115d" data-screen="finale"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261115i">
+<script src="../common/quest_config.js?v=20261115i"></script>
+<script src="../common/hud.js?v=20261115i" data-screen="finale"></script>
+<style>
+  .fin-photo { margin: 18px auto 6px; width: min(280px, 70vw); text-align: center; }
+  .fin-photo img { width: 100%; border-radius: 4px; box-shadow: 0 8px 20px rgba(0,0,0,.25); display: block; background: #123; }
+  .fin-photo figcaption { margin-top: 8px; font-size: 14px; opacity: .8; }
+  .fin-photo.is-empty img { display: none; }
+</style>
 </head>
 <body class="ph-body ph--quest" data-placeholder="1">
 <div class="ph-bg" aria-hidden="true"></div>
@@ -16,7 +22,31 @@
   <div class="ph-kicker">Финал</div>
   <h1 class="ph-title">Наш путь</h1>
   <p class="ph-text">Здесь будут финальные слова.</p>
+  <figure class="fin-photo is-empty" id="finPhoto">
+    <img id="finPhotoImg" alt="">
+    <figcaption id="finPhotoCap">Заглушка: фото</figcaption>
+  </figure>
   <button class="ph-btn" id="phNext" type="button" onclick="QuestHUD.next()">Дальше</button>
 </main>
+<script>
+(function () {
+  var P = (window.QUEST_CONFIG && window.QUEST_CONFIG.SUBNAUTICA && window.QUEST_CONFIG.SUBNAUTICA.PHOTO) || {};
+  var key = P.storageKey || "nov16_sub_photo";
+  var fig = document.getElementById("finPhoto");
+  var img = document.getElementById("finPhotoImg");
+  var cap = document.getElementById("finPhotoCap");
+  cap.textContent = P.title || "Заглушка: фото";
+  try {
+    var raw = localStorage.getItem(key);
+    if (raw) {
+      var d = JSON.parse(raw);
+      var src = d.src || "";
+      if (src && !/^https?:|^\//.test(src) && src.indexOf("../") !== 0) src = "../subnautica/" + src;
+      if (src) { img.src = src; fig.classList.remove("is-empty"); }
+      if (d.title) cap.textContent = d.title;
+    }
+  } catch (e) {}
+})();
+</script>
 </body>
 </html>
