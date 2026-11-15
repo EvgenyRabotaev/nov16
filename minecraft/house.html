@@ -40,6 +40,8 @@
   .panel {
     position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
     width: min(600px, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column;
     background: rgba(16, 0, 16, .86); color: #fff;
     border: 3px solid #1b1b1b; box-shadow: inset 0 0 0 2px #5000aa, 0 10px 30px rgba(0, 0, 0, .35);
     padding: 14px 16px 14px; z-index: 10;
@@ -47,7 +49,8 @@
   }
   .panel.hidden { opacity: 0; transform: translate(-50%, -12px); pointer-events: none; }
   .q-num { font: 700 13px/1 "Courier New", "DejaVu Sans Mono", monospace; letter-spacing: .08em; color: #ffff55; text-shadow: 2px 2px 0 #3f3f00; }
-  .q-text { margin: 10px 0 12px; font-size: 18px; line-height: 1.45; color: #f6f1e6; max-height: 38vh; overflow-y: auto; text-shadow: 1px 1px 0 #000; }
+  .q-text { margin: 10px 0 12px; font-size: 18px; line-height: 1.45; color: #f6f1e6; max-height: 38vh; min-height: 0; flex: 0 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; text-shadow: 1px 1px 0 #000; }
+  .q-text i { font-style: italic; }
   .ans-inputs { display: flex; flex-direction: column; gap: 8px; margin: 0 0 8px; }
   .ans-input { width: 100%; padding: 10px 12px; border: 2px solid #a0a0a0; border-radius: 0; background: #000; color: #fff; font: 16px/1.3 "Segoe UI", "Noto Sans", sans-serif; outline: none; user-select: text; }
   .ans-input::placeholder { color: #8a8a8a; }
@@ -168,11 +171,11 @@
 
   @media (max-width: 700px) {
     .panel { padding: 12px 12px 12px; }
-    .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 10px; max-height: 32vh; }
+    .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 10px; max-height: min(42vh, calc(100dvh - 220px)); }
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p8"></script>
+<script src="../common/quest_config.js?v=20261115p9"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="minecraft"></script>
 <script src="craft.js?v=20261115i"></script>
 </head>
@@ -556,6 +559,12 @@
   }
 
   function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  function formatQText(text) {
+    return esc(text)
+      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+      .replace(/\*(.+?)\*/g, "<i>$1</i>")
+      .replace(/\n/g, "<br>");
+  }
 
   /* Пиксельная книга (предмет в стиле Minecraft) и раскрытый ежедневник. */
   const BOOK_ITEM_SVG = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">' +
@@ -634,7 +643,7 @@
   function showPrologue() {
     const text = MC.PROLOGUE;
     if (!text) { render(); return; }
-    qText.innerHTML = esc(text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    qText.innerHTML = formatQText(text);
     qText.scrollTop = 0;
     answerInputs.innerHTML = "";
     ansMsg.textContent = "Нажми, чтобы продолжить";
@@ -667,7 +676,7 @@
     answerInputs.innerHTML = ""; ansMsg.textContent = ""; ansMsg.className = "ans-msg";
     if (window.QuestHUD) QuestHUD.setStep(exitMode ? "exit" : "q" + (question + 1));
     if (!q) { qText.textContent = "(вопрос — заглушка)"; return; }
-    qText.innerHTML = esc(q.text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    qText.innerHTML = formatQText(q.text);
     qText.scrollTop = 0;
     (q.parts || []).forEach((part) => {
       const inp = document.createElement("input");
@@ -733,14 +742,16 @@
   answerBtn.addEventListener("click", submit);
   window.addEventListener("resize", layout);
   layout();
-  window.__mc = { get state() { return { question, step, shown, busy, done, n: QUESTIONS.length, houseLevel }; }, layout };
+  window.__mc = { get state() { return { question, step, shown, busy, done, n: QUESTIONS.length, houseLevel }; }, layout, render };
 
   /* Отладка: house.html?craft=N (N = 2…5) — сразу крафт после вопроса N (предыдущие этапы дома уже стоят).
      house.html?exit=1 — сразу вопрос «Двигаемся дальше?»; house.html?craft=boat — сразу крафт лодки.
      house.html?stage=0…5 — сразу показать этапы дома без крафта.
-     house.html?book=1 — стены уже стоят, сразу книга, затем вопрос 4. */
+     house.html?book=1 — стены уже стоят, сразу книга, затем вопрос 4.
+     house.html?q=N — сразу вопрос N (1-based), пролог пропускается, предыдущие этапы дома уже стоят. */
   const STAGE_DEBUG = +((location.search.match(/[?&]stage=(\d)/) || [])[1] || -1);
   const CRAFT_DEBUG = +((location.search.match(/[?&]craft=(\d)/) || [])[1] || 0);
+  const Q_DEBUG = +((location.search.match(/[?&]q=(\d+)/) || [])[1] || 0);
   const EXIT_DEBUG = EXIT && (/[?&]exit=1/.test(location.search) ? "q" : /[?&]craft=boat/.test(location.search) ? "craft" : "");
   if (EXIT_DEBUG) {
     question = QUESTIONS.length; step = shown = N; done = true;
@@ -749,6 +760,13 @@
     together = 1; layout(); heartEl.classList.add("on"); startFireflies();
     if (EXIT_DEBUG === "q") setTimeout(startExit, 500);
     else { exitMode = true; busy = true; setTimeout(exitCorrect, 500); }
+  } else if (Q_DEBUG >= 1) {
+    const n = Math.min(Q_DEBUG, QUESTIONS.length);
+    question = n - 1; step = shown = question;
+    if (question >= 1) { vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true; }
+    STAGES.filter((st) => st.after <= question).forEach((st) => applyStage(st, true));
+    layout();
+    setTimeout(render, 80);
   } else if (STAGE_DEBUG >= 0) {
     vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true;
     const n = STAGE_DEBUG;
