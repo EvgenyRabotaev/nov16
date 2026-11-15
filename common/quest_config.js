@@ -537,6 +537,7 @@ window.QUEST_CONFIG = {
         depth: 300,
         loc: 3,
         caption: "Глубина 300 м. Вика пересаживается в Мотылёк.",
+        leaveCaption: "Вика оставляет Мотылёк у входа в пещеру.",
         o2Label: "O₂ · Мотылёк"
       },
       REUNION: {
@@ -621,10 +622,10 @@ window.QUEST_CONFIG = {
        question — id из QUESTIONS.genshin. Необязательные chest/cook — после ответа, если заданы. */
     WAYPOINTS: [
       { id: "wp1", name: "ВАЛЛ-И", x: 25.8, y: 53, question: "gs-first-see" },
-      { id: "wp2", name: "Ледниковый период", x: 64, y: 40, question: "gs-alike" },
-      { id: "wp3", name: "Леди и Бродяга", x: 82, y: 62, question: "gs-lady-tramp" },
-      { id: "wp4", name: "Тачки", x: 50.2, y: 68.2, question: "gs-cars" },
-      { id: "wp5", name: "Твоё имя", x: 82.8, y: 73.8, question: "gs-your-name" }
+      { id: "wp2", name: "Ледниковый период", x: 18.6, y: 26.6, question: "gs-alike" },
+      { id: "wp3", name: "Леди и Бродяга", x: 75.6, y: 38.8, question: "gs-lady-tramp" },
+      { id: "wp4", name: "Тачки", x: 54.8, y: 60.6, question: "gs-cars" },
+      { id: "wp5", name: "Твоё имя", x: 83.9, y: 70.0, question: "gs-your-name" }
     ],
     /* Дополнительные огоньки на карте (after — id точки, после которой появляются). Сейчас пусто. */
     COMMISSIONS: [],

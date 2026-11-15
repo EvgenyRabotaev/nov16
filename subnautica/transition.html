@@ -832,10 +832,10 @@
     }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115m">
-<script src="../common/quest_config.js?v=20261115p37"></script>
+<script src="../common/quest_config.js?v=20261115p38"></script>
 <script src="../common/hud.js?v=20261115m" data-screen="subnautica"></script>
-<link rel="stylesheet" href="../common/world_title.css?v=20261115p37">
-<script src="../common/world_title.js?v=20261115p37" data-world="subnautica"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261115p38">
+<script src="../common/world_title.js?v=20261115p38" data-world="subnautica"></script>
 <style>
   /* HUD — правый нижний угол; карточка вопроса парит над ним по центру. */
 </style>
@@ -1748,7 +1748,9 @@
       const lab = document.getElementById("o2Label");
       if (lab) {
         const sm = (SUB.STORY && SUB.STORY.SEAMOTH) || {};
-        lab.textContent = locked ? (sm.o2Label || "O₂ · Мотылёк") : "O₂";
+        lab.textContent = (locked && typeof inSeamoth === "function" && inSeamoth())
+          ? (sm.o2Label || "O₂ · Мотылёк")
+          : "O₂";
       }
     }
     function addO2(n) {
@@ -2245,11 +2247,29 @@
       if (caveSearch) { caveSearch.classList.remove("on", "found"); caveSearch.setAttribute("aria-hidden", "true"); }
       if (caveEntrance) caveEntrance.classList.remove("lit", "hint");
     }
-    function startCaveSearch() {
+    async function playLeaveSeamoth() {
+      if (inCaveSpace() && !document.documentElement.classList.contains("in-sub")) return;
+      setReady(false);
+      document.documentElement.dataset.story = "leave-seamoth";
+      const cfg = (STORY && STORY.SEAMOTH) || {};
+      const text = cfg.leaveCaption || "Вика оставляет Мотылёк у входа в пещеру.";
+      const hold = FAST ? 500 : 2000;
+      const capP = showStoryCaption(text, hold);
+      await new Promise((r) => setTimeout(r, FAST ? 160 : 600));
+      caveSearching = true;
+      syncCraft();
+      await capP;
+      document.documentElement.dataset.story = "";
+    }
+    async function startCaveSearch() {
       if (caveDone) { setReady(true); return; }
       if (caveSearching) return;
       setReady(false);
+      if (document.documentElement.classList.contains("in-sub") || (typeof inSeamoth === "function" && inSeamoth())) {
+        await playLeaveSeamoth();
+      }
       caveSearching = true;
+      syncCraft();
       caveDwell = 0;
       if (window.QuestHUD) QuestHUD.setStep("cave");
       const p = cavePos();
@@ -2690,8 +2710,15 @@
       for (let i = 0; i < LOCS.length; i++) if (locDepth(i) >= seamothDepth()) return i;
       return 3;
     }
+    function inCaveSpace(i) {
+      const idx = i != null ? i : index;
+      if (idx >= heartLoc()) return true;
+      if (idx === caveLoc() && (caveSearching || caveDone)) return true;
+      return false;
+    }
     function inSeamoth(i) {
       const idx = i != null ? i : index;
+      if (inCaveSpace(idx)) return false;
       return locDepth(idx) >= seamothDepth() && (seamothDone || idx > seamothEntryLoc() || locDepth(idx) > seamothDepth());
     }
     function syncCraft() {
@@ -2706,7 +2733,8 @@
       }
       const v = document.getElementById("diverVika");
       if (v) v.setAttribute("aria-label", on ? "Мотылёк" : "Вика");
-      if (on) lockOxygen();
+      if (o2Locked()) lockOxygen();
+      else renderO2();
     }
     function syncDivePair() {
       syncCraft();
@@ -3006,7 +3034,7 @@
         if (LEVI_DEBUG) { leviDone = false; caveDone = false; }
         if (index > heartLoc() || (Q_DEBUG && index === heartLoc()) || GLOW_DEBUG || REUNION_DEBUG) caveDone = true;
         if (index > heartLoc()) heartQDone = true;
-        if (CAVE_DEBUG) { leviDone = true; caveDone = false; }
+        if (CAVE_DEBUG) { leviDone = true; leviQDone = true; caveDone = false; }
         if (!INTRO_DEBUG && (index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG)) introDone = true;
         if (!CURRENT_DEBUG && (index > currentLoc() || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG || (Q_DEBUG && index > currentLoc()) || (Q_DEBUG && index === currentLoc() && Q_DEBUG > 1))) currentDone = true;
         if (GLOW_DEBUG || index > heartLoc()) reunionDone = true;
@@ -3028,7 +3056,7 @@
       window.__ready = true;
       window.__goNext = goNext;
       window.__subnautica = {
-        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, introDone, currentDone, reunionDone, seamothDone, inSeamoth: inSeamoth(), together: !currentDone || reunionDone, radioFreq, leviPlaying, leviHidden, scanned: Object.assign({}, scanned) }; },
+        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, introDone, currentDone, reunionDone, seamothDone, inSeamoth: inSeamoth(), inCave: inCaveSpace(), together: !currentDone || reunionDone, radioFreq, leviPlaying, leviHidden, scanned: Object.assign({}, scanned) }; },
         story: { playIntro, playCurrent: playCurrentEvent, playReunion, showCard: showEventCard },
         completeGate: forceComplete,
         spawnBubble: spawnAirBubble,
