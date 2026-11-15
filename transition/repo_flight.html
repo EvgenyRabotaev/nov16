@@ -184,7 +184,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115d">
-<script src="../common/quest_config.js?v=20261115p29"></script>
+<script src="../common/quest_config.js?v=20261115p30"></script>
 <script src="../common/hud.js?v=20261115d" data-screen="repo-flight"></script>
 </head>
 <body>
@@ -233,12 +233,17 @@
     { src: "repo/worlds/08_teyvat_tile.jpg", name: "Тейват",            road: ["#b89450", "#d4b06a"], dash: "rgba(255,248,210,.9)",  dust: "255,220,140" }
   ];
   const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 2;
-  const HEART_CAP = CFG.HEART_CAP != null ? CFG.HEART_CAP : 50;
+  const HEART_CAP = CFG.HEART_CAP != null ? CFG.HEART_CAP : 0; /* 0 — без потолка */
   const HEART_KEY = "nov16_repo_hearts";
+  const HEART_EVERY = FAST ? 380 : (CFG.HEART_EVERY_MS || 700);
+  const HEART_JITTER = FAST ? 60 : (CFG.HEART_JITTER_MS != null ? CFG.HEART_JITTER_MS : 120);
   const LANE_MS = CFG.LANE_MS || 250;
   const FADE = CFG.FADE_MS || 3000;
   const WORLD_MS = FAST ? 2800 : (CFG.WORLD_MS || 22500);
+  const WORLD_FADE = FAST ? 1400 : 2500;
+  const TEYVAT_LEAD = FAST ? 3000 : (CFG.TEYVAT_LEAD_MS || 9000);
   const CAR_ASPECT = 1010 / 576;
+  const CAR_CX = W => W * (W < 600 ? 0.27 : 0.19);
 
   const ENTER = FAST ? 700 : 2000;
   const END = FAST ? 7000 : 14000;
@@ -253,8 +258,11 @@
     T.flash = T.portalAt + END * 0.58;
     T.titleAt = T.portalAt + END * 0.68;
     T.done = DURATION;
+    /* Тейват полностью на экране за TEYVAT_LEAD до начала всасывания в портал */
+    T.teyvatFull = Math.max(T.enter + WORLD_FADE + 500, T.portalAt - TEYVAT_LEAD);
+    T.teyvatAt = Math.max(T.enter, T.teyvatFull - WORLD_FADE);
+    planHearts();
   }
-  setTimeline();
 
   const stackA = document.getElementById("stackA");
   const stackB = document.getElementById("stackB");
@@ -281,7 +289,9 @@
   let jumpingLane = false, muted = false;
   let clock = 0, lastTs = 0;
   let collected = 0, awardedThisRun = 0;
-  let nextSpawn = 0, pickups = [];
+  let pickups = [];
+  let heartPlan = [];
+  let nextPlanI = 0;
   let W = innerWidth, H = innerHeight;
   let scrollRoad = 0, dust = [], dustAcc = 0;
   let lane = 1, laneFrom = 1, laneTo = 1, laneT0 = -1, laneVisual = 1;
@@ -289,7 +299,63 @@
   let swipeY0 = null, swipeT0 = 0, paused = false;
   let lines = [];
 
-  function alreadyAwarded() {
+  
+  function planHearts() {
+    const start = T.enter + (FAST ? 400 : 900);
+    const end = T.portalAt - (FAST ? 800 : 1600);
+    const plan = [];
+    let t = start, i = 0;
+    const span = HEART_JITTER * 2 + 1;
+    while (t <= end) {
+      const j = HEART_JITTER ? ((i * 17 + 11) % span) - HEART_JITTER : 0;
+      const lane = (i * 2 + 1) % 3;
+      plan.push({ t: t, lane: lane });
+      if (i % 3 === 2) {
+        const l2 = (lane + 1 + (i % 2)) % 3;
+        if (l2 !== lane) plan.push({ t: t, lane: l2 });
+      }
+      if (i % 7 === 6) {
+        const l3 = (lane + 2) % 3;
+        if (l3 !== lane) plan.push({ t: t, lane: l3 });
+      }
+      t += HEART_EVERY + j;
+      i++;
+    }
+    heartPlan = plan;
+    nextPlanI = 0;
+  }
+  function heartGain() {
+    if (!HEART_CAP) return HEART_PRIMOS;
+    const remain = Math.max(0, HEART_CAP - alreadyAwarded());
+    return Math.min(HEART_PRIMOS, remain);
+  }
+  function grantSkipMax() {
+    const n = heartPlan.length;
+    collected = n;
+    if (heartCountEl) heartCountEl.textContent = String(n);
+    const target = n * HEART_PRIMOS;
+    const missing = Math.max(0, target - awardedThisRun);
+    if (missing) {
+      try {
+        if (window.QuestHUD) QuestHUD.addPrimos(missing);
+      } catch (e) {}
+      setAwarded(alreadyAwarded() + missing);
+      awardedThisRun += missing;
+    }
+  }
+  function setWorldInstant(i) {
+    lastWorldShown = i; curWorld = i;
+    setStackWorld(frontStack, i);
+    frontStack.classList.add("on");
+    backStack.classList.remove("on");
+    worldName.textContent = (WORLDS[i] && WORLDS[i].name) || "";
+    worldName.classList.remove("off");
+    worldName.classList.add("on");
+  }
+
+  setTimeline();
+
+function alreadyAwarded() {
     try { return Math.max(0, parseInt(localStorage.getItem(HEART_KEY) || "0", 10) || 0); } catch (e) { return 0; }
   }
   function setAwarded(n) {
@@ -351,9 +417,13 @@
     if (bg) bg.style.backgroundImage = "url(" + w.src + ")";
   }
   function worldIndexAt(t) {
+    const last = WORLDS.length - 1;
     if (t < T.enter) return 0;
-    const i = Math.floor((t - T.enter) / WORLD_MS);
-    return Math.min(WORLDS.length - 1, Math.max(0, i));
+    if (t >= T.teyvatAt) return last;
+    const pre = Math.max(1, T.teyvatAt - T.enter);
+    const step = Math.min(WORLD_MS, pre / Math.max(1, last));
+    const i = Math.floor((t - T.enter) / step);
+    return Math.min(last - 1, Math.max(0, i));
   }
   function setWorld(i) {
     if (i === lastWorldShown) return;
@@ -439,12 +509,12 @@
     carWrap.style.width = cw + "px";
     carWrap.style.height = ch + "px";
     const st = laneState();
-    let cx = W * (W < 600 ? 0.30 : 0.26);
+    let cx = CAR_CX(W);
     let cy = st.y, sc = st.scale, op = 1, rot = st.tilt;
     if (t < T.enter) {
       const k = Math.max(0, t / T.enter);
       const e = 1 - Math.pow(1 - k, 3);
-      cx = W * (-0.35 + (W < 600 ? 0.65 : 0.61) * e);
+      cx = W * (-0.35 + (W < 600 ? 0.62 : 0.54) * e);
       op = Math.min(1, k * 1.8);
       sc *= 0.85 + 0.15 * e;
     } else if (t >= T.portalAt && t < T.flash) {
@@ -481,7 +551,7 @@
   }
 
   function spawnHeart(laneIdx, x) {
-    if (pickups.length > 7) return null;
+    if (pickups.length > 14) return null;
     const el = document.createElement("div");
     el.className = "heart";
     el.innerHTML = '<svg viewBox="0 0 32 29" aria-hidden="true"><path fill="#ff3b6b" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" d="M16 27.5S2.5 18.2 2.5 10.2C2.5 5.6 6.1 2.5 10.3 2.5c2.4 0 4.5 1.2 5.7 3.1 1.2-1.9 3.3-3.1 5.7-3.1 4.2 0 7.8 3.1 7.8 7.7 0 8-13.5 17.3-13.5 17.3z"/></svg>';
@@ -503,12 +573,10 @@
     setTimeout(() => item.el.remove(), 300);
     collected += 1;
     heartCountEl.textContent = String(collected);
-    const already = alreadyAwarded();
-    const remain = Math.max(0, HEART_CAP - already);
-    const gain = Math.min(HEART_PRIMOS, remain);
+    const gain = heartGain();
     if (gain && window.QuestHUD) {
       QuestHUD.addPrimos(gain);
-      setAwarded(already + gain);
+      setAwarded(alreadyAwarded() + gain);
       awardedThisRun += gain;
     }
     const fl = document.createElement("div");
@@ -521,12 +589,11 @@
     setTimeout(() => fl.remove(), 900);
   }
   function updateLoot(dt, car, roadSpd) {
-    const inWindow = started && clock > T.enter + 500 && clock < T.portalAt - 500;
-    if (inWindow && clock >= nextSpawn) {
-      spawnHeart();
-      const remain = Math.max(3000, T.portalAt - clock);
-      const want = FAST ? 8 : 22;
-      nextSpawn = clock + Math.max(FAST ? 800 : 2000, remain / want);
+    if (!skipped && started && clock < T.portalAt) {
+      while (nextPlanI < heartPlan.length && clock >= heartPlan[nextPlanI].t) {
+        spawnHeart(heartPlan[nextPlanI].lane);
+        nextPlanI++;
+      }
     }
     const L = lanes();
     for (let i = pickups.length - 1; i >= 0; i--) {
@@ -537,7 +604,7 @@
       const sc = L[p.lane].scale;
       p.el.style.transform = "translate3d(" + p.x + "px," + y + "px,0) scale(" + sc + ")";
       p.y = y;
-      if (!p.taken && car && Math.abs(car.lane - p.lane) < 0.4 && Math.abs(p.x - car.cx) < Math.max(36, car.cw * 0.18)) {
+      if (!p.taken && car && Math.abs(car.lane - p.lane) < 0.4 && Math.abs(p.x - car.cx) < Math.max(44, car.cw * 0.22)) {
         collectItem(p, car);
         continue;
       }
@@ -653,7 +720,6 @@
   function finish() {
     if (doneShown) return;
     doneShown = true;
-    window.__repoFlight.done = true;
     titleCard.classList.add("on");
     worldName.classList.remove("on");
     worldName.classList.add("off");
@@ -700,7 +766,7 @@
     }
     if (clock > T.done) clock = T.done;
     const t = clock;
-    const roadSpd = (FAST ? 0.38 : 0.22) * Math.max(0.85, W / 390);
+    const roadSpd = (FAST ? 0.50 : 0.32) * Math.max(0.85, W / 390);
     if (t > 80 && t < T.flash) {
       scrollRoad += roadSpd * dt;
     }
@@ -728,12 +794,6 @@
     if (t >= T.done) finish();
     if (started && !doneShown) requestAnimationFrame(frame);
     else if (doneShown) { placeCar(T.done); placePortal(T.done); }
-    window.__repoFlight.t = t;
-    window.__repoFlight.world = curWorld;
-    window.__repoFlight.lane = laneTo;
-    window.__repoFlight.laneVisual = laneVisual;
-    window.__repoFlight.collected = collected;
-    window.__repoFlight.awarded = awardedThisRun;
   }
 
   const musicSrc = (CFG.MUSIC && String(CFG.MUSIC).trim() && String(CFG.MUSIC).trim() !== "null") ? String(CFG.MUSIC).trim() : "";
@@ -750,7 +810,7 @@
     audio = new Audio();
     audio.preload = "auto";
     audio.setAttribute("playsinline", "");
-    audio.src = musicSrc + (/[?]/.test(musicSrc) ? "&" : "?") + "v=20261115p29";
+    audio.src = musicSrc + (/[?]/.test(musicSrc) ? "&" : "?") + "v=20261115p30";
     audio.addEventListener("error", () => { audioFailed = true; });
     audio.addEventListener("loadedmetadata", () => {
       if (!FAST && isFinite(audio.duration) && audio.duration > 0) {
@@ -769,11 +829,10 @@
   function start() {
     if (started) return;
     started = true;
-    window.__repoFlight.started = true;
     tapStart.classList.remove("show");
     veil.classList.add("off");
     collectHud.classList.add("on");
-    nextSpawn = ENTER + (FAST ? 500 : 1600);
+    nextPlanI = 0;
     if (window.QuestHUD) QuestHUD.setStep("drive");
     startAudio();
     requestAnimationFrame(frame);
@@ -781,12 +840,14 @@
 
   function skip() {
     if (!DEBUG || skipped || !started || doneShown) return;
-    skipped = true; window.__repoFlight.skipped = true;
+    skipped = true;
     skipBtn.classList.remove("show");
     clock = T.portalAt;
     lastTs = 0;
     pickups.forEach((p) => p.el.remove());
     pickups = [];
+    grantSkipMax();
+    setWorldInstant(WORLDS.length - 1);
     if (audio) { try { audio.currentTime = Math.max(0, (T.portalAt) / 1000); } catch (e) {} }
   }
 
@@ -827,14 +888,27 @@
   }, { passive: true });
 
   window.__repoFlight = {
-    t: 0, duration: function () { return DURATION; }, T,
-    world: 0, lane: 1, laneVisual: 1,
-    collected: 0, awarded: 0,
-    started: false, done: false, skipped: false, debug: DEBUG, fast: FAST,
+    get t() { return clock; },
+    duration: function () { return DURATION; }, T,
+    get world() { return curWorld; },
+    get lane() { return laneTo; },
+    get laneVisual() { return laneVisual; },
+    get collected() { return collected; },
+    get awarded() { return awardedThisRun; },
+    get started() { return started; },
+    get done() { return doneShown; },
+    get skipped() { return skipped; },
+    debug: DEBUG, fast: FAST,
     skip: skip, start: start, setLane: setLane,
     spawnHeart: function (ln, x) { return spawnHeart(ln, x); },
     clearHearts: function () { pickups.forEach((p) => p.el.remove()); pickups = []; lootEl.innerHTML = ""; },
     lanes: lanes, worldMs: WORLD_MS, carSize: carSize,
+    get planned() { return heartPlan.length; },
+    primos: HEART_PRIMOS, cap: HEART_CAP, everyMs: HEART_EVERY,
+    teyvatAt: function () { return T.teyvatAt; },
+    teyvatFull: function () { return T.teyvatFull; },
+    teyvatLead: TEYVAT_LEAD,
+    worldIndexAt: worldIndexAt,
     lastCar: function () { return placeCar(clock); },
     dust: function () { return dust.map((d) => ({ x: d.x, y: d.y, life: d.life })); },
     pause: function (v) { paused = v !== false; if (!paused) lastTs = 0; },

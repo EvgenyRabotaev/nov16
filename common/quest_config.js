@@ -482,15 +482,19 @@ window.QUEST_CONFIG = {
   /* Переход R.E.P.O. (transition/repo_flight.html) — после Subnautica, перед Тейватом.
      MUSIC: путь от папки transition/ (например "music.mp3") или полный URL; пусто/null — без файла,
      тихий сгенерированный эмбиент. С музыкой: длительность = длина трека. Без музыки: DURATION_MS.
-     HEART_PRIMOS — за одно сердце, HEART_CAP — потолок примогемов за все сердца (сохраняется). */
+     HEART_PRIMOS — за одно сердце. HEART_CAP: 0 — без потолка. За пропуск начисляется полный максимум.
+     TEYVAT_LEAD_MS — за сколько до портала Тейват уже полностью на фоне. */
   TRANSITIONS: {
     REPO_FLIGHT: {
       MUSIC: "kacheli.mp3",
       DURATION_MS: 180000,
       HEART_PRIMOS: 2,
-      HEART_CAP: 50,
+      HEART_CAP: 0,
+      HEART_EVERY_MS: 700,
+      HEART_JITTER_MS: 120,
       LANE_MS: 250,
       WORLD_MS: 22500,
+      TEYVAT_LEAD_MS: 9000,
       TOAST: "Сердца собраны"
     }
   },
