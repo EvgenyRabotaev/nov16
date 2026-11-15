@@ -382,7 +382,7 @@
   let houseLevel = 0;
   const CODE_HOUSE = STAGES.some((st) => !st.img);           /* рисованный кодом домик — только если нет картинок */
   if (window.MCCraft && CODE_HOUSE) MCCraft.House.mount(houseStages);
-  function stageSrc(img) { if (!img) return img; return img + (img.indexOf('?') >= 0 ? '&' : '?') + 'v=20261115i'; }
+  function stageSrc(img) { if (!img) return img; return img + (img.indexOf('?') >= 0 ? '&' : '?') + 'v=20261115j'; }
   STAGES.forEach((st) => { if (st.img) { const im = new Image(); im.src = stageSrc(st.img); } }); /* предзагрузка */
   function stageAfter(qNum) { return STAGES.find((st) => st.after === qNum) || null; }
   function applyStage(st, instant) {
