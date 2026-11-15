@@ -403,6 +403,134 @@
   body.flying #home { pointer-events: none; }
   body.approach #ground { opacity: 1; }
 
+
+  /* ===== загадка из 4 секретных карточек (после «Женя») ===== */
+  #puzzle {
+    justify-content: flex-start;
+    justify-content: safe center;
+    gap: clamp(16px, 3.5vh, 32px);
+    z-index: 9;
+    padding-top: calc(20px + env(safe-area-inset-top));
+    overflow: hidden;
+  }
+  body.paimon-on #puzzle {
+    padding-bottom: calc(var(--dlgH) + min(80px, var(--paimonW) * .5) + 12px);
+  }
+  @media (max-width: 700px) {
+    body.paimon-on #puzzle { padding-right: calc(var(--paimonW) * .42 + 6px); }
+  }
+  .pz-board {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 1.4vw, 12px);
+    width: 100%;
+    max-width: 760px;
+    flex-shrink: 0;
+  }
+  .pz-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 1.4vw, 12px);
+    min-width: 0;
+  }
+  .pz-slot {
+    --pzW: min(140px, 16.5vw, 19vh);
+    width: var(--pzW);
+    aspect-ratio: 3 / 4;
+    border: 2px dashed rgba(180, 200, 255, .42);
+    border-radius: 12px;
+    background: rgba(12, 18, 42, .55);
+    box-shadow: inset 0 0 18px rgba(40, 70, 140, .25);
+    position: relative;
+    flex: 0 0 auto;
+    transition: border-color .2s, box-shadow .2s, background .2s, transform .2s;
+  }
+  .pz-slot.over, .pz-slot.target {
+    border-color: #ffd27a;
+    border-style: solid;
+    background: rgba(60, 40, 10, .35);
+    box-shadow: 0 0 18px rgba(255, 180, 50, .35), inset 0 0 14px rgba(255, 180, 50, .12);
+  }
+  #puzzle.solved .pz-slot {
+    border-style: solid;
+    border-color: rgba(255, 200, 80, .95);
+    box-shadow: 0 0 22px rgba(255, 170, 40, .65), 0 0 48px rgba(255, 140, 20, .35);
+  }
+  #puzzle.solved .pz-board { animation: pzGlow 1.6s ease-in-out infinite; }
+  @keyframes pzGlow {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 170, 40, .35)); }
+    50% { filter: drop-shadow(0 0 22px rgba(255, 190, 70, .8)); }
+  }
+  #puzzle.wrong .pz-board { animation: pzShake .5s ease; }
+  @keyframes pzShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); }
+    60% { transform: translateX(-7px); }
+    80% { transform: translateX(6px); }
+  }
+  .pz-arrow, .pz-slash {
+    flex: 0 0 auto;
+    color: #ffd9a6;
+    text-shadow: 0 0 12px rgba(255, 180, 60, .55);
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+  .pz-arrow { font-size: clamp(22px, 5.2vw, 42px); padding: 0 2px; }
+  .pz-slash { font-size: clamp(20px, 4.4vw, 34px); opacity: .9; }
+  .pz-tray {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: clamp(8px, 2vw, 16px);
+    width: 100%;
+    max-width: 760px;
+    min-height: calc(min(140px, 16.5vw, 19vh) * 4 / 3);
+    padding: 8px;
+    border-radius: 16px;
+  }
+  .pz-tray.over { background: rgba(255, 210, 120, .08); box-shadow: inset 0 0 0 1px rgba(255, 210, 120, .25); }
+  .pz-card {
+    width: min(140px, 16.5vw, 19vh);
+    aspect-ratio: 3 / 4;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: 0 8px 22px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.16);
+    position: relative;
+    flex: 0 0 auto;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .pz-slot .pz-card { width: 100%; height: 100%; }
+  .pz-card img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; -webkit-user-drag: none; }
+  .pz-card.selected { outline: 2px solid #ffd27a; box-shadow: 0 0 0 2px #ffd27a, 0 0 22px rgba(255, 180, 40, .75); transform: translateY(-3px); }
+  .pz-card.dragging { opacity: .35; cursor: grabbing; }
+  .pz-card:active { cursor: grabbing; }
+  .pz-drag {
+    position: fixed; z-index: 40; pointer-events: none;
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0,0,0,.55), 0 0 24px rgba(255, 180, 40, .45);
+    will-change: left, top;
+  }
+  .pz-drag img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #pzNext {
+    margin-top: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .4s;
+    flex-shrink: 0;
+  }
+  #pzNext.on { opacity: 1; pointer-events: auto; }
+  #puzzle.locked .pz-card { cursor: default; }
+
   /* На экране гачи подсказок нет — кнопку HUD прячем. */
   .qhud-hint, .qhud-panel { display: none !important; }
 </style>
@@ -410,7 +538,7 @@
 <script src="../common/quest_config.js?v=20261115p3"></script>
 <script src="../common/hud.js?v=20261115f" data-screen="gacha" data-counter="off"></script>
 <script src="card_texts.js?v=20261115z3"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
-<script src="card_texts_paimon.js?v=20261115z3"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
+<script src="card_texts_paimon.js?v=20261115z4"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
 <link rel="preload" as="image" href="../genshin/fairy.png">
 </head>
 <body>
@@ -447,6 +575,23 @@
     <div class="chint" id="cardHint">Тап по карте — слова Жени</div>
   </div>
   <button class="btn-main" id="btnClose">Дальше</button>
+</div>
+
+
+<div id="puzzle" class="screen hidden" aria-label="Загадка с секретными карточками">
+  <div class="pz-board" id="pzBoard">
+    <div class="pz-slot" data-slot="0" aria-label="Первое поле"></div>
+    <div class="pz-arrow" aria-hidden="true">→</div>
+    <div class="pz-group">
+      <div class="pz-slot" data-slot="1" aria-label="Второе поле"></div>
+      <div class="pz-slash" aria-hidden="true">/</div>
+      <div class="pz-slot" data-slot="2" aria-label="Третье поле"></div>
+      <div class="pz-slash" aria-hidden="true">/</div>
+      <div class="pz-slot" data-slot="3" aria-label="Четвёртое поле"></div>
+    </div>
+  </div>
+  <div class="pz-tray" id="pzTray" aria-label="Карточки для загадки"></div>
+  <button class="btn-main" id="pzNext">Дальше</button>
 </div>
 
 <div class="pdlg-wrap" id="pdlgWrap" aria-live="polite">
@@ -559,6 +704,9 @@
   const PAIMON = window.CARD_TEXTS_PAIMON || {};
   const PAIMON_FALLBACK = ['Ого, какая карточка! Паймон в восторге!'];
   const PAIMON_INTRO = PAIMON.zhenya_intro || ['Ой, что это?', 'Все карточки собраны, а тут что-то светится… Оранжевым?! Нажми скорее!'];
+  const PAIMON_PUZZLE = PAIMON.puzzle_intro || ['Погоди-ка… Помнишь те четыре секретные карточки с числами? Паймон чувствует, что это загадка!', 'Давай разложим их по местам?'];
+  const PAIMON_PUZZLE_OK = PAIMON.puzzle_done || ['Получилось! Паймон так и знала, что ты справишься!'];
+  const PAIMON_PUZZLE_BAD = PAIMON.puzzle_wrong || ['Хм, что-то не сходится… Попробуй ещё разок!'];
   function paimonLines(card) {
     const L = PAIMON[card.id];
     if (Array.isArray(L) && L.length) return L;
@@ -583,6 +731,12 @@
   const DEBUG_ALL = /[?&]allcollected=1/.test(location.search);
   let specialDone = DEBUG_ALL ? false : (function () { try { return localStorage.getItem(SPECIAL_KEY) === '1'; } catch (e) { return false; } })();
   function saveSpecialDone() { specialDone = true; if (DEBUG_ALL) return; try { localStorage.setItem(SPECIAL_KEY, '1'); } catch (e) {} }
+  // Загадка после «Женя». Отладка: gacha/?puzzle=1 — сразу на экран загадки.
+  const PUZZLE_KEY = 'nov16_gacha_puzzle_v1';
+  const DEBUG_PUZZLE = /[?&]puzzle=1/.test(location.search);
+  const PUZZLE_ANSWER = ['secret_2039', 'secret_344', 'secret_577', 'secret_687'];
+  let puzzleDone = (DEBUG_ALL || DEBUG_PUZZLE) ? false : (function () { try { return localStorage.getItem(PUZZLE_KEY) === '1'; } catch (e) { return false; } })();
+  function savePuzzleDone() { puzzleDone = true; if (DEBUG_ALL || DEBUG_PUZZLE) return; try { localStorage.setItem(PUZZLE_KEY, '1'); } catch (e) {} }
 
   function cardView(card) {
     const v = Object.assign({}, FX[card.rarity], card);
@@ -675,7 +829,8 @@
     if (mys) mys.classList.toggle('on', mysteryNow);
     if (mysteryNow && !busy && !document.getElementById('home').classList.contains('hidden') && !talkOn()) startTalk(PAIMON_INTRO, null, true);
     if (!mysteryNow && talkIsIntro) stopTalk();
-    if (window.QuestHUD && empty && specialDone) QuestHUD.showNext('К подаркам');
+    if (window.QuestHUD && empty && specialDone && puzzleDone) QuestHUD.showNext('К подаркам');
+    else if (window.QuestHUD && QuestHUD.hideNext) QuestHUD.hideNext();
     if (status) {
       if (empty) {
         status.textContent = EMPTY_MSG;
@@ -1311,7 +1466,12 @@
     return imgCache[src];
   }
 
+  let lastShown = null;
+  let pendingPuzzle = false;
+
   function showCard(card) {
+    lastShown = card;
+    pendingPuzzle = !!card.special;
     const c = cardView(card);
     const reveal = document.getElementById('reveal');
     const cardEl = document.getElementById('card');
@@ -1499,6 +1659,13 @@
   function finishPull() {
     gen++;
     hideReveal();
+    const goPuzzle = pendingPuzzle && !puzzleDone;
+    pendingPuzzle = false;
+    if (goPuzzle) {
+      startPuzzle();
+      if (resolveWait) { resolveWait(); resolveWait = null; }
+      return;
+    }
     document.getElementById('home').classList.remove('hidden');
     busy = false;
     updatePoolUI();
@@ -1506,6 +1673,262 @@
   }
 
   document.getElementById('btnClose').addEventListener('click', finishPull);
+
+  /* ----- Загадка: 2039 → 344 / 577 / 687 ----- */
+  const pzRoot = document.getElementById('puzzle');
+  const pzBoard = document.getElementById('pzBoard');
+  const pzTray = document.getElementById('pzTray');
+  const pzNext = document.getElementById('pzNext');
+  const pzSlots = Array.prototype.slice.call(pzRoot.querySelectorAll('.pz-slot'));
+  let pzLocked = false;
+  let pzSelected = null;
+  let pzDrag = null;
+
+  function pzCards() {
+    return PUZZLE_ANSWER.map(id => CARDS.find(c => c.id === id)).filter(Boolean);
+  }
+
+  function pzShuffle(list) {
+    const a = list.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function pzClearSelect() {
+    if (pzSelected) pzSelected.classList.remove('selected');
+    pzSelected = null;
+    pzSlots.forEach(s => s.classList.remove('target', 'over'));
+    pzTray.classList.remove('over');
+  }
+
+  function pzSelect(cardEl) {
+    if (pzLocked || !cardEl) return;
+    if (pzSelected === cardEl) { pzClearSelect(); return; }
+    pzClearSelect();
+    pzSelected = cardEl;
+    cardEl.classList.add('selected');
+    pzSlots.forEach(s => s.classList.add('target'));
+  }
+
+  function pzSlotOf(el) {
+    const s = el && el.closest ? el.closest('.pz-slot') : null;
+    return s ? pzSlots.indexOf(s) : -1;
+  }
+
+  function pzPlace(cardEl, dest) {
+    if (pzLocked || !cardEl) return;
+    const fromSlot = cardEl.parentElement && cardEl.parentElement.classList.contains('pz-slot')
+      ? cardEl.parentElement : null;
+    if (dest === 'tray' || dest === pzTray) {
+      if (cardEl.parentElement !== pzTray) pzTray.appendChild(cardEl);
+      pzClearSelect();
+      return;
+    }
+    const slot = typeof dest === 'number' ? pzSlots[dest] : dest;
+    if (!slot || !slot.classList.contains('pz-slot')) return;
+    const existing = slot.querySelector('.pz-card');
+    if (existing && existing !== cardEl) {
+      if (fromSlot) fromSlot.appendChild(existing);
+      else pzTray.appendChild(existing);
+    }
+    slot.appendChild(cardEl);
+    pzClearSelect();
+    pzCheck();
+  }
+
+  function pzFilledIds() {
+    return pzSlots.map(s => {
+      const c = s.querySelector('.pz-card');
+      return c ? c.dataset.id : null;
+    });
+  }
+
+  let pzLastCheck = '';
+  function pzCheck() {
+    const ids = pzFilledIds();
+    if (ids.some(id => !id)) { pzLastCheck = ''; return; }
+    const key = ids.join(',');
+    if (key === pzLastCheck) return;
+    pzLastCheck = key;
+    if (ids.every((id, i) => id === PUZZLE_ANSWER[i])) pzWin();
+    else pzFail();
+  }
+
+  function pzFail() {
+    pzRoot.classList.remove('wrong');
+    void pzRoot.offsetWidth;
+    pzRoot.classList.add('wrong');
+    startTalk(PAIMON_PUZZLE_BAD);
+  }
+
+  function pzWin() {
+    if (pzLocked) return;
+    pzLocked = true;
+    pzClearSelect();
+    pzRoot.classList.remove('wrong');
+    pzRoot.classList.add('solved', 'locked');
+    savePuzzleDone();
+    startTalk(PAIMON_PUZZLE_OK, () => { pzNext.classList.add('on'); });
+  }
+
+  function pzMakeCard(card) {
+    const el = document.createElement('div');
+    el.className = 'pz-card';
+    el.dataset.id = card.id;
+    el.setAttribute('role', 'button');
+    el.tabIndex = 0;
+    el.setAttribute('aria-label', card.id.replace('secret_', ''));
+    const img = document.createElement('img');
+    img.src = card.img;
+    img.alt = card.id.replace('secret_', '');
+    img.draggable = false;
+    el.appendChild(img);
+    return el;
+  }
+
+  function startPuzzle() {
+    busy = true;
+    hideReveal();
+    document.getElementById('home').classList.add('hidden');
+    if (window.QuestHUD && QuestHUD.hideNext) QuestHUD.hideNext();
+    pzLocked = false;
+    pzClearSelect();
+    pzRoot.classList.remove('hidden', 'solved', 'wrong', 'locked');
+    pzNext.className = 'btn-main';
+    pzSlots.forEach(s => { s.innerHTML = ''; s.classList.remove('over', 'target'); });
+    pzTray.innerHTML = '';
+    pzShuffle(pzCards()).forEach(c => pzTray.appendChild(pzMakeCard(c)));
+    document.body.classList.add('puzzle-on');
+    startTalk(PAIMON_PUZZLE);
+  }
+
+  function pzHit(x, y) {
+    const ghost = document.querySelector('.pz-drag');
+    const prev = ghost ? ghost.style.visibility : '';
+    if (ghost) ghost.style.visibility = 'hidden';
+    const el = document.elementFromPoint(x, y);
+    if (ghost) ghost.style.visibility = prev;
+    if (!el) return null;
+    const slot = el.closest && el.closest('.pz-slot');
+    if (slot && pzRoot.contains(slot)) return { type: 'slot', el: slot };
+    if (el.closest && (el.closest('#pzTray') || el === pzTray)) return { type: 'tray', el: pzTray };
+    return null;
+  }
+
+  function pzMoveGhost(e) {
+    if (!pzDrag || !pzDrag.ghost) return;
+    pzDrag.ghost.style.left = (e.clientX - pzDrag.ox) + 'px';
+    pzDrag.ghost.style.top = (e.clientY - pzDrag.oy) + 'px';
+    pzSlots.forEach(s => s.classList.remove('over'));
+    pzTray.classList.remove('over');
+    const hit = pzHit(e.clientX, e.clientY);
+    if (hit && hit.type === 'slot') hit.el.classList.add('over');
+    else if (hit && hit.type === 'tray') pzTray.classList.add('over');
+  }
+
+  function pzEndDrag(e, cancelled) {
+    if (!pzDrag) return;
+    const d = pzDrag;
+    pzDrag = null;
+    if (d.ghost) d.ghost.remove();
+    d.el.classList.remove('dragging');
+    pzSlots.forEach(s => s.classList.remove('over'));
+    pzTray.classList.remove('over');
+    try { d.el.releasePointerCapture(d.pid); } catch (err) {}
+    if (cancelled || !d.moved) {
+      if (!d.moved && !cancelled) {
+        const hit = e ? pzHit(e.clientX, e.clientY) : null;
+        if (pzSelected && pzSelected !== d.el && hit && hit.type === 'slot') pzPlace(pzSelected, hit.el);
+        else pzSelect(d.el);
+      }
+      return;
+    }
+    const hit = pzHit(e.clientX, e.clientY);
+    if (hit && hit.type === 'slot') pzPlace(d.el, hit.el);
+    else if (hit && hit.type === 'tray') pzPlace(d.el, 'tray');
+  }
+
+  pzRoot.addEventListener('pointerdown', (e) => {
+    if (pzLocked || e.button) return;
+    const card = e.target.closest && e.target.closest('.pz-card');
+    if (!card || !pzRoot.contains(card) || card.classList.contains('pz-drag')) return;
+    e.preventDefault();
+    const r = card.getBoundingClientRect();
+    pzDrag = {
+      el: card, pid: e.pointerId, sx: e.clientX, sy: e.clientY,
+      ox: e.clientX - r.left, oy: e.clientY - r.top,
+      moved: false, ghost: null, w: r.width, h: r.height
+    };
+    try { card.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+
+  pzRoot.addEventListener('pointermove', (e) => {
+    if (!pzDrag || e.pointerId !== pzDrag.pid) return;
+    const dx = e.clientX - pzDrag.sx, dy = e.clientY - pzDrag.sy;
+    if (!pzDrag.moved && dx * dx + dy * dy < 64) return;
+    if (!pzDrag.moved) {
+      pzDrag.moved = true;
+      pzClearSelect();
+      pzDrag.el.classList.add('dragging');
+      const g = pzDrag.el.cloneNode(true);
+      g.classList.add('pz-drag');
+      g.classList.remove('dragging', 'selected');
+      g.style.width = pzDrag.w + 'px';
+      g.style.height = pzDrag.h + 'px';
+      document.body.appendChild(g);
+      pzDrag.ghost = g;
+    }
+    e.preventDefault();
+    pzMoveGhost(e);
+  });
+
+  pzRoot.addEventListener('pointerup', (e) => {
+    if (!pzDrag || e.pointerId !== pzDrag.pid) {
+      if (pzLocked) return;
+      // tap-slot fallback when a card is already selected
+      if (pzSelected && e.button === 0) {
+        const slot = e.target.closest && e.target.closest('.pz-slot');
+        if (slot && pzRoot.contains(slot) && !e.target.closest('.pz-card')) {
+          pzPlace(pzSelected, slot);
+          return;
+        }
+        if (e.target === pzTray || (e.target.closest && e.target === pzTray)) {
+          pzPlace(pzSelected, 'tray');
+        }
+      }
+      return;
+    }
+    pzEndDrag(e, false);
+  });
+
+  pzRoot.addEventListener('pointercancel', (e) => {
+    if (pzDrag && e.pointerId === pzDrag.pid) pzEndDrag(e, true);
+  });
+
+  // тап по пустому полю, когда карточка уже выбрана
+  pzSlots.forEach(slot => {
+    slot.addEventListener('click', (e) => {
+      if (pzLocked || !pzSelected) return;
+      const tapped = e.target.closest && e.target.closest('.pz-card');
+      // клик по только что выбранной карточке в этом поле — это выбор, а не постановка
+      if (tapped && tapped === pzSelected) return;
+      pzPlace(pzSelected, slot);
+    });
+  });
+  pzTray.addEventListener('click', (e) => {
+    if (pzLocked || !pzSelected) return;
+    if (e.target.closest && e.target.closest('.pz-card')) return;
+    pzPlace(pzSelected, 'tray');
+  });
+
+  pzNext.addEventListener('click', () => {
+    if (!puzzleDone && !pzRoot.classList.contains('solved')) return;
+    if (window.QuestHUD && QuestHUD.next) QuestHUD.next();
+  });
+
   // Отладка: gacha/index.html?rank=3|4|5 — «Крутить» тянет только этот ранг (Вике не видно).
   const DEBUG_RANK = (location.search.match(/[?&]rank=([3-6])/) || [])[1] ? +location.search.match(/[?&]rank=([3-6])/)[1] : null;
   document.getElementById('btnPull').addEventListener('click', () => {
@@ -1536,7 +1959,9 @@
     setAutoClose: (ms) => { window.__autoClose = ms; },
     remaining: remainingCards,
     startSpecial,
+    startPuzzle,
     specialDone: () => specialDone,
+    puzzleDone: () => puzzleDone,
     talk: () => ({ on: talkOn(), idx: tIdx, lines: tLines.slice(), text: pText.textContent }),
     advanceTalk,
     pulled: () => pulledIds.slice(),
@@ -1550,6 +1975,9 @@
   updatePoolUI();
 
   if (/[?&]reset=1/.test(location.search)) resetPool();
+
+  if (DEBUG_PUZZLE) startPuzzle();
+  else if (remainingCards().length === 0 && specialDone && !puzzleDone) startPuzzle();
 
   if (/[?&]demo=1/.test(location.search)) {
     window.__autoClose = 3200;
