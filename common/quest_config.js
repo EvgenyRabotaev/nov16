@@ -417,14 +417,15 @@ window.QUEST_CONFIG = {
     RISE_MS: 2600,
     LAND_MS: 2600,
     FADE_MS: 3000,
-    /* Сердечки в полёте: 5 рядов, ловятся парой (мышь/палец/стрелки). За пропуск — полный максимум. */
+    /* Сердечки в полёте: 5 рядов, по одному, вертикально (как в repo_flight).
+       Интервал ~1.4 с, падение ~5.5 с — комфортно ловить. За пропуск — полный максимум.
+       На текущем music.mp3 (~202.8 с) план: 138 сердечек, skip = +276 примогемов. */
     HEART_PRIMOS: 2,
-    HEART_EVERY_MS: 850,
+    HEART_EVERY_MS: 1400,
     HEART_JITTER_MS: 150,
-    HEART_FALL_MS: 3000,
+    HEART_FALL_MS: 5500,
     HEART_START_MS: 800,
     HEART_LANES: 5,
-    HEART_DOUBLE_EVERY: 4,
     AWARD_ID: "sky-hearts",
     HEART_SUMMARY: "Собрано сердечек: {n}, +{x} примогемов"
   },

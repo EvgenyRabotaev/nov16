@@ -12,7 +12,7 @@
      Два героя в плащах (Вика — жёлтый, Женя — оранжевый) влетают снизу, ~10 с летят по световому потоку,
      прилетают к парящему острову — и только тогда появляется «Дальше». Отладка: sky/index.html, ?fast=1 — в 4 раза быстрее (без музыки).
      Длительность и музыка — QUEST_CONFIG.SKY. Мышь/палец влево-вправо — пара смещается с креном.
-     Сердечки: каждые 2–3 с в трёх дорожках, ловятся парой, +2 примогема. Пропуск = все сердечки песни. */
+     Сердечки: как в поездке на машинке — розовые с белым контуром, без поворота; по одному, ~1.4 с, падение ~5.5 с, 5 рядов, +2. Пропуск = весь максимум песни. */
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #f3d6d0; user-select: none; -webkit-user-select: none; }
   #bg { position: fixed; left: 0; top: 0; will-change: transform; transform-origin: 50% 30%; }
@@ -52,30 +52,17 @@
   @keyframes tapPulse { 50% { box-shadow: 0 0 50px rgba(255, 190, 140, 1); } }
   #heartLayer { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
   .sky-heart {
-    position: absolute; left: 0; top: 0; width: 56px; height: 56px;
-    margin: -28px 0 0 -28px; transform-origin: 50% 50%;
-    filter: drop-shadow(0 0 10px rgba(255, 140, 170, .85)) drop-shadow(0 0 18px rgba(255, 200, 160, .55));
+    position: absolute; left: 0; top: 0; width: 48px; height: 48px;
+    margin: -24px 0 0 -24px;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,.45));
     will-change: transform, opacity;
+    pointer-events: none;
   }
-  .sky-heart i {
-    display: block; width: 28px; height: 28px; margin: 14px auto 0;
-    background: radial-gradient(circle at 30% 30%, #fff5f8, #ff7aa0 42%, #ff4e7a 80%);
-    transform: rotate(-45deg);
-    border-radius: 4px 4px 2px 2px;
-  }
-  .sky-heart i::before, .sky-heart i::after {
-    content: ""; position: absolute; width: 28px; height: 28px;
-    background: inherit; border-radius: 50%;
-  }
-  .sky-heart i::before { left: -14px; top: 0; }
-  .sky-heart i::after { left: 0; top: -14px; }
-  .sky-heart.pop {
-    animation: heartPop .42s ease-out forwards;
-  }
-  @keyframes heartPop {
-    0% { opacity: 1; }
-    40% { opacity: 1; transform: scale(1.7) rotate(-8deg); filter: drop-shadow(0 0 16px rgba(255, 230, 200, 1)); }
-    100% { opacity: 0; transform: scale(2.2) rotate(8deg); }
+  .sky-heart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .sky-heart.pop { animation: heartPop .28s ease forwards; }
+  @keyframes heartPop { to { opacity: 0; } }
+  @media (min-width: 900px) {
+    .sky-heart { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
   }
   #heartHud {
     position: fixed; z-index: 9;
@@ -107,7 +94,7 @@
   #heartSummary.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p39">
-<script src="../common/quest_config.js?v=20261115p39"></script>
+<script src="../common/quest_config.js?v=20261115p40"></script>
 <script src="../common/hud.js?v=20261115p39" data-screen="sky" data-counter="off"></script>
 </head>
 <body>
@@ -285,13 +272,13 @@
   const clamp = (v) => Math.max(0, Math.min(1, v));
 
   /* ---------- сердечки ---------- */
+  const HEART_SVG = '<svg viewBox="0 0 32 29" aria-hidden="true"><path fill="#ff3b6b" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" d="M16 27.5S2.5 18.2 2.5 10.2C2.5 5.6 6.1 2.5 10.3 2.5c2.4 0 4.5 1.2 5.7 3.1 1.2-1.9 3.3-3.1 5.7-3.1 4.2 0 7.8 3.1 7.8 7.7 0 8-13.5 17.3-13.5 17.3z"/></svg>';
   const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 2;
-  const HEART_EVERY = CFG.HEART_EVERY_MS || 850;
+  const HEART_EVERY = CFG.HEART_EVERY_MS || 1400;
   const HEART_JITTER = CFG.HEART_JITTER_MS != null ? CFG.HEART_JITTER_MS : 150;
-  const HEART_FALL = CFG.HEART_FALL_MS || 3000;
+  const HEART_FALL = CFG.HEART_FALL_MS || 5500;
   const HEART_START = CFG.HEART_START_MS != null ? CFG.HEART_START_MS : 800;
   const HEART_LANES = CFG.HEART_LANES || 5;
-  const HEART_DOUBLE_EVERY = CFG.HEART_DOUBLE_EVERY || 4;
   const HEART_AWARD = CFG.AWARD_ID || "sky-hearts";
   const heartLayer = document.getElementById("heartLayer");
   const heartHud = document.getElementById("heartHud");
@@ -302,26 +289,28 @@
   let nextPlanI = 0, caught = 0, awarded = false, skippedFull = false;
   let heartAudio = null;
 
-  function planHearts() {
-    if (skipped || awarded) return;
-    const start = T.enter + HEART_START;
-    const end = T.flyEnd - Math.min(HEART_FALL * 0.75, 4000);
+  function buildHeartPlan(flightMs) {
+    const enter = RISE;
+    const flyEnd = enter + flightMs;
+    const start = enter + HEART_START;
+    /* последнее сердце должно успеть долететь до зоны ловли до конца полёта */
+    const end = flyEnd - HEART_FALL * 0.85;
     const plan = [];
     let t = start, i = 0;
     const span = HEART_JITTER * 2 + 1;
+    const minGap = Math.max(1100, HEART_EVERY - Math.abs(HEART_JITTER));
     while (t <= end) {
-      /* детерминированный джиттер 0.7–1 с; иногда второе сердце в другом ряду — тот же максимум при пропуске */
       const j = HEART_JITTER ? ((i * 17 + 11) % span) - HEART_JITTER : 0;
       const lane = (i * 3 + 1) % HEART_LANES;
       plan.push({ t: t, lane: lane });
-      if (HEART_DOUBLE_EVERY > 0 && i % HEART_DOUBLE_EVERY === HEART_DOUBLE_EVERY - 1) {
-        const lane2 = (lane + 2 + (i % 2)) % HEART_LANES;
-        if (lane2 !== lane) plan.push({ t: t, lane: lane2 });
-      }
-      t += HEART_EVERY + j;
+      t += Math.max(minGap, HEART_EVERY + j);
       i++;
     }
-    heartPlan = plan;
+    return plan;
+  }
+  function planHearts() {
+    if (skipped || awarded) return;
+    heartPlan = buildHeartPlan(T.flyEnd - T.enter);
   }
 
   function setHeartCount(n) {
@@ -370,10 +359,11 @@
   function spawnHeart(spec) {
     const el = document.createElement("div");
     el.className = "sky-heart";
-    el.innerHTML = "<i></i>";
+    el.innerHTML = HEART_SVG;
     el.setAttribute("data-lane", String(spec.lane));
     heartLayer.appendChild(el);
-    hearts.push({ lane: spec.lane, born: spec.t, el: el, x: 0, y: 0, r: 24, popping: false });
+    const r = (W >= 900 ? 28 : 24);
+    hearts.push({ lane: spec.lane, born: spec.t, el: el, x: 0, y: 0, r: r, popping: false });
   }
 
   function laneX(lane) {
@@ -388,7 +378,7 @@
     h.popping = true;
     h.el.classList.add("pop");
     if (!silent) playHeartSound();
-    setTimeout(() => { if (h.el && h.el.parentNode) h.el.remove(); }, 420);
+    setTimeout(() => { if (h.el && h.el.parentNode) h.el.remove(); }, 300);
   }
 
   function catchHeart(h) {
@@ -447,9 +437,9 @@
       }
       const x = laneX(h.lane);
       const y = H * 0.10 + Math.max(0, u) * (H * 0.78);
-      const sc = 0.55 + 0.75 * clamp(u);
-      h.x = x; h.y = y; h.r = 22 * sc;
-      h.el.style.transform = "translate(" + x + "px," + y + "px) scale(" + sc + ")";
+      h.x = x; h.y = y;
+      /* вертикально, без поворота и без «налёта» масштаба — как в repo_flight */
+      h.el.style.transform = "translate(" + x + "px," + y + "px)";
       if (!h.popping && pairBox && u > 0.28 && u < 0.92) {
         const dx = Math.abs(x - pairBox.cx), dy = Math.abs(y - pairBox.cy);
         if (dx < pairBox.hw + h.r && dy < pairBox.hh + h.r) catchHeart(h);
@@ -587,6 +577,8 @@
     get caught() { return caught; }, get planned() { return heartPlan.length; },
     get awarded() { return awarded; }, hearts: hearts, skip: function () { skip(); },
     lanes: HEART_LANES, fallMs: HEART_FALL, everyMs: HEART_EVERY, primos: HEART_PRIMOS,
+    get plan() { return heartPlan.slice(); },
+    buildPlan: buildHeartPlan,
     laneX: laneX, playHeartSound: playHeartSound };
   /* «Пропустить»: остров быстро подлетает, пара к центру и садится, музыка гаснет — ~3.6 с, потом «Дальше» */
   const skipBtn = document.getElementById("skipBtn");
