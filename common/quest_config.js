@@ -19,8 +19,7 @@ window.QUEST_CONFIG = {
     { id: "genshin",      path: "genshin/index.html",     theme: "genshin",    title: "Тейват" },
     { id: "finale",       path: "finale/index.html",      theme: "quest",      title: "Финал" },
     { id: "trust",        path: "finale/trust.html",      theme: "quest",      title: "Ты веришь мне?" },
-    { id: "gacha",        path: "gacha/index.html",       theme: "quest",      title: "Крутки" },
-    { id: "gifts",        path: "gifts/index.html",       theme: "quest",      title: "Подарки" }
+    { id: "gacha",        path: "gacha/index.html",       theme: "quest",      title: "Крутки" }
   ],
 
   /* Вопросы и ответы. Правятся здесь.

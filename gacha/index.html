@@ -766,8 +766,6 @@
     letter-spacing: .04em;
     padding: 8px;
   }
-  #shopNext { flex-shrink: 0; margin: 4px 0 8px; }
-
   .sg-modal {
     position: fixed; inset: 0; z-index: 20;
     display: flex; align-items: center; justify-content: center;
@@ -820,7 +818,7 @@
   .qhud-hint, .qhud-panel { display: none !important; }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115f">
-<script src="../common/quest_config.js?v=20261115p4"></script>
+<script src="../common/quest_config.js?v=20261115p5"></script>
 <script src="../common/hud.js?v=20261115f" data-screen="gacha" data-counter="off"></script>
 <script src="card_texts.js?v=20261115z3"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
 <script src="card_texts_paimon.js?v=20261115z6"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
@@ -917,7 +915,6 @@
     <div class="shop-bal" id="shopBal" data-sg="0"></div>
   </div>
   <div class="shop-grid" id="shopGrid"></div>
-  <button class="btn-main" id="shopNext">Дальше</button>
 </div>
 
 <div id="sgModal" class="sg-modal hidden" role="dialog" aria-modal="true" aria-labelledby="sgModalText">
@@ -2463,9 +2460,6 @@
     hideSgModal();
   }
   document.getElementById('sgRewardNext').addEventListener('click', startShop);
-  document.getElementById('shopNext').addEventListener('click', function () {
-    if (window.QuestHUD && QuestHUD.next) QuestHUD.next();
-  });
   document.getElementById('sgModalYes').addEventListener('click', shopConfirmYes);
   document.getElementById('sgModalNo').addEventListener('click', shopConfirmNo);
   document.getElementById('sgModal').addEventListener('click', function (e) {
