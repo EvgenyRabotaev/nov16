@@ -88,15 +88,7 @@
   .pin.done .wp-glyph .beam { opacity: .55; height: 56px; }
   .pin.locked .wp-glyph .beam { opacity: .55; }
   @keyframes wpPulse { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-  .pin-name {
-    position: absolute; top: 78px; left: 50%; transform: translateX(-50%);
-    white-space: nowrap; font-size: 13px; font-weight: 700; letter-spacing: .08em;
-    text-transform: uppercase; color: #f5e6c0;
-    text-shadow: 0 1px 4px #000, 0 0 8px rgba(0,0,0,.8);
-    background: rgba(0,0,0,.35); border-radius: 8px; padding: 1px 7px;
-    pointer-events: none;
-  }
-  .pin.locked .pin-name { color: #c8c0b0; }
+  .pin-name { display: none !important; }
 
   .chest-pin .chest {
     width: 52px; height: 42px; position: relative;
@@ -397,8 +389,10 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115m">
-<script src="../common/quest_config.js?v=20261115p36"></script>
+<script src="../common/quest_config.js?v=20261115p37"></script>
 <script src="../common/hud.js?v=20261115m" data-screen="genshin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261115p37">
+<script src="../common/world_title.js?v=20261115p37" data-world="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -621,8 +615,9 @@
       el.className = "pin wp-pin" + (i > wi ? " locked" : i === wi && !locReady ? " current" : " done");
       el.dataset.id = w.id;
       pinAt(el, w.x, w.y);
-      el.innerHTML = '<div class="wp-glyph"><div class="beam"></div></div><div class="pin-name"></div>';
-      el.querySelector(".pin-name").textContent = w.name || (spotOne(true) + " " + (i + 1));
+      el.innerHTML = '<div class="wp-glyph"><div class="beam"></div></div>';
+      el.setAttribute("aria-label", (spotOne(true) || "Огонёк") + " " + (i + 1));
+      el.removeAttribute("title");
       if (i === wi && !locReady) el.addEventListener("click", (e) => { e.stopPropagation(); onWaypointTap(i); });
       pins.appendChild(el);
       if (w.chest && (openedChests[w.id] || (i === wi && mode === "chest"))) {
@@ -643,8 +638,9 @@
       el.className = "pin cm-pin" + (doneCommissions[c.id] ? " done" : " current");
       el.dataset.cm = c.id;
       pinAt(el, c.x, c.y);
-      el.innerHTML = '<div class="cm-glyph"></div><div class="pin-name"></div>';
-      el.querySelector(".pin-name").textContent = c.name || spotOne(true);
+      el.innerHTML = '<div class="cm-glyph"></div>';
+      el.setAttribute("aria-label", "Огонёк");
+      el.removeAttribute("title");
       if (!doneCommissions[c.id]) el.addEventListener("click", (e) => { e.stopPropagation(); openCommission(c); });
       pins.appendChild(el);
     });
@@ -1161,12 +1157,16 @@
       return;
     }
     const intro = G.INTRO || [];
-    if (intro.length) {
-      mode = "intro";
-      startTalk(fairyLines(intro), () => { mode = "map"; setStep("map"); renderPins(); setFlags(); });
-    } else {
-      mode = "map"; setStep("map"); setFlags();
-    }
+    const afterTitle = () => {
+      if (intro.length) {
+        mode = "intro";
+        startTalk(fairyLines(intro), () => { mode = "map"; setStep("map"); renderPins(); setFlags(); });
+      } else {
+        mode = "map"; setStep("map"); setFlags();
+      }
+    };
+    const titleReady = (window.WorldTitle && WorldTitle.whenReady()) || Promise.resolve();
+    titleReady.then(afterTitle);
   }
 
   if (gsRewatch) gsRewatch.addEventListener("click", (e) => {

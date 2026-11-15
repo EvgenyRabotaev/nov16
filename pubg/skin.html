@@ -3,18 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Выбор скина — заглушка</title>
+<title>Эрангель</title>
 <link rel="stylesheet" href="../common/hud.css?v=20261115m">
-<script src="../common/quest_config.js?v=20261115p34"></script>
+<script src="../common/quest_config.js?v=20261115p37"></script>
 <script src="../common/hud.js?v=20261115m" data-screen="pubg-skin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261115p37">
+<script src="../common/world_title.js?v=20261115p37" data-world="pubg"></script>
 </head>
-<body class="ph-body ph--pubg" data-placeholder="1">
+<body class="ph-body ph--pubg">
 <div class="ph-bg" aria-hidden="true"></div>
-<main class="ph-card">
-  <div class="ph-kicker">Мир 1 · Королевская битва</div>
-  <h1 class="ph-title">Выбор скина</h1>
-  <p class="ph-text">Здесь будет выбор скина. Наборы пришлю позже, а пока — сразу в самолёт.</p>
-  <button class="ph-btn" id="phNext" type="button" onclick="QuestHUD.next()">В самолёт</button>
-</main>
+<script>
+  (window.WorldTitle ? WorldTitle.whenReady() : Promise.resolve()).then(function () {
+    if (window.QuestHUD) QuestHUD.next();
+  });
+</script>
 </body>
 </html>

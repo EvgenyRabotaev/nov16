@@ -604,28 +604,17 @@
     }
     .levi-hide {
       position: absolute; z-index: 5; transform: translate(-50%, -50%);
-      width: 86px; height: 86px; pointer-events: none;
+      width: min(300px, 52vw); height: min(300px, 52vw);
+      pointer-events: none;
     }
-    .levi-hide .spot {
-      position: absolute; inset: 8px; border-radius: 50% 50% 40% 40%;
-      background: radial-gradient(ellipse at 50% 40%, rgba(10, 30, 36, .2), rgba(0, 0, 0, .75));
-      border: 1px dashed rgba(120, 220, 210, .45);
-      box-shadow: 0 0 14px rgba(60, 180, 170, .2), inset 0 0 16px rgba(0,0,0,.5);
+    .levi-hide img {
+      display: block; width: 100%; height: 100%; object-fit: contain;
+      filter: drop-shadow(0 8px 16px rgba(0, 8, 16, .55));
+      pointer-events: none; user-select: none;
     }
-    .levi-hide.kelp .spot {
-      border-radius: 40% 40% 16px 16px;
-      background:
-        radial-gradient(ellipse at 50% 80%, rgba(20, 60, 40, .35), rgba(0, 10, 8, .7));
-    }
-    .levi-hide .frond {
-      position: absolute; bottom: 14px; width: 10px; height: 46px; border-radius: 20px;
-      background: linear-gradient(180deg, #3d8a5a, #173a28);
-      transform-origin: 50% 100%;
-      animation: kelpSway 2.4s ease-in-out infinite;
-    }
-    .levi-hide .frond:nth-child(2) { left: 28px; height: 54px; animation-delay: -.6s; }
-    .levi-hide .frond:nth-child(3) { left: 48px; height: 42px; animation-delay: -1.1s; }
-    .levi-hide .frond:nth-child(4) { left: 38px; width: 8px; height: 38px; left: 18px; animation-delay: -.2s; }
+    .levi-hide.near img { filter: drop-shadow(0 0 18px rgba(120, 255, 230, .55)) drop-shadow(0 8px 16px rgba(0, 8, 16, .55)); }
+    .levi-hide.in { z-index: 7; }
+    .levi-hide.in img { filter: drop-shadow(0 0 14px rgba(80, 200, 210, .4)); }
     @keyframes kelpSway { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(9deg); } }
     .levi-hide .lab {
       position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px);
@@ -641,8 +630,13 @@
       margin: -56px 0 0 -56px; cursor: grab; touch-action: none;
       filter: drop-shadow(0 0 8px rgba(180, 255, 240, .6));
     }
+    #leviDiver.in-sub { width: 200px; height: 124px; margin: -62px 0 0 -100px; }
     #leviDiver:active { cursor: grabbing; }
-    #leviDiver.hidden { filter: drop-shadow(0 0 6px rgba(80, 200, 180, .35)); opacity: .92; }
+    #leviDiver.hidden { z-index: 5; filter: drop-shadow(0 0 6px rgba(80, 200, 180, .35)); opacity: .88; }
+    #leviDiver .suit-art, #diverVika .suit-art { display: block; }
+    #leviDiver .seamoth-art, #diverVika .seamoth-art { display: none; }
+    #leviDiver.in-sub .suit-art, #divePair.in-sub #diverVika .suit-art, html.in-sub #diverVika .suit-art { display: none; }
+    #leviDiver.in-sub .seamoth-art, #divePair.in-sub #diverVika .seamoth-art, html.in-sub #diverVika .seamoth-art { display: block; }
     #leviFail {
       position: absolute; inset: 0; z-index: 8; display: none;
       align-items: center; justify-content: center; flex-direction: column; gap: 14px;
@@ -737,8 +731,9 @@
     }
 
     @media (max-width: 600px) {
-      .levi-hide { width: 96px; height: 96px; }
+      .levi-hide { width: min(230px, 58vw); height: min(230px, 58vw); }
       #leviDiver { width: 104px; height: 104px; margin: -52px 0 0 -52px; }
+      #leviDiver.in-sub { width: 168px; height: 108px; margin: -54px 0 0 -84px; }
       #leviWarn { font-size: 11px; padding: 5px 10px; }
       #leviFail .fail-text { font-size: 18px; }
     }
@@ -774,8 +769,12 @@
       0%, 100% { margin-top: 0; }
       50% { margin-top: -12px; }
     }
+    #divePair.in-sub #diverVika,
+    html.in-sub #diverVika { width: 200px; height: 124px; }
     @media (max-width: 640px) {
       .diver { width: 128px; height: 128px; }
+      #divePair.in-sub #diverVika,
+      html.in-sub #diverVika { width: 168px; height: 104px; }
     }
     #currentFx {
       position: absolute; inset: 0; z-index: 7; pointer-events: none;
@@ -833,8 +832,10 @@
     }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115m">
-<script src="../common/quest_config.js?v=20261115p36"></script>
+<script src="../common/quest_config.js?v=20261115p37"></script>
 <script src="../common/hud.js?v=20261115m" data-screen="subnautica"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261115p37">
+<script src="../common/world_title.js?v=20261115p37" data-world="subnautica"></script>
 <style>
   /* HUD — правый нижний угол; карточка вопроса парит над ним по центру. */
 </style>
@@ -859,7 +860,7 @@
     </div>
     <button id="deeper" type="button">Глубже <span class="arrow">↓</span></button>
     
-    <div id="o2"><span class="label">O₂</span><div class="bar"><div class="fill" id="o2fill"></div></div><div class="val"><span id="o2val">100</span>%</div></div>
+    <div id="o2"><span class="label" id="o2Label">O₂</span><div class="bar"><div class="fill" id="o2fill"></div></div><div class="val"><span id="o2val">100</span>%</div></div>
     <div id="fauna"></div>
     <div id="radioPing" title="Радиосигнал"></div>
     <button id="camBtn" type="button" title="Сделать снимок">📷</button>
@@ -873,7 +874,7 @@
         <div id="leviTimer">0:16</div>
         <div id="leviHides"></div>
         <div id="leviDiver" aria-label="Вика">
-          <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
+          <svg class="suit-art" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
             <defs>
               <radialGradient id="dvGlow" cx="50%" cy="45%" r="50%">
                 <stop offset="0%" stop-color="#dff" stop-opacity=".9"/>
@@ -887,6 +888,34 @@
             <rect x="22" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <svg class="seamoth-art" viewBox="0 0 160 100" width="100%" height="100%" aria-hidden="true">
+            <defs>
+              <radialGradient id="smGlowL" cx="50%" cy="50%" r="60%">
+                <stop offset="0%" stop-color="#bff" stop-opacity=".7"/>
+                <stop offset="100%" stop-color="#4ad" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="smHullL" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#2a6d7a"/>
+                <stop offset="55%" stop-color="#163a44"/>
+                <stop offset="100%" stop-color="#0d242c"/>
+              </linearGradient>
+              <linearGradient id="smGlassL" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#e7ffff"/>
+                <stop offset="40%" stop-color="#7ee0f0"/>
+                <stop offset="100%" stop-color="#1a6a80"/>
+              </linearGradient>
+            </defs>
+            <ellipse cx="80" cy="52" rx="72" ry="36" fill="url(#smGlowL)" opacity=".5"/>
+            <path d="M22 50 L4 28 L18 48 L8 72 Z" fill="#1b4a54" stroke="#7ad4c8" stroke-width="1.2"/>
+            <path d="M48 68 Q80 86 118 66" fill="none" stroke="#d7a13a" stroke-width="2.2" stroke-linecap="round"/>
+            <ellipse cx="86" cy="54" rx="56" ry="24" fill="url(#smHullL)" stroke="#8ee8e0" stroke-width="1.8"/>
+            <path d="M40 54 Q86 48 132 54" fill="none" stroke="#7ad4c8" stroke-width="1.4" opacity=".7"/>
+            <ellipse cx="118" cy="46" rx="20" ry="16" fill="url(#smGlassL)" stroke="#dff" stroke-width="1.4"/>
+            <ellipse cx="112" cy="40" rx="7" ry="4" fill="#fff" opacity=".45"/>
+            <circle cx="138" cy="54" r="6" fill="#ffe08a" opacity=".35"/>
+            <circle cx="138" cy="54" r="3.2" fill="#fff6b0"/>
+            <path d="M70 70 L88 88 L100 70" fill="#1b4a54" stroke="#7ad4c8" stroke-width="1.2"/>
           </svg>
         </div>
         <div id="leviHint">Перетащи себя в укрытие!</div>
@@ -940,7 +969,7 @@
       </div>
     </div>
     <div id="divePair" aria-hidden="true">
-      <div class="diver vika" id="diverVika" aria-label="Вика">          <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
+      <div class="diver vika" id="diverVika" aria-label="Вика">          <svg class="suit-art" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
             <defs>
               <radialGradient id="dvGlowV" cx="50%" cy="45%" r="50%">
                 <stop offset="0%" stop-color="#dff" stop-opacity=".9"/>
@@ -954,6 +983,34 @@
             <rect x="22" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <svg class="seamoth-art" viewBox="0 0 160 100" width="100%" height="100%" aria-hidden="true">
+            <defs>
+              <radialGradient id="smGlowV" cx="50%" cy="50%" r="60%">
+                <stop offset="0%" stop-color="#bff" stop-opacity=".7"/>
+                <stop offset="100%" stop-color="#4ad" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="smHullV" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#2a6d7a"/>
+                <stop offset="55%" stop-color="#163a44"/>
+                <stop offset="100%" stop-color="#0d242c"/>
+              </linearGradient>
+              <linearGradient id="smGlassV" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#e7ffff"/>
+                <stop offset="40%" stop-color="#7ee0f0"/>
+                <stop offset="100%" stop-color="#1a6a80"/>
+              </linearGradient>
+            </defs>
+            <ellipse cx="80" cy="52" rx="72" ry="36" fill="url(#smGlowV)" opacity=".5"/>
+            <path d="M22 50 L4 28 L18 48 L8 72 Z" fill="#1b4a54" stroke="#7ad4c8" stroke-width="1.2"/>
+            <path d="M48 68 Q80 86 118 66" fill="none" stroke="#d7a13a" stroke-width="2.2" stroke-linecap="round"/>
+            <ellipse cx="86" cy="54" rx="56" ry="24" fill="url(#smHullV)" stroke="#8ee8e0" stroke-width="1.8"/>
+            <path d="M40 54 Q86 48 132 54" fill="none" stroke="#7ad4c8" stroke-width="1.4" opacity=".7"/>
+            <ellipse cx="118" cy="46" rx="20" ry="16" fill="url(#smGlassV)" stroke="#dff" stroke-width="1.4"/>
+            <ellipse cx="112" cy="40" rx="7" ry="4" fill="#fff" opacity=".45"/>
+            <circle cx="138" cy="54" r="6" fill="#ffe08a" opacity=".35"/>
+            <circle cx="138" cy="54" r="3.2" fill="#fff6b0"/>
+            <path d="M70 70 L88 88 L100 70" fill="#1b4a54" stroke="#7ad4c8" stroke-width="1.2"/>
           </svg>
       </div>
       <div class="diver zhenya" id="diverZhenya" aria-label="Женя">          <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
@@ -1021,7 +1078,8 @@
     const INTRO_DEBUG = params.get("intro") === "1";
     const CURRENT_DEBUG = params.get("current") === "1" || params.get("event") === "current";
     const REUNION_DEBUG = params.get("reunion") === "1" || params.get("meet") === "1";
-    const ASSET_V = "20261115r";
+    const SEAMOTH_DEBUG = params.get("seamoth") === "1" || params.get("moth") === "1";
+    const ASSET_V = "20261115s";
     const FISH_SRC = {
       peeper: "fish_peeper.png?v=" + ASSET_V,
       boomerang: "fish_boomerang.png?v=" + ASSET_V,
@@ -1681,13 +1739,32 @@
 
     /* ----- кислород ----- */
     function renderO2() {
-      const pct = Math.max(0, Math.min(100, oxygen));
+      const locked = o2Locked();
+      const pct = locked ? 100 : Math.max(0, Math.min(100, oxygen));
       o2fill.style.width = pct + "%";
       o2val.textContent = String(Math.round(pct));
-      o2el.classList.toggle("warn", pct <= O2CFG.warnAt);
+      o2el.classList.toggle("warn", !locked && pct <= O2CFG.warnAt);
+      o2el.classList.toggle("locked", locked);
+      const lab = document.getElementById("o2Label");
+      if (lab) {
+        const sm = (SUB.STORY && SUB.STORY.SEAMOTH) || {};
+        lab.textContent = locked ? (sm.o2Label || "O₂ · Мотылёк") : "O₂";
+      }
     }
     function addO2(n) {
+      if (o2Locked()) { oxygen = O2CFG.max; renderO2(); return; }
       oxygen = Math.min(O2CFG.max, oxygen + n);
+      renderO2();
+    }
+    function o2Locked() {
+      const d = Number(((SUB.STORY || {}).SEAMOTH || {}).depth);
+      const need = Number.isFinite(d) ? d : 300;
+      const loc = LOCS[index] || {};
+      return (Number(loc.depth) || 0) >= need;
+    }
+    function lockOxygen() {
+      oxygen = O2CFG.max;
+      document.querySelectorAll(".air-bubble").forEach((b) => b.remove());
       renderO2();
     }
     function spawnAirBubble() {
@@ -1718,7 +1795,9 @@
       const tick = (now) => {
         const dt = Math.min(0.1, (now - o2Last) / 1000);
         o2Last = now;
-        if (!busy && !pda.classList.contains("on") && !repairEl.classList.contains("on")) {
+        if (o2Locked()) {
+          if (oxygen < O2CFG.max) { oxygen = O2CFG.max; renderO2(); }
+        } else if (!busy && !pda.classList.contains("on") && !repairEl.classList.contains("on")) {
           const drain = (FAST ? O2CFG.drainPerSec * 1.6 : O2CFG.drainPerSec) * dt;
           oxygen = Math.max(O2CFG.minFloor, oxygen - drain);
           renderO2();
@@ -1735,7 +1814,7 @@
       };
       o2Raf = requestAnimationFrame(tick);
       const bubbleLoop = () => {
-        if (!busy && Math.random() < 0.65) spawnAirBubble();
+        if (!busy && !o2Locked() && Math.random() < 0.65) spawnAirBubble();
         airTimer = setTimeout(bubbleLoop, FAST ? 2200 : 4500 + Math.random() * 2500);
       };
       airTimer = setTimeout(bubbleLoop, FAST ? 800 : 2500);
@@ -2324,7 +2403,10 @@
         leviDiver.style.top = leviDy + "%";
       }
     }
-    function hideRadius() { return 9; }
+    function hideRadius() {
+      const r = leviCfg().hideRadius;
+      return r != null ? Number(r) : 16;
+    }
     function nearestHide() {
       let best = null, bestD = 1e9;
       leviHideList().forEach((h, i) => {
@@ -2352,14 +2434,17 @@
     function buildHides() {
       if (!leviHides) return;
       leviHides.innerHTML = "";
+      const art = { crevice: "hide_rock.png", kelp: "hide_kelp.png", wreck: "hide_wreck.png" };
+      const labels = { crevice: "Скала", kelp: "Водоросли", wreck: "Обломки" };
       leviHideList().forEach((h) => {
         const el = document.createElement("div");
-        el.className = "levi-hide " + (h.type === "kelp" ? "kelp" : "crevice");
+        const typ = h.type || "crevice";
+        el.className = "levi-hide " + typ;
         el.style.left = h.x + "%";
         el.style.top = h.y + "%";
-        el.innerHTML = (h.type === "kelp"
-          ? '<span class="frond"></span><span class="frond"></span><span class="frond"></span><span class="frond"></span><div class="spot"></div><div class="lab">Водоросли</div>'
-          : '<div class="spot"></div><div class="lab">Расщелина</div>');
+        const src = (art[typ] || art.crevice) + "?v=" + ASSET_V;
+        const lab = h.label || labels[typ] || "";
+        el.innerHTML = '<img alt="" src="' + src + '"><div class="lab">' + lab + "</div>";
         leviHides.appendChild(el);
       });
     }
@@ -2584,14 +2669,47 @@
     const currentFx = document.getElementById("currentFx");
     const snCaption = document.getElementById("snCaption");
     const snEvCard = document.getElementById("snEvCard");
-    let introDone = false, currentDone = false, reunionDone = false;
+    let introDone = false, currentDone = false, reunionDone = false, seamothDone = false;
     let evCardWait = null;
 
     function currentLoc() {
       const c = STORY.CURRENT || {};
       return c.loc != null ? c.loc : 1;
     }
+    function locDepth(i) {
+      const loc = LOCS[i != null ? i : index] || {};
+      return Number(loc.depth) || 0;
+    }
+    function seamothDepth() {
+      const s = STORY.SEAMOTH || {};
+      return s.depth != null ? Number(s.depth) : 300;
+    }
+    function seamothEntryLoc() {
+      const s = STORY.SEAMOTH || {};
+      if (s.loc != null) return s.loc;
+      for (let i = 0; i < LOCS.length; i++) if (locDepth(i) >= seamothDepth()) return i;
+      return 3;
+    }
+    function inSeamoth(i) {
+      const idx = i != null ? i : index;
+      return locDepth(idx) >= seamothDepth() && (seamothDone || idx > seamothEntryLoc() || locDepth(idx) > seamothDepth());
+    }
+    function syncCraft() {
+      const on = inSeamoth();
+      document.documentElement.classList.toggle("in-sub", on);
+      document.documentElement.dataset.seamoth = on ? "1" : "0";
+      if (divePair) divePair.classList.toggle("in-sub", on);
+      if (typeof leviDiver !== "undefined" && leviDiver) {
+        leviDiver.classList.toggle("in-sub", on);
+        if (on) leviDiver.setAttribute("aria-label", "Мотылёк");
+        else leviDiver.setAttribute("aria-label", "Вика");
+      }
+      const v = document.getElementById("diverVika");
+      if (v) v.setAttribute("aria-label", on ? "Мотылёк" : "Вика");
+      if (on) lockOxygen();
+    }
     function syncDivePair() {
+      syncCraft();
       if (!divePair) return;
       const z = document.getElementById("diverZhenya");
       if (z && !divePair.classList.contains("enter") && !divePair.classList.contains("swept")) {
@@ -2666,22 +2784,43 @@
       currentFx.classList.remove("on");
       setTimeout(() => { if (currentFx && !currentFx.classList.contains("on")) currentFx.innerHTML = ""; }, 400);
     }
-    function showDepthCaption(i) {
-      const lines = STORY.DEPTH || {};
-      const text = lines[String(i)] || lines[i];
+    function showStoryCaption(text, ms) {
       if (!text || !snCaption) return Promise.resolve();
       const span = snCaption.querySelector("span") || snCaption;
       span.textContent = text;
       snCaption.classList.add("on");
       document.documentElement.dataset.caption = "1";
-      const ms = FAST ? 450 : 2200;
+      const wait = ms != null ? ms : (FAST ? 450 : 2200);
       return new Promise((resolve) => {
         setTimeout(() => {
           snCaption.classList.remove("on");
           document.documentElement.dataset.caption = "0";
           resolve();
-        }, ms);
+        }, wait);
       });
+    }
+    function showDepthCaption(i) {
+      const lines = STORY.DEPTH || {};
+      return showStoryCaption(lines[String(i)] || lines[i]);
+    }
+    async function playSeamothMoment() {
+      if (seamothDone && inSeamoth()) return;
+      setReady(false);
+      if (window.QuestHUD) QuestHUD.setStep("seamoth");
+      document.documentElement.dataset.story = "seamoth";
+      // сначала скафандр, затем Мотылёк
+      seamothDone = false;
+      document.documentElement.classList.remove("in-sub");
+      if (divePair) divePair.classList.remove("in-sub");
+      const cfg = STORY.SEAMOTH || {};
+      const text = cfg.caption || cfg.text || "Глубина 300 м. Вика пересаживается в Мотылёк.";
+      const hold = FAST ? 500 : 2200;
+      const capP = showStoryCaption(text, hold);
+      await new Promise((r) => setTimeout(r, FAST ? 180 : 700));
+      seamothDone = true;
+      syncCraft();
+      await capP;
+      document.documentElement.dataset.story = "";
     }
     async function playIntro() {
       if (introDone) { startRepair(); return; }
@@ -2751,6 +2890,12 @@
       const needRepair = SUB.REPAIR && i === SUB.REPAIR.loc && !repairDone;
       const needIntro = !introDone && STORY.INTRO && i === (SUB.REPAIR && SUB.REPAIR.loc != null ? SUB.REPAIR.loc : 0);
       if (needIntro) { await playIntro(); return; }
+      if (!seamothDone && i === seamothEntryLoc()) {
+        await playSeamothMoment();
+      } else if (locDepth(i) >= seamothDepth()) {
+        seamothDone = true;
+        syncCraft();
+      }
       if (currentDone && !reunionDone && STORY.DEPTH && (STORY.DEPTH[String(i)] || STORY.DEPTH[i])) {
         await showDepthCaption(i);
       }
@@ -2772,6 +2917,7 @@
       if (index === 0 || index >= currentLoc()) introDone = true;
       if (index >= currentLoc()) currentDone = true;
       if (index >= heartLoc()) { currentDone = true; reunionDone = true; }
+      if (locDepth(index) >= seamothDepth()) seamothDone = true;
       syncDivePair();
       if (SUB.REPAIR && index === SUB.REPAIR.loc && !repairDone) { repairDone = true; repairEl.classList.remove("on"); }
       if (SUB.RADIO && index === SUB.RADIO.loc && !radioDone) { radioDone = true; radioPing.classList.remove("show"); closeRadioTune(); }
@@ -2808,7 +2954,11 @@
     async function main() {
       resize();
       await preload();
-      if (CURRENT_DEBUG) {
+      if (SEAMOTH_DEBUG) {
+        index = seamothEntryLoc();
+        subQuestions().forEach((q) => { if (q.loc != null && q.loc < index) markQDone(q); });
+        syncQFlags();
+      } else if (CURRENT_DEBUG) {
         index = currentLoc();
         subQuestions().forEach((q) => { if (q.loc != null && q.loc <= index) markQDone(q); });
         syncQFlags();
@@ -2846,9 +2996,9 @@
       } else if (START_LOC > 0) {
         index = START_LOC;
       }
-      const jump = index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG;
+      const jump = index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG;
       if (jump || INTRO_DEBUG) {
-        if (SUB.REPAIR && (index > SUB.REPAIR.loc || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG)) repairDone = true;
+        if (SUB.REPAIR && (index > SUB.REPAIR.loc || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG)) repairDone = true;
         if (SUB.RADIO && (index > SUB.RADIO.loc || (Q_DEBUG && index === SUB.RADIO.loc) || ((CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || REUNION_DEBUG) && index >= SUB.RADIO.loc))) radioDone = true;
         if (SUB.PHOTO && index > SUB.PHOTO.loc) photoDone = true;
         if (SUB.LEVIATHAN && index > SUB.LEVIATHAN.loc) { leviDone = true; leviQDone = true; }
@@ -2857,9 +3007,11 @@
         if (index > heartLoc() || (Q_DEBUG && index === heartLoc()) || GLOW_DEBUG || REUNION_DEBUG) caveDone = true;
         if (index > heartLoc()) heartQDone = true;
         if (CAVE_DEBUG) { leviDone = true; caveDone = false; }
-        if (!INTRO_DEBUG && (index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG)) introDone = true;
-        if (!CURRENT_DEBUG && (index > currentLoc() || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || REUNION_DEBUG || (Q_DEBUG && index > currentLoc()) || (Q_DEBUG && index === currentLoc() && Q_DEBUG > 1))) currentDone = true;
+        if (!INTRO_DEBUG && (index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG)) introDone = true;
+        if (!CURRENT_DEBUG && (index > currentLoc() || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || GLOW_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG || (Q_DEBUG && index > currentLoc()) || (Q_DEBUG && index === currentLoc() && Q_DEBUG > 1))) currentDone = true;
         if (GLOW_DEBUG || index > heartLoc()) reunionDone = true;
+        if (!SEAMOTH_DEBUG && locDepth(index) >= seamothDepth() && index > seamothEntryLoc()) seamothDone = true;
+        if (SEAMOTH_DEBUG) seamothDone = false;
         syncQFlags();
         syncDivePair();
       }
@@ -2876,7 +3028,7 @@
       window.__ready = true;
       window.__goNext = goNext;
       window.__subnautica = {
-        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, introDone, currentDone, reunionDone, together: !currentDone || reunionDone, radioFreq, leviPlaying, leviHidden, scanned: Object.assign({}, scanned) }; },
+        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, introDone, currentDone, reunionDone, seamothDone, inSeamoth: inSeamoth(), together: !currentDone || reunionDone, radioFreq, leviPlaying, leviHidden, scanned: Object.assign({}, scanned) }; },
         story: { playIntro, playCurrent: playCurrentEvent, playReunion, showCard: showEventCard },
         completeGate: forceComplete,
         spawnBubble: spawnAirBubble,
@@ -2895,6 +3047,8 @@
         startGlow: startHeartTeleport,
         glowDone: false
       };
+      const titleReady = (window.WorldTitle && WorldTitle.whenReady()) || Promise.resolve();
+      await titleReady;
       await onArrive(index);
       startOxygen();
       if (GLOW_DEBUG) {

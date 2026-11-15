@@ -9,7 +9,7 @@ window.QUEST_CONFIG = {
      на следующий пункт списка. */
   FLOW: [
     { id: "start",        path: "start/",                 theme: "quest",      title: "Старт" },
-    { id: "pubg-skin",    path: "pubg/skin.html",         theme: "pubg",       title: "Выбор скина" },
+    { id: "pubg-skin",    path: "pubg/skin.html",         theme: "pubg",       title: "Эрангель" },
     { id: "pubg-flight",  path: "pubg/flight.html",       theme: "pubg",       title: "Полёт" },
     { id: "pubg-zone",    path: "pubg/zone.html",         theme: "pubg",       title: "Зоны: вопросы 1–8, аирдроп после 6-го, снайпер, победа" },
     { id: "sky",          path: "sky/index.html",         theme: "quest",      title: "Переход: полёт по ветру (в духе Sky)" },
@@ -22,6 +22,21 @@ window.QUEST_CONFIG = {
     { id: "gacha",        path: "gacha/index.html",       theme: "quest",      title: "Крутки" }
     /* finale/index.html больше не в цепочке: после Тейвата — «Ты веришь мне?», затем крутки. */
   ],
+
+  /* Карточки названия мира на входе (не на переходах sky/boat/repo_flight).
+     DURATION_MS — всё появление целиком (включая fade), можно пропустить тапом.
+     Отладка: ?title=1 — показать даже в fast; на q=/loc=/… карточка не показывается. */
+  WORLD_TITLES: {
+    DURATION_MS: 2500,
+    FADE_MS: 450,
+    skip: "Нажми, чтобы пропустить",
+    worlds: {
+      pubg:       { roman: "I",   name: "Эрангель",   kicker: "Мир" },
+      minecraft:  { roman: "II",  name: "Minecraft",  kicker: "Мир" },
+      subnautica: { roman: "III", name: "Subnautica", kicker: "Мир" },
+      genshin:    { roman: "IV",  name: "Тейват",     kicker: "Мир" }
+    }
+  },
 
   /* Вопросы и ответы. Правятся здесь.
      text: текст вопроса (**так** — выделить жирным).
@@ -475,11 +490,12 @@ window.QUEST_CONFIG = {
       timerMs: 16000,
       fail: "Левиафан тебя заметил!",
       warning: "Крупная биоформа поблизости. Спрячься — и иди к Жене!",
-      start: { x: 50, y: 46 },
+      start: { x: 50, y: 44 },
+      hideRadius: 16,
       hides: [
-        { x: 14, y: 66, type: "crevice" },
-        { x: 50, y: 82, type: "kelp" },
-        { x: 86, y: 62, type: "crevice" }
+        { x: 20, y: 68, type: "crevice", label: "Скала" },
+        { x: 50, y: 80, type: "kelp", label: "Водоросли" },
+        { x: 80, y: 58, type: "wreck", label: "Обломки" }
       ]
     },
     /* Финальный грот с сердцем (loc7, 1200 м). Сначала встреча, затем вопрос, затем телепорт. */
@@ -488,7 +504,7 @@ window.QUEST_CONFIG = {
       question: "sn-maomao"
     },
     /* Сюжет подводного мира. Карточки событий — в стиле PUBG (заголовок + текст + «Дальше»).
-       Отладка: ?intro=1, ?current=1, ?radio=1, ?reunion=1, ?leviathan=1, ?cave=1, ?glow=1. */
+       Отладка: ?intro=1, ?current=1, ?radio=1, ?seamoth=1, ?leviathan=1, ?cave=1, ?reunion=1, ?glow=1. */
     STORY: {
       INTRO: {
         id: "intro",
@@ -515,6 +531,13 @@ window.QUEST_CONFIG = {
         "3": "Сигнал сильнее. Кажется, пещера ещё глубже.",
         "4": "Совсем близко. Надо идти дальше.",
         "5": "Сигнал почти рядом. Но в темноте кто-то огромный шевелится…"
+      },
+      /* С 300 м Вика пересаживается в Мотылёк; кислород больше не падает. */
+      SEAMOTH: {
+        depth: 300,
+        loc: 3,
+        caption: "Глубина 300 м. Вика пересаживается в Мотылёк.",
+        o2Label: "O₂ · Мотылёк"
       },
       REUNION: {
         id: "reunion",
