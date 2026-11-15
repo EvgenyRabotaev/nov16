@@ -327,6 +327,8 @@ window.QUEST_CONFIG = {
            genshin → q1…qN, "talk", "done". */
   HINTS: {
     DEFAULT: "Подсказка появится позже",
+    "sky": "Двигайте пару влево и вправо и ловите сердечки",
+    "sky:done": "Жми «Дальше»",
     "pubg-zone:sniper": "Подсказка появится позже",
     "pubg-zone:knock": "Это история Жени — просто смотри",
     // "pubg-zone:q1": "…",
@@ -381,7 +383,15 @@ window.QUEST_CONFIG = {
     FLIGHT_MS: 30000,
     RISE_MS: 2600,
     LAND_MS: 2600,
-    FADE_MS: 3000
+    FADE_MS: 3000,
+    /* Сердечки в полёте: ловятся парой (мышь/палец). За пропуск начисляется полный максимум. */
+    HEART_PRIMOS: 2,
+    HEART_EVERY_MS: 2500,
+    HEART_JITTER_MS: 500,
+    HEART_FALL_MS: 5200,
+    HEART_START_MS: 800,
+    AWARD_ID: "sky-hearts",
+    HEART_SUMMARY: "Собрано сердечек: {n}, +{x} примогемов"
   },
 
   /* Подводный мир (subnautica/transition.html).
