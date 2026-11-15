@@ -105,6 +105,81 @@
       ctx.fillStyle = "#c9c9c9"; ctx.fillRect(2, 9, 12, 1);
       for (let x = 2; x < 14; x++) { ctx.fillStyle = x % 3 ? "#a8804b" : "#8a6638"; ctx.fillRect(x, 10, 1, 2); }
       ctx.fillStyle = "#5b4128"; ctx.fillRect(2, 12, 2, 2); ctx.fillRect(12, 12, 2, 2);
+    },
+    red_wool(ctx) { block3d(ctx, (c) => texWool(c, 0, 0, 16, "#c42828", 41), (c) => texWool(c, 0, 0, 16, "#9a1c1c", 43)); },
+    blue_wool(ctx) { block3d(ctx, (c) => texWool(c, 0, 0, 16, "#3c5bd6", 51), (c) => texWool(c, 0, 0, 16, "#2a3ea3", 53)); },
+    yellow_wool(ctx) { block3d(ctx, (c) => texWool(c, 0, 0, 16, "#d6c22a", 61), (c) => texWool(c, 0, 0, 16, "#b49a18", 63)); },
+    black_wool(ctx) { block3d(ctx, (c) => texWool(c, 0, 0, 16, "#2c2c2c", 71), (c) => texWool(c, 0, 0, 16, "#1a1a1a", 73)); },
+    pink_wool(ctx) { block3d(ctx, (c) => texWool(c, 0, 0, 16, "#e48aa8", 81), (c) => texWool(c, 0, 0, 16, "#c46a88", 83)); },
+    green_wool(ctx) { block3d(ctx, (c) => texWool(c, 0, 0, 16, "#4a8a32", 91), (c) => texWool(c, 0, 0, 16, "#356824", 93)); },
+    red_concrete(ctx) {
+      block3d(ctx, (c) => { c.fillStyle = "#c42a2a"; c.fillRect(0, 0, 16, 16); c.fillStyle = "#d44848"; c.fillRect(2, 2, 3, 2); },
+        (c) => { c.fillStyle = "#9a1c1c"; c.fillRect(0, 0, 16, 16); c.fillStyle = "#7a1414"; c.fillRect(0, 14, 16, 2); });
+    },
+    glass(ctx) {
+      block3d(ctx, (c) => {
+        c.fillStyle = "#c8e8f0"; c.fillRect(0, 0, 16, 16);
+        c.fillStyle = "#e8f8fc"; c.fillRect(2, 2, 5, 4); c.fillStyle = "#9ecad8"; c.fillRect(10, 9, 4, 4);
+        c.fillStyle = "#7aa8b8"; c.fillRect(0, 0, 16, 1); c.fillRect(0, 15, 16, 1);
+      }, (c) => {
+        c.fillStyle = "#b0d4de"; c.fillRect(0, 0, 16, 16);
+        c.fillStyle = "#d0ecf2"; c.fillRect(2, 3, 4, 6); c.fillStyle = "#8ab0bc"; c.fillRect(9, 8, 5, 5);
+      });
+    },
+    iron_ingot(ctx) {
+      const rows = ["..............", "..XXXXXXXXXX..", ".XllllllllllX.", ".XllllllllwwX.", ".XdddddddddwX.", ".XdddddddddX..", "..XXXXXXXXX..."];
+      const pal = { X: "#5a5a5a", l: "#d0d0d0", w: "#f2f2f2", d: "#8a8a8a" };
+      rows.forEach((r, y) => [...r].forEach((ch, x) => { const c = pal[ch]; if (c) { ctx.fillStyle = c; ctx.fillRect(x + 1, y + 5, 1, 1); } }));
+    },
+    gold_ingot(ctx) {
+      const rows = ["..............", "..XXXXXXXXXX..", ".XllllllllllX.", ".XllllllllwwX.", ".XdddddddddwX.", ".XdddddddddX..", "..XXXXXXXXX..."];
+      const pal = { X: "#8a6a10", l: "#f0c040", w: "#fff0a0", d: "#c49218" };
+      rows.forEach((r, y) => [...r].forEach((ch, x) => { const c = pal[ch]; if (c) { ctx.fillStyle = c; ctx.fillRect(x + 1, y + 5, 1, 1); } }));
+    },
+    diamond(ctx) {
+      const pts = {
+        "#1a6a8a": [[8, 1], [7, 2], [9, 2], [6, 3], [10, 3]],
+        "#7ad8f0": [[8, 2], [7, 3], [8, 3], [9, 3], [6, 4], [7, 4], [8, 4]],
+        "#d8f8ff": [[8, 3], [7, 4]],
+        "#2e8cb0": [[10, 4], [9, 4], [5, 4], [5, 5], [6, 5], [10, 5], [11, 5], [6, 6], [10, 6], [7, 7], [9, 7], [8, 8]],
+        "#0e4a66": [[8, 9], [7, 8], [9, 8], [5, 6], [11, 6], [4, 5], [12, 5]]
+      };
+      Object.keys(pts).forEach((c) => { ctx.fillStyle = c; pts[c].forEach(([x, y]) => ctx.fillRect(x, y + 2, 1, 1)); });
+    },
+    book(ctx) {
+      ctx.fillStyle = "#5b2a14"; ctx.fillRect(3, 3, 10, 11);
+      ctx.fillStyle = "#7a3c1c"; ctx.fillRect(4, 4, 8, 9);
+      ctx.fillStyle = "#e8d2a0"; ctx.fillRect(5, 4, 1, 9);
+      ctx.fillStyle = "#c9a56a"; ctx.fillRect(7, 6, 4, 1); ctx.fillRect(7, 8, 3, 1);
+      ctx.fillStyle = "#c9a43a"; ctx.fillRect(3, 3, 10, 1);
+    },
+    torch(ctx) {
+      ctx.fillStyle = "#6b4f2a"; ctx.fillRect(7, 7, 2, 8); ctx.fillStyle = "#4a361c"; ctx.fillRect(8, 7, 1, 8);
+      ctx.fillStyle = "#ffcf5e"; ctx.fillRect(6, 3, 4, 4); ctx.fillStyle = "#ff9a2a"; ctx.fillRect(7, 2, 2, 2);
+      ctx.fillStyle = "#fff4c0"; ctx.fillRect(7, 4, 2, 2); ctx.fillStyle = "#e05010"; ctx.fillRect(6, 5, 1, 2); ctx.fillRect(9, 5, 1, 2);
+    },
+    red_dye(ctx) {
+      const rows = ["......XXX.......", ".....XbbbX......", "....XbBBbbX.....", "...XbBBBBbbX....", "...XbBBBbbbX....", "..XbbBbbbbbbX...", "..XbbbbbbbbbX...", "..XbbbbbbbdbX...", "..XbbbbbbbddX...", "...XbbbbbddX....", "....XXdddXX.....", "......XXX......."];
+      const pal = { X: "#4a1010", b: "#c42828", B: "#f06060", d: "#8a1818" };
+      rows.forEach((r, y) => [...r].forEach((ch, x) => { const c = pal[ch]; if (c) { ctx.fillStyle = c; ctx.fillRect(x + 1, y + 2, 1, 1); } }));
+    },
+    yellow_dye(ctx) {
+      const rows = ["......XXX.......", ".....XbbbX......", "....XbBBbbX.....", "...XbBBBBbbX....", "...XbBBBbbbX....", "..XbbBbbbbbbX...", "..XbbbbbbbbbX...", "..XbbbbbbbdbX...", "..XbbbbbbbddX...", "...XbbbbbddX....", "....XXdddXX.....", "......XXX......."];
+      const pal = { X: "#5a4a08", b: "#e0c030", B: "#fff08a", d: "#b49218" };
+      rows.forEach((r, y) => [...r].forEach((ch, x) => { const c = pal[ch]; if (c) { ctx.fillStyle = c; ctx.fillRect(x + 1, y + 2, 1, 1); } }));
+    },
+    red_room(ctx) {
+      /* пиксельная красная комнатка: стены, дверь, тёплый свет */
+      ctx.fillStyle = "#3a0a0c"; ctx.fillRect(1, 1, 14, 14);
+      ctx.fillStyle = "#9a1c22"; ctx.fillRect(2, 2, 12, 12);
+      ctx.fillStyle = "#c4343a"; ctx.fillRect(3, 3, 10, 7);
+      ctx.fillStyle = "#6a1014"; ctx.fillRect(3, 10, 10, 4);
+      ctx.fillStyle = "#2a0608"; ctx.fillRect(6, 7, 4, 7);
+      ctx.fillStyle = "#5a0c10"; ctx.fillRect(7, 8, 2, 5);
+      ctx.fillStyle = "#f0c060"; ctx.fillRect(8, 11, 1, 1);
+      ctx.fillStyle = "#e3262b"; ctx.fillRect(4, 4, 1, 1); ctx.fillRect(11, 4, 1, 1);
+      ctx.fillStyle = "#ff9a9a"; ctx.fillRect(5, 4, 1, 1);
+      ctx.fillStyle = "#1a0406"; ctx.fillRect(1, 1, 14, 1); ctx.fillRect(1, 14, 14, 1); ctx.fillRect(1, 1, 1, 14); ctx.fillRect(14, 1, 1, 14);
     }
   };
   const ICONS = {};
@@ -116,7 +191,17 @@
     return (ICONS[id] = c.toDataURL());
   }
 
-  const NAMES = { log: "Бревно", planks: "Доски", stick: "Палка", cobblestone: "Булыжник", crafting_table: "Верстак", wool: "Шерсть", bed: "Кровать", cornflower: "Василёк", lapis: "Лазурит", blue_dye: "Синий краситель", boat: "Лодка" };
+  const NAMES = {
+    log: "Бревно", planks: "Доски", stick: "Палка", cobblestone: "Булыжник",
+    crafting_table: "Верстак", wool: "Белая шерсть", bed: "Кровать",
+    cornflower: "Василёк", lapis: "Лазурит", blue_dye: "Синий краситель", boat: "Лодка",
+    red_wool: "Красная шерсть", blue_wool: "Синяя шерсть", yellow_wool: "Жёлтая шерсть",
+    black_wool: "Чёрная шерсть", pink_wool: "Розовая шерсть", green_wool: "Зелёная шерсть",
+    red_concrete: "Красный бетон", glass: "Стекло", iron_ingot: "Железный слиток",
+    gold_ingot: "Золотой слиток", diamond: "Алмаз", book: "Книга", torch: "Факел",
+    red_dye: "Красный краситель", yellow_dye: "Жёлтый краситель", red_room: "Красная комната"
+  };
+  const RED_IDS = ["red_wool", "red_dye", "red_concrete"];
 
   /* Рецепты (форма может стоять в любом месте сетки, как в игре). */
   const RECIPES = {
@@ -124,7 +209,16 @@
     crafting_table: { patterns: [["PP", "PP"]], key: { P: "planks" }, count: 1, inv: [["planks", 4], ["stick", 2], ["cobblestone", 2]] },
     bed: { patterns: [["WWW", "PPP"]], key: { W: "wool", P: "planks" }, count: 1, inv: [["wool", 3], ["planks", 3], ["stick", 1], ["cobblestone", 2]] },
     blue_dye: { patterns: [["F"], ["Z"]], key: { F: "cornflower", Z: "lapis" }, count: 1, inv: [["cornflower", 1], ["stick", 1], ["cobblestone", 2]] },
-    boat: { patterns: [["P.P", "PPP"]], key: { P: "planks", ".": null }, count: 1, inv: [["planks", 5], ["stick", 2], ["cobblestone", 2]] }
+    boat: { patterns: [["P.P", "PPP"]], key: { P: "planks", ".": null }, count: 1, inv: [["planks", 5], ["stick", 2], ["cobblestone", 2]] },
+    /* Все 9 клеток любым красным материалом; рецепт сам не раскрывается (noReveal). */
+    red_room: {
+      fillAll: RED_IDS, count: 1, noReveal: true,
+      inv: [
+        ["log", 4], ["planks", 8], ["glass", 8], ["cobblestone", 16], ["torch", 8], ["iron_ingot", 6],
+        ["red_wool", 16], ["gold_ingot", 4], ["diamond", 2], ["book", 4], ["wool", 6], ["blue_wool", 4],
+        ["red_dye", 4], ["yellow_wool", 4], ["black_wool", 4], ["stick", 8], ["pink_wool", 4], ["red_concrete", 8]
+      ]
+    }
   };
 
   function trim(grid) {
@@ -135,6 +229,7 @@
     return out;
   }
   function matches(recipe, grid) {
+    if (recipe.fillAll) return grid.every((id) => !!id && recipe.fillAll.indexOf(id) !== -1);
     const t = trim(grid);
     return recipe.patterns.some((p) => p.length === t.length && p.every((row, y) => row.length === t[y].length && [...row].every((ch, x) => recipe.key[ch] === t[y][x])));
   }
@@ -203,27 +298,31 @@
       document.body.appendChild(root);
       const gridEl = root.querySelector(".mc-grid"), invEl = root.querySelector(".mc-inv"), resEl = root.querySelector(".mc-result");
       const arrow = root.querySelector(".mc-arrow"), tip = root.querySelector(".mc-tip"), hintBtn = root.querySelector(".mc-hintbtn"), gui = root.querySelector(".mc-gui");
+      const noReveal = !!(def.noReveal || recipe.noReveal);
       const grid = Array(9).fill(null);
-      const inv = Array(9).fill(null).map((_, i) => recipe.inv[i] ? { id: recipe.inv[i][0], n: recipe.inv[i][1] } : null);
+      const invSrc = recipe.inv || [];
+      const invN = Math.max(9, Math.ceil(invSrc.length / 9) * 9);
+      const inv = Array(invN).fill(null).map((_, i) => invSrc[i] ? { id: invSrc[i][0], n: invSrc[i][1] } : null);
       let fails = 0, wasFull = false, ghost = null, sel = null, finished = false, showRecipe = false;
-      const need = recipe.patterns[0].join("").replace(/\./g, "").length;
+      const need = recipe.fillAll ? 9 : recipe.patterns[0].join("").replace(/\./g, "").length;
       const gridSlots = [], invSlots = [];
       for (let i = 0; i < 9; i++) { const s = document.createElement("div"); s.className = "mc-slot"; s.dataset.k = "g" + i; gridEl.appendChild(s); gridSlots.push(s); }
-      for (let i = 0; i < 9; i++) { const s = document.createElement("div"); s.className = "mc-slot"; s.dataset.k = "i" + i; invEl.appendChild(s); invSlots.push(s); }
+      for (let i = 0; i < invN; i++) { const s = document.createElement("div"); s.className = "mc-slot"; s.dataset.k = "i" + i; invEl.appendChild(s); invSlots.push(s); }
+      if (noReveal) hintBtn.style.display = "none";
       const fill = (el, id, n, cls) => { el.innerHTML = id ? '<img class="' + (cls || "") + '" alt="" src="' + icon(id) + '">' + (n > 1 ? '<span class="mc-cnt">' + n + "</span>" : "") : ""; if (id && !cls) el.title = NAMES[id] || ""; else el.removeAttribute("title"); };
       function ready() { return matches(recipe, grid); }
       function render() {
         grid.forEach((id, i) => fill(gridSlots[i], id, 1));
-        if (showRecipe) { const p = recipe.patterns[0]; p.forEach((row, y) => [...row].forEach((ch, x) => { const i = y * 3 + x; if (!grid[i]) fill(gridSlots[i], recipe.key[ch], 1, "ghost-hint"); })); }
+        if (showRecipe && !noReveal && recipe.patterns) { const p = recipe.patterns[0]; p.forEach((row, y) => [...row].forEach((ch, x) => { const i = y * 3 + x; if (!grid[i]) fill(gridSlots[i], recipe.key[ch], 1, "ghost-hint"); })); }
         inv.forEach((it, i) => { fill(invSlots[i], it && it.n > 0 ? it.id : null, it ? it.n : 0); invSlots[i].classList.toggle("sel", sel === i && !!it && it.n > 0); });
         const ok = ready();
         fill(resEl, ok ? def.craft : null, ok ? recipe.count : 0);
         resEl.classList.toggle("ready", ok); arrow.classList.toggle("ready", ok);
         const filled = grid.filter(Boolean).length;
-        if (!ok && filled >= need && !wasFull) { fails++; wasFull = true; tip.textContent = "Пока не то… Попробуй другую форму."; if (fails >= 2) hintBtn.classList.add("show"); }
+        if (!ok && filled >= need && !wasFull) { fails++; wasFull = true; tip.textContent = "Пока не то… Попробуй ещё раз."; if (!noReveal && fails >= 2) hintBtn.classList.add("show"); }
         if (filled < need) wasFull = false;
         if (ok) tip.textContent = "Готово! Забери " + NAMES[def.craft].toLowerCase() + " из клетки справа.";
-        window.__craft = { craft: def.craft, grid: grid.slice(), inv: inv.map((x) => x && x.n ? x.id + ":" + x.n : null), ready: ok, fails, hintShown: hintBtn.classList.contains("show") };
+        window.__craft = { craft: def.craft, grid: grid.slice(), inv: inv.map((x) => x && x.n ? x.id + ":" + x.n : null), ready: ok, fails, noReveal, hintShown: !noReveal && hintBtn.classList.contains("show") };
       }
       function toInv(id) {
         let slot = inv.findIndex((x) => x && x.id === id);
@@ -317,10 +416,10 @@
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onUp);
-      hintBtn.addEventListener("click", () => { showRecipe = true; tip.textContent = "Полупрозрачные клетки — подсказка: положи предметы так же."; render(); });
-      // бездействие ~25 с — тоже можно открыть подсказку
+      hintBtn.addEventListener("click", () => { if (noReveal) return; showRecipe = true; tip.textContent = "Полупрозрачные клетки — подсказка: положи предметы так же."; render(); });
+      // бездействие ~25 с — тоже можно открыть подсказку (кроме рецептов с noReveal)
       let lastAct = Date.now();
-      const idle = setInterval(() => { if (finished) { clearInterval(idle); return; } if (Date.now() - lastAct > 25000) hintBtn.classList.add("show"); }, 1000);
+      const idle = setInterval(() => { if (finished) { clearInterval(idle); return; } if (!noReveal && Date.now() - lastAct > 25000) hintBtn.classList.add("show"); }, 1000);
       tip.textContent = window.matchMedia && matchMedia("(pointer: coarse)").matches ? "Перетащи предметы пальцем в сетку 3×3 (или коснись предмета, потом клетки)." : "Перетащи предметы мышкой из инвентаря в сетку 3×3.";
       render();
       requestAnimationFrame(() => root.classList.add("on"));
@@ -388,5 +487,5 @@
     ratio: BH / BW
   };
 
-  window.MCCraft = { icon, open, House, RECIPES, NAMES, matches };
+  window.MCCraft = { icon, open, House, RECIPES, NAMES, matches, RED_IDS };
 })();

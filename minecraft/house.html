@@ -90,18 +90,19 @@
   @keyframes catBob { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-2px); } }
   .mc-ach {
     position: fixed; left: 16px; top: 16px; z-index: 40;
-    display: flex; align-items: center; gap: 10px;
-    min-width: 240px; max-width: min(360px, calc(100vw - 32px));
-    padding: 8px 12px 8px 8px;
+    display: flex; align-items: center; gap: 15px;
+    min-width: 360px; max-width: min(540px, calc(100vw - 24px));
+    padding: 12px 18px 12px 12px;
     background: #212121; border: 3px solid #000;
     box-shadow: inset 0 0 0 2px #555, 4px 4px 0 rgba(0,0,0,.35);
-    color: #fff; font: 700 13px/1.25 "Courier New", "DejaVu Sans Mono", monospace;
+    color: #fff; font: 700 20px/1.25 "Courier New", "DejaVu Sans Mono", monospace;
     text-shadow: 2px 2px 0 #000; pointer-events: none;
     animation: achIn .35s ease both;
   }
   .mc-ach.off { animation: achOut .4s ease forwards; }
-  .mc-ach .ico { width: 32px; height: 32px; image-rendering: pixelated; flex: 0 0 32px; background: #111; border: 2px solid #000; }
-  .mc-ach .kicker { color: #fcfc54; font-size: 11px; letter-spacing: .04em; }
+  .mc-ach .ico { width: 48px; height: 48px; image-rendering: pixelated; flex: 0 0 48px; background: #111; border: 2px solid #000; }
+  .mc-ach .kicker { color: #fcfc54; font-size: 16px; letter-spacing: .04em; }
+  .panel.craft-q #answerBtn, .panel.craft-q .ans-inputs { display: none; }
   @keyframes achIn { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes achOut { to { transform: translateY(-16px); opacity: 0; } }
   @media (max-width: 600px) {
@@ -176,9 +177,9 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p11"></script>
+<script src="../common/quest_config.js?v=20261115p12"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="minecraft"></script>
-<script src="craft.js?v=20261115i"></script>
+<script src="craft.js?v=20261115p12"></script>
 </head>
 <body>
 <div class="scene" id="scene">
@@ -362,8 +363,9 @@
   }
 
   /* Финал после голубого дома: пауза 5 с → подходят друг к другу → сердечко → «Дальше». */
-  async function finale() {
-    await new Promise((r) => setTimeout(r, 5000));
+  async function finale(opts) {
+    const delay = (opts && opts.delay != null) ? opts.delay : 5000;
+    await new Promise((r) => setTimeout(r, delay));
     await new Promise((res) => {
       const t0 = performance.now(), MS = 2600, hops = 5;
       function f(now) {
@@ -382,9 +384,9 @@
     setTimeout(() => sparkle(heartEl, 10), 900);
     await new Promise((r) => setTimeout(r, 1500));
   }
-  function finish() {
+  function finish(opts) {
     done = true;
-    finale().then(() => { busy = false; if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше", EXIT ? { onClick: startExit } : undefined); } window.__mcDone = true; });
+    finale(opts).then(() => { busy = false; if (window.QuestHUD) { QuestHUD.setStep("done"); QuestHUD.showNext("Дальше", EXIT ? { onClick: startExit } : undefined); } window.__mcDone = true; });
   }
   /* «Дальше» после сердечка → вопрос «Двигаемся дальше?» (без примогемов) */
   function startExit() {
@@ -514,8 +516,8 @@
     tx.lastChild.textContent = title;
     t.appendChild(ico); t.appendChild(tx);
     document.body.appendChild(t);
-    setTimeout(() => t.classList.add("off"), 2800);
-    setTimeout(() => t.remove(), 3300);
+    setTimeout(() => t.classList.add("off"), 5600);
+    setTimeout(() => t.remove(), 6600);
   }
   function startFireflies() {
     const c = document.getElementById("mcFireflies");
@@ -671,6 +673,22 @@
     }, 250);
   }
 
+  let questionCraftOpen = false;
+  async function startQuestionCraft(q) {
+    if (questionCraftOpen || !q || !q.craft || !window.MCCraft) return;
+    questionCraftOpen = true;
+    busy = true;
+    if (window.QuestHUD) QuestHUD.setStep(exitMode ? "exit" : "q" + (question + 1));
+    await new Promise((r) => setTimeout(r, 450));
+    await MCCraft.open({ craft: q.craft, hint: "Скрафти секретное место", noReveal: true });
+    if (window.QuestHUD) QuestHUD.award(q.id || ("mc-q" + (question + 1)), q.placeholder ? 0 : (q.primos != null ? q.primos : undefined));
+    achievement(q.craft);
+    panel.classList.add("hidden");
+    questionCraftOpen = false;
+    question++;
+    finish({ delay: 400 });
+  }
+
   function render() {
     const q = curQ();
     const qLabel = exitMode ? "Новый путь" : "Вопрос " + (question + 1) + " из " + QUESTIONS.length;
@@ -681,6 +699,16 @@
     if (!q) { qText.textContent = "(вопрос — заглушка)"; return; }
     qText.innerHTML = formatQText(q.text);
     qText.scrollTop = 0;
+    if (q.craft) {
+      answerBtn.hidden = true; answerBtn.disabled = true;
+      panel.classList.add("craft-q");
+      panel.classList.remove("hidden");
+      { panelBottom = panel.offsetTop + panel.offsetHeight; layout(); }
+      startQuestionCraft(q);
+      return;
+    }
+    panel.classList.remove("craft-q");
+    answerBtn.hidden = false;
     (q.parts || []).forEach((part) => {
       const inp = document.createElement("input");
       inp.className = "ans-input"; inp.type = "text"; inp.autocomplete = "off";
@@ -712,6 +740,7 @@
     busy = false;
     await new Promise((r) => setTimeout(r, 350));
     if (QUESTIONS[question] && QUESTIONS[question].book) await showDiaryBook();
+    if (QUESTIONS[question] && QUESTIONS[question].craft) await walkTo(N); /* после голубых стен чуть ближе к дому, не загораживая его */
     render();
   }
 
@@ -768,6 +797,7 @@
     question = n - 1; step = shown = question;
     if (question >= 1) { vikaImg.src = "chars/vika_flowers.png"; window.__mcFlowers = true; }
     STAGES.filter((st) => st.after <= question).forEach((st) => applyStage(st, true));
+    if (QUESTIONS[question] && QUESTIONS[question].craft) shown = N; /* уже у дома, не загораживая его */
     layout();
     if (QUESTIONS[question] && QUESTIONS[question].book) {
       busy = true;

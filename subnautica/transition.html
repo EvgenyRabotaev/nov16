@@ -287,7 +287,7 @@
       color: #e7f7ff; font-size: 22px; box-shadow: 0 8px 20px rgba(0,0,0,.35);
       display: none;
     }
-    #camBtn.show { display: block; }
+    #camBtn, #camBtn.show { display: none !important; }
     #flash { position: absolute; inset: 0; z-index: 18; background: #fff; opacity: 0; pointer-events: none; }
 
     #hideBtn {
@@ -333,7 +333,7 @@
     }
   </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115i">
-<script src="../common/quest_config.js?v=20261115p11"></script>
+<script src="../common/quest_config.js?v=20261115p12"></script>
 <script src="../common/hud.js?v=20261115i" data-screen="subnautica" data-avoid="#deeper, #depth"></script>
 </head>
 <body>
@@ -1296,7 +1296,7 @@
       else if (needLevi) startLeviathan();
       else if (needLeviQ) showLeviQuestion(leviQuestion());
       else setReady(true);
-      if (SUB.PHOTO && i === SUB.PHOTO.loc && !photoDone) startPhoto();
+      /* Фото на 500 м убрано (15.11): локация остаётся, шаг со снимком больше не запускается. */
       document.documentElement.dataset.index = String(i);
     }
 
@@ -1307,7 +1307,6 @@
         leviDone = true; leviQDone = true;
         hideBtn.classList.remove("show"); cover.classList.remove("on"); hideQuestion();
       }
-      if (SUB.PHOTO && index === SUB.PHOTO.loc && !photoDone) takePhoto();
       pda.classList.remove("on");
       setReady(true);
     }
