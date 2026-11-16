@@ -93,9 +93,9 @@
   }
   #heartSummary.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p70">
-<script src="../common/quest_config.js?v=20261116p70"></script>
-<script src="../common/hud.js?v=20261116p70" data-screen="sky" data-counter="off"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p71">
+<script src="../common/quest_config.js?v=20261116p71"></script>
+<script src="../common/hud.js?v=20261116p71" data-screen="sky" data-counter="off"></script>
 </head>
 <body>
 <img id="bg" alt="">
@@ -273,7 +273,8 @@
 
   /* ---------- сердечки ---------- */
   const HEART_SVG = '<svg viewBox="0 0 32 29" aria-hidden="true"><path fill="#ff3b6b" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" d="M16 27.5S2.5 18.2 2.5 10.2C2.5 5.6 6.1 2.5 10.3 2.5c2.4 0 4.5 1.2 5.7 3.1 1.2-1.9 3.3-3.1 5.7-3.1 4.2 0 7.8 3.1 7.8 7.7 0 8-13.5 17.3-13.5 17.3z"/></svg>';
-  const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 2;
+  const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 1;
+  const HEART_CAP = CFG.HEART_CAP != null ? CFG.HEART_CAP : 0; /* 0 — без потолка; иначе макс. примогемов за игру */
   const HEART_EVERY = CFG.HEART_EVERY_MS || 1400;
   const HEART_JITTER = CFG.HEART_JITTER_MS != null ? CFG.HEART_JITTER_MS : 150;
   const HEART_FALL = CFG.HEART_FALL_MS || 5500;
@@ -400,14 +401,16 @@
     if (awarded) return finalHeartCount();
     awarded = true;
     const n = finalHeartCount();
-    const x = n * HEART_PRIMOS;
+    let x = n * HEART_PRIMOS;
+    if (HEART_CAP) x = Math.min(x, HEART_CAP);
     if (window.QuestHUD && x) QuestHUD.award(HEART_AWARD, x);
     return n;
   }
 
   function showHeartSummary() {
     const n = grantHearts();
-    const x = n * HEART_PRIMOS;
+    let x = n * HEART_PRIMOS;
+    if (HEART_CAP) x = Math.min(x, HEART_CAP);
     if (heartSummary) {
       heartSummary.textContent = formatSummary(n, x);
       heartSummary.classList.add("show");
@@ -576,7 +579,7 @@
   window.__sky = { t: 0, done: false, T, speed: SPEED, steer, music: !!audio, audio, skipped: false,
     get caught() { return caught; }, get planned() { return heartPlan.length; },
     get awarded() { return awarded; }, hearts: hearts, skip: function () { skip(); },
-    lanes: HEART_LANES, fallMs: HEART_FALL, everyMs: HEART_EVERY, primos: HEART_PRIMOS,
+    lanes: HEART_LANES, fallMs: HEART_FALL, everyMs: HEART_EVERY, primos: HEART_PRIMOS, cap: HEART_CAP,
     get plan() { return heartPlan.slice(); },
     buildPlan: buildHeartPlan,
     laneX: laneX, playHeartSound: playHeartSound };

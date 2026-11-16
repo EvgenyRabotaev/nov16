@@ -177,9 +177,9 @@
     .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 10px; max-height: min(42vh, calc(100dvh - 220px)); }
   }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p70">
-<script src="../common/quest_config.js?v=20261116p70"></script>
-<script src="../common/hud.js?v=20261116p70" data-screen="minecraft"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p71">
+<script src="../common/quest_config.js?v=20261116p71"></script>
+<script src="../common/hud.js?v=20261116p71" data-screen="minecraft"></script>
 <link rel="stylesheet" href="../common/world_title.css?v=20261115p37">
 <script src="../common/world_title.js?v=20261115p37" data-world="minecraft"></script>
 <script src="craft.js?v=20261115p34"></script>
@@ -510,7 +510,7 @@
     const title = (raw && typeof raw === "object") ? (raw.title || craft) : (raw || craft);
     const primos = (raw && typeof raw === "object" && raw.primos != null)
       ? raw.primos
-      : (MC.ACHIEVEMENT_PRIMOS != null ? MC.ACHIEVEMENT_PRIMOS : 40);
+      : (MC.ACHIEVEMENT_PRIMOS != null ? MC.ACHIEVEMENT_PRIMOS : 30);
     const awardId = (raw && typeof raw === "object" && raw.awardId) || ("mc-ach-" + craft);
     let granted = false;
     if (primos && window.QuestHUD && typeof QuestHUD.award === "function") {

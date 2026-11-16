@@ -187,9 +187,9 @@
     .heart { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
   }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p70">
-<script src="../common/quest_config.js?v=20261116p70"></script>
-<script src="../common/hud.js?v=20261116p70" data-screen="repo-flight"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p71">
+<script src="../common/quest_config.js?v=20261116p71"></script>
+<script src="../common/hud.js?v=20261116p71" data-screen="repo-flight"></script>
 </head>
 <body>
 <div id="bgRoot">
@@ -243,7 +243,7 @@
   const FORCE_WORLD = Math.max(0, parseInt(new URLSearchParams(location.search).get("world") || "0", 10));
   const roadImgs = WORLDS.map((w) => { const im = new Image(); im.decoding = "async"; im.src = w.roadSrc; return im; });
   let roadFadeFrom = 0, roadFadeStart = 0;
-  const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 2;
+  const HEART_PRIMOS = CFG.HEART_PRIMOS != null ? CFG.HEART_PRIMOS : 1;
   const HEART_CAP = CFG.HEART_CAP != null ? CFG.HEART_CAP : 0; /* 0 — без потолка */
   const HEART_KEY = "nov16_repo_hearts";
   const HEART_EVERY = FAST ? 750 : (CFG.HEART_EVERY_MS || 1350);
@@ -338,7 +338,7 @@
     const n = heartPlan.length;
     collected = n;
     if (heartCountEl) heartCountEl.textContent = String(n);
-    const target = n * HEART_PRIMOS;
+    const target = HEART_CAP ? Math.min(n * HEART_PRIMOS, HEART_CAP) : n * HEART_PRIMOS;
     const missing = Math.max(0, target - awardedThisRun);
     if (missing) {
       try {
