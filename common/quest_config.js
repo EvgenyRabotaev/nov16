@@ -647,7 +647,7 @@ window.QUEST_CONFIG = {
       counter: "Собрано: {n}/{N}",
       primos: 40,
       awardId: "tv-fireflies",
-      paimon: "Это наш день ✨"
+      paimon: "Это ваш день ✨"
     },
     STARS: {
       title: "Звёздное небо",

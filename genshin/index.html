@@ -505,13 +505,16 @@
   .ff-lantern-s { animation-duration: 3s; animation-delay: -.8s; }
   @keyframes ffLantern { from { opacity: .72; } to { opacity: 1; } }
   .ff-lily .ff-bloom, .ff-qingxin .ff-bloom {
-    transform-box: fill-box; transform-origin: center;
-    animation: ffPetal 2.8s ease-in-out infinite alternate;
     filter: drop-shadow(0 0 5px rgba(200, 230, 255, .85)) drop-shadow(0 0 10px rgba(160, 200, 255, .45));
   }
-  .ff-qingxin .ff-bloom { filter: drop-shadow(0 0 5px rgba(220, 255, 230, .9)) drop-shadow(0 0 10px rgba(180, 255, 210, .4)); animation-duration: 3.2s; }
-  .ff-flowers .ff-lily:nth-of-type(2) .ff-bloom, .ff-flowers .ff-qingxin:nth-of-type(5) .ff-bloom { animation-delay: -1s; }
-  .ff-flowers .ff-lily:nth-of-type(3) .ff-bloom, .ff-flowers .ff-qingxin:nth-of-type(6) .ff-bloom { animation-delay: -1.8s; }
+  .ff-qingxin .ff-bloom { filter: drop-shadow(0 0 5px rgba(220, 255, 230, .9)) drop-shadow(0 0 10px rgba(180, 255, 210, .4)); }
+  .ff-bloom-anim {
+    transform-box: fill-box; transform-origin: center;
+    animation: ffPetal 2.8s ease-in-out infinite alternate;
+  }
+  .ff-qingxin .ff-bloom-anim { animation-duration: 3.2s; }
+  .ff-flowers .ff-lily:nth-of-type(2) .ff-bloom-anim, .ff-flowers .ff-qingxin:nth-of-type(5) .ff-bloom-anim { animation-delay: -1s; }
+  .ff-flowers .ff-lily:nth-of-type(3) .ff-bloom-anim, .ff-flowers .ff-qingxin:nth-of-type(6) .ff-bloom-anim { animation-delay: -1.8s; }
   @keyframes ffPetal { from { opacity: .8; transform: scale(.94); } to { opacity: 1; transform: scale(1.06); } }
   .ff-date-box {
     position: absolute; left: 50%; top: 16%;
@@ -646,10 +649,10 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p56"></script>
+<script src="../common/quest_config.js?v=20261116p57"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="genshin"></script>
-<link rel="stylesheet" href="../common/world_title.css?v=20261116p56">
-<script src="../common/world_title.js?v=20261116p56" data-world="genshin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261116p57">
+<script src="../common/world_title.js?v=20261116p57" data-world="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -816,68 +819,82 @@
         <g class="ff-lily" transform="translate(52,760)">
           <path d="M0,8 C1,-20 2,-40 1,-62" fill="none" stroke="#16301c" stroke-width="1.3"/>
           <g class="ff-bloom" transform="translate(1,-62)">
+            <g class="ff-bloom-anim">
             <ellipse rx="3.2" ry="10" fill="#eef4ff" transform="rotate(-20)"/>
             <ellipse rx="3.2" ry="10" fill="#d7e6ff" transform="rotate(25)"/>
             <ellipse rx="3" ry="9" fill="#f7fbff" transform="rotate(70)"/>
             <ellipse rx="3" ry="9" fill="#cddcff" transform="rotate(-70)"/>
             <circle r="2" fill="#fff6d8"/>
+                      </g>
           </g>
         </g>
         <g class="ff-lily" transform="translate(86,778) scale(.82)">
           <path d="M0,8 C-1,-18 1,-38 0,-56" fill="none" stroke="#16301c" stroke-width="1.3"/>
           <g class="ff-bloom" transform="translate(0,-56)">
+            <g class="ff-bloom-anim">
             <ellipse rx="3.2" ry="10" fill="#eef4ff" transform="rotate(-30)"/>
             <ellipse rx="3.2" ry="10" fill="#d7e6ff" transform="rotate(20)"/>
             <ellipse rx="3" ry="9" fill="#f7fbff" transform="rotate(80)"/>
             <ellipse rx="3" ry="9" fill="#cddcff" transform="rotate(-80)"/>
             <circle r="2" fill="#fff6d8"/>
+                      </g>
           </g>
         </g>
         <g class="ff-lily" transform="translate(308,766) scale(.9)">
           <path d="M0,8 C1,-18 0,-40 -1,-60" fill="none" stroke="#16301c" stroke-width="1.3"/>
           <g class="ff-bloom" transform="translate(-1,-60)">
+            <g class="ff-bloom-anim">
             <ellipse rx="3.2" ry="10" fill="#eef4ff" transform="rotate(-15)"/>
             <ellipse rx="3.2" ry="10" fill="#d7e6ff" transform="rotate(35)"/>
             <ellipse rx="3" ry="9" fill="#f7fbff" transform="rotate(75)"/>
             <ellipse rx="3" ry="9" fill="#cddcff" transform="rotate(-65)"/>
             <circle r="2" fill="#fff6d8"/>
+                      </g>
           </g>
         </g>
         <!-- qingxin -->
         <g class="ff-qingxin" transform="translate(140,782)">
           <path d="M0,6 C0,-24 2,-46 1,-68" fill="none" stroke="#1a3820" stroke-width="1.1"/>
           <g class="ff-bloom" transform="translate(1,-68)">
+            <g class="ff-bloom-anim">
             <circle r="4.2" fill="#f5fff8"/>
             <circle cx="-3" cy="2" r="2.4" fill="#e8fff0"/>
             <circle cx="3.2" cy="2.2" r="2.3" fill="#e8fff0"/>
             <circle cx="0" cy="-3.2" r="2.2" fill="#fff"/>
+                      </g>
           </g>
         </g>
         <g class="ff-qingxin" transform="translate(176,796) scale(.8)">
           <path d="M0,6 C-1,-22 1,-44 0,-62" fill="none" stroke="#1a3820" stroke-width="1.1"/>
           <g class="ff-bloom" transform="translate(0,-62)">
+            <g class="ff-bloom-anim">
             <circle r="4.2" fill="#f5fff8"/>
             <circle cx="-3" cy="2" r="2.4" fill="#e8fff0"/>
             <circle cx="3.2" cy="2.2" r="2.3" fill="#e8fff0"/>
             <circle cx="0" cy="-3.2" r="2.2" fill="#fff"/>
+                      </g>
           </g>
         </g>
         <g class="ff-qingxin" transform="translate(248,786) scale(.88)">
           <path d="M0,6 C1,-22 0,-46 1,-66" fill="none" stroke="#1a3820" stroke-width="1.1"/>
           <g class="ff-bloom" transform="translate(1,-66)">
+            <g class="ff-bloom-anim">
             <circle r="4.2" fill="#f5fff8"/>
             <circle cx="-3" cy="2" r="2.4" fill="#e8fff0"/>
             <circle cx="3.2" cy="2.2" r="2.3" fill="#e8fff0"/>
             <circle cx="0" cy="-3.2" r="2.2" fill="#fff"/>
+                      </g>
           </g>
         </g>
         <g class="ff-qingxin" transform="translate(360,800) scale(.7)">
           <path d="M0,6 C0,-20 1,-40 0,-56" fill="none" stroke="#1a3820" stroke-width="1.1"/>
           <g class="ff-bloom" transform="translate(0,-56)">
+            <g class="ff-bloom-anim">
             <circle r="4.2" fill="#f5fff8"/>
             <circle cx="-3" cy="2" r="2.4" fill="#e8fff0"/>
             <circle cx="3.2" cy="2.2" r="2.3" fill="#e8fff0"/>
             <circle cx="0" cy="-3.2" r="2.2" fill="#fff"/>
+                      </g>
           </g>
         </g>
       </g>
@@ -1693,7 +1710,7 @@
     counter: "Собрано: {n}/{N}",
     primos: 40,
     awardId: "tv-fireflies",
-    paimon: "Это наш день ✨"
+    paimon: "Это ваш день ✨"
   }, G.FIREFLIES || {});
   const ST_CFG = Object.assign({
     title: "Звёздное небо",
