@@ -79,6 +79,7 @@
     transition: opacity .45s ease, visibility .45s;
   }
   .screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  body.reveal-on #home { display: none !important; }
   #home { justify-content: center; }
   .wish-panel {
     position: relative;
@@ -317,6 +318,9 @@
   }
   .card.flip {
     transform: rotateY(180deg);
+  }
+  .card.no-flip {
+    transition: none;
   }
   .face {
     position: absolute; inset: 0;
@@ -849,10 +853,10 @@
   .qhud-hint, .qhud-panel { display: none !important; }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p47"></script>
+<script src="../common/quest_config.js?v=20261116p48"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="gacha" data-counter="off"></script>
-<script src="card_texts.js?v=20261115z3"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
-<script src="card_texts_paimon.js?v=20261116p46"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
+<script src="card_texts.js?v=20261116p48"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
+<script src="card_texts_paimon.js?v=20261116p48"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
 <link rel="preload" as="image" href="../genshin/fairy.png">
 </head>
 <body>
@@ -1043,7 +1047,7 @@
   // Финальная оранжевая карточка «Женя» — НЕ входит в 43, выпадает только особой круткой
   // («Ой, что это?»), когда собраны все 43. Бесплатно, работает и при 0 примогемов.
   // Текст: card_texts.md «## Женя (6★)», реплика Паймон: card_texts_paimon.md «## Женя (6★)».
-  const SPECIAL_CARD = { id: 'zhenya', rarity: 6, title: 'Женя', special: true, note: 'Заглушка: текст от Жени', img: './cards/zhenya_6star.jpg' };
+  const SPECIAL_CARD = { id: 'zhenya', rarity: 6, title: 'Женя', special: true, note: '', img: './cards/zhenya_6star.jpg' };
   /* описания из card_texts.js (window.CARD_TEXTS: id → текст) перекрывают note */
   if (window.CARD_TEXTS) CARDS.concat([SPECIAL_CARD]).forEach(c => { if (window.CARD_TEXTS[c.id]) c.note = window.CARD_TEXTS[c.id]; });
   /* реплики Паймон (window.CARD_TEXTS_PAIMON: id → [реплики]) */
@@ -1057,8 +1061,7 @@
   const PAIMON_SHOP_BOUGHT = PAIMON.shop_bought || ['Отличный выбор! Женя уже в курсе, хе-хе 😏'];
   function paimonLines(card) {
     const L = PAIMON[card.id];
-    if (Array.isArray(L) && L.length) return L;
-    if (card.special) return ['Заглушка: реплика Паймон про карточку «Женя».'];
+    if (Array.isArray(L) && L.length) return L.filter(s => s && !/^Заглушка:/.test(s));
     return PAIMON_FALLBACK;
   }
 
@@ -1877,13 +1880,14 @@
     const showImg = () => { if (img.getAttribute('src') === c.img) img.style.visibility = ''; };
     if (img.complete && img.naturalWidth) showImg();
     else (img.decode ? img.decode() : Promise.reject()).then(showImg, () => { img.onload = showImg; if (img.complete) showImg(); });
+    const noFlip = !!card.special; // 6★ «Женя»: без оборота и без текста — слова скажет Женя
+    const note = noFlip ? '' : (c.note || '');
     document.getElementById('cardName').textContent = c.title;
-    document.getElementById('cardNote').textContent = c.note || '';
+    document.getElementById('cardNote').textContent = note;
     const bt = document.getElementById('cardBackText');
     bt.innerHTML = '';
-    if (c.note) { if (c.title) { const b = document.createElement('b'); b.textContent = c.title; bt.appendChild(b); } bt.appendChild(document.createTextNode(c.note)); }
-    document.getElementById('cardHint').classList.toggle('has', !!c.note);
-    document.getElementById('cardEnter').classList.toggle('special', !!card.special);
+    if (note) { if (c.title) { const b = document.createElement('b'); b.textContent = c.title; bt.appendChild(b); } bt.appendChild(document.createTextNode(note)); }
+    document.getElementById('cardHint').classList.toggle('has', !!note);
     glow.style.background = c.c1;
     glow.style.opacity = '0.85';
     document.documentElement.style.setProperty('--glow', c.c1);
@@ -1892,24 +1896,26 @@
     document.documentElement.style.setProperty('--backStar', c.c2);
 
     const enter = document.getElementById('cardEnter');
-    cardEl.className = 'card';
-    enter.className = 'card-enter';
+    cardEl.className = noFlip ? 'card flip no-flip' : 'card';
+    enter.className = card.special ? 'card-enter special' : 'card-enter';
     meta.className = 'meta';
     close.className = 'btn-main';
+    document.body.classList.add('reveal-on');
     reveal.classList.remove('hidden');
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => enter.classList.add('show'));
     });
-    setTimeout(() => { cardEl.classList.add('flip'); }, 900);
+    if (!noFlip) setTimeout(() => { cardEl.classList.add('flip'); }, 900);
     const myGen = gen;
+    const talkAt = noFlip ? 280 : 1200;
     setTimeout(() => {
       if (myGen !== gen) return;
       meta.classList.add('on');
-      if (c.note) { cardEl.classList.add('texted'); fitBackText(); }
+      if (note) { cardEl.classList.add('texted'); fitBackText(); }
       // Паймон рассказывает; «Дальше» — когда допечатана последняя реплика
       startTalk(paimonLines(card), () => { if (myGen === gen) close.classList.add('on'); });
-    }, 1200);
+    }, talkAt);
   }
 
   // подгоняем шрифт текста на обороте под размер карты
@@ -1931,6 +1937,7 @@
 
   function hideReveal() {
     stopTalk();
+    document.body.classList.remove('reveal-on');
     document.getElementById('reveal').classList.add('hidden');
     document.getElementById('card').className = 'card';
     document.getElementById('cardEnter').className = 'card-enter';
@@ -2567,8 +2574,15 @@
 
   if (/[?&]reset=1/.test(location.search)) resetPool();
 
+  const DEBUG_ZHENYA = /[?&](?:zhenya|special)=1/.test(location.search);
+
   if (DEBUG_SHOP) startShop();
   else if (DEBUG_PUZZLE) startPuzzle();
+  else if (DEBUG_ZHENYA) {
+    document.getElementById('home').classList.add('hidden');
+    busy = true;
+    showCard(SPECIAL_CARD);
+  }
   else if (remainingCards().length === 0 && specialDone && !puzzleDone) startPuzzle();
   else if (remainingCards().length === 0 && specialDone && puzzleDone) startShop();
 
