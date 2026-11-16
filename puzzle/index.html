@@ -7,23 +7,17 @@
 <title>Пятнашки</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 14s-6-3.8-6-8.2C2 3.5 3.7 2 5.6 2 6.8 2 7.6 2.7 8 3.6 8.4 2.7 9.2 2 10.4 2 12.3 2 14 3.5 14 5.8 14 10.2 8 14 8 14z' fill='%236ec8ff'/%3E%3C/svg%3E">
 <link rel="preload" as="image" href="heart.webp">
-<link rel="stylesheet" href="../common/hud.css?v=20261116p60">
-<script src="../common/quest_config.js?v=20261116p60"></script>
-<script src="../common/hud.js?v=20261116p60" data-screen="puzzle"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p61">
+<link rel="stylesheet" href="puzzle.css?v=20261116p61">
+<script src="../common/quest_config.js?v=20261116p61"></script>
+<script src="../common/hud.js?v=20261116p61" data-screen="puzzle"></script>
 <style>
   @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-cyrillic-ext.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
   @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-cyrillic.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
   @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-latin-ext.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
   @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-latin.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-  :root {
-    --gold: #d3bc8e;
-    --cream: #f5e6c0;
-    --ink: #070b1c;
-    --pad: 16px;
-    --hud: 72px;
-  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; margin: 0; background: #070b1c; color: var(--cream);
+  html, body { height: 100%; margin: 0; background: #070b1c; color: #f5e6c0;
     font-family: "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif;
     overflow: hidden; user-select: none; }
   body {
@@ -33,425 +27,34 @@
       radial-gradient(ellipse at 50% 62%, rgba(40, 80, 180, .16), transparent 50%),
       linear-gradient(to bottom, #070b1c 0%, #0c1230 55%, #0a1024 100%);
   }
-  .wrap {
-    min-height: 100dvh;
-    padding: calc(14px + env(safe-area-inset-top, 0px)) var(--pad) calc(var(--hud) + env(safe-area-inset-bottom, 0px));
-    display: flex; flex-direction: column; align-items: center;
-    gap: 10px;
-  }
-  .head { text-align: center; width: min(92vw, 520px); flex: 0 0 auto; }
-  h1 {
-    margin: 0 0 4px; font-size: clamp(18px, 5.4vw, 26px); font-weight: 700;
-    letter-spacing: .16em; text-transform: uppercase;
-    color: #ffe7b0; text-shadow: 0 0 18px rgba(255, 200, 90, .45), 0 2px 8px #000;
-  }
-  .sub { margin: 0; font-size: 15px; color: #dce7ff; text-shadow: 0 1px 6px #000; opacity: .92; }
-  .bar {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    margin-top: 8px; flex-wrap: wrap;
-  }
-  .count {
-    display: inline-block; padding: 4px 12px; border-radius: 999px;
-    background: rgba(10, 16, 32, .45); border: 1px solid rgba(211, 188, 142, .45);
-    font-size: 14px; font-weight: 600; letter-spacing: .04em;
-  }
-  .toggle {
-    appearance: none; cursor: pointer;
-    padding: 4px 12px; min-height: 28px; border-radius: 999px;
-    border: 1px solid rgba(211, 188, 142, .45);
-    background: rgba(20, 16, 30, .4); color: #f5e6c0;
-    font: 600 13px/1 "QuestTeyvat", sans-serif;
-  }
-  .toggle[aria-pressed="true"] {
-    background: rgba(110, 180, 255, .22);
-    border-color: rgba(150, 210, 255, .7);
-    color: #e8f4ff;
-  }
-  .stage {
-    flex: 1 1 auto; width: 100%;
-    display: flex; align-items: center; justify-content: center;
-    min-height: 0;
-  }
-  .frame {
-    position: relative;
-    width: min(92vw, calc(100dvh - 220px), 480px);
-    aspect-ratio: 1;
-    border-radius: 16px;
-    padding: 8px;
-    background:
-      linear-gradient(180deg, rgba(243, 238, 228, .12), rgba(20, 16, 36, .35));
-    border: 2px solid var(--gold);
-    box-shadow:
-      inset 0 0 0 5px rgba(20, 16, 36, .55),
-      0 0 0 1px rgba(255, 230, 180, .2),
-      0 16px 40px rgba(0, 0, 0, .45),
-      0 0 48px rgba(80, 150, 255, .12);
-  }
-  .board {
-    position: relative; width: 100%; height: 100%;
-    border-radius: 10px; overflow: hidden;
-    background: rgba(4, 8, 20, .7);
-    touch-action: none;
-  }
-  .well {
-    position: absolute; border-radius: 8px;
-    background: rgba(0, 0, 0, .35);
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, .45);
-    pointer-events: none;
-  }
-  .tile {
-    position: absolute; padding: 0; border: 0; margin: 0;
-    border-radius: 8px; overflow: hidden;
-    background-repeat: no-repeat;
-    background-size: 400% 400%;
-    box-shadow: 0 2px 6px rgba(0,0,0,.35), inset 0 0 0 1px rgba(180, 220, 255, .18);
-    cursor: pointer;
-    touch-action: none;
-    will-change: transform, left, top;
-  }
-  .tile:focus-visible { outline: 2px solid #9ad4ff; outline-offset: 1px; }
-  .tile .num {
-    position: absolute; right: 5px; bottom: 4px;
-    font: 700 11px/1 "QuestTeyvat", sans-serif;
-    color: rgba(255,255,255,.0);
-    text-shadow: 0 1px 2px rgba(0,0,0,.0);
-    pointer-events: none;
-    transition: color .2s, text-shadow .2s;
-  }
-  body.show-nums .tile .num {
-    color: rgba(255,255,255,.82);
-    text-shadow: 0 1px 3px rgba(0,0,0,.85);
-  }
-  .board.busy .tile { pointer-events: none; }
-  .full {
-    position: absolute; inset: 0; border-radius: 10px;
-    background: center / cover no-repeat url("heart.webp");
-    opacity: 0; pointer-events: none;
-    transition: opacity .7s ease;
-    z-index: 3;
-  }
-  .frame.solved .full { opacity: 1; }
-  .frame.solved .tile, .frame.solved .well { opacity: 0; transition: opacity .45s ease; pointer-events: none; }
-  .glow {
-    position: absolute; inset: -18%;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(120, 200, 255, .45), rgba(60, 120, 255, .12) 42%, transparent 70%);
-    opacity: 0; pointer-events: none; z-index: 2;
-    filter: blur(8px);
-  }
-  .frame.solved .glow { opacity: 1; animation: heartGlow 1.8s ease-in-out infinite alternate; }
-  @keyframes heartGlow {
-    from { opacity: .55; transform: scale(.96); }
-    to { opacity: 1; transform: scale(1.05); }
-  }
-  .win {
-    margin: 0; min-height: 28px; text-align: center;
-    font-size: clamp(16px, 4.4vw, 20px); font-weight: 600;
-    color: #e8f4ff; text-shadow: 0 0 16px rgba(120, 200, 255, .7), 0 2px 8px #000;
-    opacity: 0; transform: translateY(6px);
-    transition: opacity .45s ease, transform .45s ease;
-  }
-  .win.on { opacity: 1; transform: none; }
-  .skip {
-    appearance: none; cursor: pointer;
-    padding: 8px 18px; min-height: 40px; border-radius: 999px;
-    border: 1px solid rgba(211, 188, 142, .7);
-    background: rgba(20, 16, 30, .5); color: #f5e6c0;
-    font: 600 14px/1 "QuestTeyvat", sans-serif;
-    backdrop-filter: blur(6px);
-  }
-  .skip.hidden { visibility: hidden; pointer-events: none; }
-  .skip:active { transform: translateY(1px); }
-  @media (min-width: 900px) {
-    .frame { width: min(92vw, calc(100dvh - 240px), 520px); padding: 10px; }
-    .tile .num { font-size: 13px; }
-  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="head">
-      <h1 id="title">Пятнашки</h1>
-      <p class="sub" id="hint">Собери синее сердце</p>
-      <div class="bar">
-        <div class="count" id="moves" aria-live="polite">Ходы: 0</div>
-        <button class="toggle" id="nums" type="button" aria-pressed="false" title="Показать номера плиток">Цифры</button>
+  <div class="pz-wrap" id="pzRoot">
+    <header class="pz-head">
+      <h1 class="pz-title" id="pzTitle">Пятнашки</h1>
+      <p class="pz-sub" id="pzHint">Собери синее сердце</p>
+      <div class="pz-bar">
+        <div class="pz-count" id="pzMoves" aria-live="polite">Ходы: 0</div>
+        <button class="pz-toggle" id="pzNums" type="button" aria-pressed="false" title="Показать номера плиток">Цифры</button>
       </div>
     </header>
-    <div class="stage">
-      <div class="frame" id="frame">
-        <div class="glow" aria-hidden="true"></div>
-        <div class="board" id="board" role="application" aria-label="Пятнашки, поле 4 на 4">
-          <div class="well" id="well" hidden></div>
+    <div class="pz-stage">
+      <div class="pz-frame" id="pzFrame">
+        <div class="pz-glow" aria-hidden="true"></div>
+        <div class="pz-board" id="pzBoard" role="application" aria-label="Пятнашки, поле 4 на 4">
+          <div class="pz-well" id="pzWell" hidden></div>
         </div>
-        <div class="full" id="full" aria-hidden="true"></div>
+        <div class="pz-full" id="pzFull" aria-hidden="true"></div>
       </div>
     </div>
-    <p class="win" id="win" aria-live="polite"></p>
-    <button class="skip" id="skip" type="button">Пропустить</button>
+    <p class="pz-win" id="pzWin" aria-live="polite"></p>
+    <button class="pz-skip" id="pzSkip" type="button">Пропустить</button>
   </div>
+<script src="puzzle.js?v=20261116p61"></script>
 <script>
-(function () {
-  const CFG = (window.QUEST_CONFIG && window.QUEST_CONFIG.PUZZLE) || {};
-  const params = new URLSearchParams(location.search);
-  const FAST = params.get("fast") === "1";
-  const N = 4, EMPTY = 15, TILES = 16;
-  const GAP = 3;
-  const SLIDE_MS = FAST ? 90 : 200;
-  const SHUFFLE_MOVES = FAST ? 48 : 88;
-  const DRAG_COMMIT = 0.28;
-  const TAP_PX = 10;
-
-  const boardEl = document.getElementById("board");
-  const frameEl = document.getElementById("frame");
-  const wellEl = document.getElementById("well");
-  const movesEl = document.getElementById("moves");
-  const skipEl = document.getElementById("skip");
-  const numsEl = document.getElementById("nums");
-  const winEl = document.getElementById("win");
-
-  document.getElementById("title").textContent = CFG.title || "Пятнашки";
-  document.getElementById("hint").textContent = CFG.hint || "Собери синее сердце";
-  skipEl.textContent = CFG.skip || "Пропустить";
-  numsEl.textContent = CFG.numbers || "Цифры";
-  const movesTpl = CFG.moves || "Ходы: {n}";
-  const winLine = CFG.win || "Теперь оно целое 💙";
-  const awardId = CFG.awardId || "puzzle-heart";
-  const primos = CFG.primos != null ? CFG.primos : 40;
-
-  if (window.QuestHUD) {
-    QuestHUD.setStep("play");
-    QuestHUD.hideNext && QuestHUD.hideNext();
-  }
-
-  let slots = Array.from({ length: TILES }, (_, i) => i);
-  let moves = 0, won = false, busy = false;
-  const els = [];
-
-  function rc(i) { return { r: (i / N) | 0, c: i % N }; }
-  function emptyAt() { return slots.indexOf(EMPTY); }
-  function neighbors(i) {
-    const { r, c } = rc(i), out = [];
-    if (r > 0) out.push(i - N);
-    if (r < N - 1) out.push(i + N);
-    if (c > 0) out.push(i - 1);
-    if (c < N - 1) out.push(i + 1);
-    return out;
-  }
-  function canSlide(from) { return neighbors(from).indexOf(emptyAt()) !== -1; }
-  function cellSize() {
-    const r = boardEl.getBoundingClientRect();
-    const g = GAP;
-    return (r.width - g * (N + 1)) / N;
-  }
-  function cellXY(i, size) {
-    const { r, c } = rc(i);
-    return { x: GAP + c * (size + GAP), y: GAP + r * (size + GAP) };
-  }
-  function bgPos(tile) {
-    const { r, c } = rc(tile);
-    return (c / (N - 1) * 100).toFixed(3) + "% " + (r / (N - 1) * 100).toFixed(3) + "%";
-  }
-
-  function place(el, index, size, withTrans) {
-    const p = cellXY(index, size);
-    if (!withTrans) el.style.transition = "none";
-    else el.style.transition = "left " + SLIDE_MS + "ms ease, top " + SLIDE_MS + "ms ease";
-    el.style.width = size + "px";
-    el.style.height = size + "px";
-    el.style.left = p.x + "px";
-    el.style.top = p.y + "px";
-  }
-  function layout(withTrans) {
-    const size = cellSize();
-    for (let i = 0; i < TILES; i++) {
-      const t = slots[i];
-      if (t === EMPTY) {
-        const p = cellXY(i, size);
-        wellEl.hidden = false;
-        wellEl.style.width = size + "px";
-        wellEl.style.height = size + "px";
-        wellEl.style.left = p.x + "px";
-        wellEl.style.top = p.y + "px";
-        continue;
-      }
-      place(els[t], i, size, withTrans);
-    }
-  }
-  function setMoves(n) {
-    moves = n;
-    movesEl.textContent = movesTpl.replace("{n}", String(moves));
-  }
-  function isSolved() {
-    for (let i = 0; i < TILES; i++) if (slots[i] !== i) return false;
-    return true;
-  }
-  function manhattan() {
-    let d = 0;
-    for (let i = 0; i < TILES; i++) {
-      const t = slots[i];
-      if (t === EMPTY) continue;
-      const a = rc(t), b = rc(i);
-      d += Math.abs(a.r - b.r) + Math.abs(a.c - b.c);
-    }
-    return d;
-  }
-  function swap(a, b) {
-    const tmp = slots[a]; slots[a] = slots[b]; slots[b] = tmp;
-  }
-
-  function shuffle() {
-    slots = Array.from({ length: TILES }, (_, i) => i);
-    let last = -1, n = SHUFFLE_MOVES, guard = 0;
-    while ((manhattan() < 18 || isSolved()) && guard < 8) {
-      for (let k = 0; k < n; k++) {
-        const e = emptyAt();
-        let opts = neighbors(e).filter((i) => i !== last);
-        if (!opts.length) opts = neighbors(e);
-        const pick = opts[(Math.random() * opts.length) | 0];
-        last = e;
-        swap(pick, e);
-      }
-      n += 20; guard += 1;
-    }
-    setMoves(0);
-  }
-
-  function awardOnce() {
-    if (window.QuestHUD && typeof QuestHUD.award === "function") QuestHUD.award(awardId, primos);
-  }
-  function celebrate() {
-    if (won) return;
-    won = true;
-    busy = true;
-    boardEl.classList.add("busy");
-    skipEl.classList.add("hidden");
-    slots = Array.from({ length: TILES }, (_, i) => i);
-    layout(true);
-    awardOnce();
-    setTimeout(function () {
-      frameEl.classList.add("solved");
-      winEl.textContent = winLine;
-      winEl.classList.add("on");
-    }, FAST ? 80 : 280);
-  }
-
-  function slideTile(fromIndex) {
-    if (won || busy || !canSlide(fromIndex)) return false;
-    const e = emptyAt();
-    swap(fromIndex, e);
-    setMoves(moves + 1);
-    layout(true);
-    if (isSolved()) {
-      busy = true;
-      boardEl.classList.add("busy");
-      setTimeout(celebrate, SLIDE_MS + 40);
-    }
-    return true;
-  }
-
-  function skipAll() {
-    if (won) return;
-    celebrate();
-  }
-
-  /* ----- drag / tap ----- */
-  let drag = null;
-  function tileIndexFromEl(el) {
-    const t = el && el.closest && el.closest(".tile");
-    if (!t) return -1;
-    const id = +t.dataset.tile;
-    return slots.indexOf(id);
-  }
-  function onDown(e) {
-    if (won || busy) return;
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    const from = tileIndexFromEl(e.target);
-    if (from < 0 || !canSlide(from)) return;
-    e.preventDefault();
-    const tileId = slots[from];
-    const el = els[tileId];
-    const size = cellSize();
-    const start = cellXY(from, size);
-    const dest = cellXY(emptyAt(), size);
-    const axis = Math.abs(dest.x - start.x) > 1 ? "x" : "y";
-    drag = {
-      pointerId: e.pointerId, el, from, tileId, size, start, dest, axis,
-      x0: e.clientX, y0: e.clientY, moved: 0, ox: 0, oy: 0
-    };
-    el.style.transition = "none";
-    el.style.zIndex = "4";
-    try { el.setPointerCapture(e.pointerId); } catch (err) {}
-  }
-  function onMove(e) {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    e.preventDefault();
-    const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
-    drag.moved = Math.hypot(dx, dy);
-    let ox = 0, oy = 0;
-    if (drag.axis === "x") {
-      const span = drag.dest.x - drag.start.x;
-      ox = span > 0 ? Math.max(0, Math.min(span, dx)) : Math.min(0, Math.max(span, dx));
-    } else {
-      const span = drag.dest.y - drag.start.y;
-      oy = span > 0 ? Math.max(0, Math.min(span, dy)) : Math.min(0, Math.max(span, dy));
-    }
-    drag.ox = ox; drag.oy = oy;
-    drag.el.style.left = (drag.start.x + ox) + "px";
-    drag.el.style.top = (drag.start.y + oy) + "px";
-  }
-  function onUp(e) {
-    if (!drag || (e && e.pointerId !== drag.pointerId)) return;
-    const d = drag; drag = null;
-    try { d.el.releasePointerCapture(d.pointerId); } catch (err) {}
-    d.el.style.zIndex = "";
-    const span = d.axis === "x" ? (d.dest.x - d.start.x) : (d.dest.y - d.start.y);
-    const gone = d.axis === "x" ? d.ox : d.oy;
-    const ratio = span !== 0 ? Math.abs(gone / span) : 0;
-    const isTap = d.moved < TAP_PX;
-    if (isTap || ratio >= DRAG_COMMIT) {
-      slideTile(d.from);
-    } else {
-      d.el.style.transition = "left " + SLIDE_MS + "ms ease, top " + SLIDE_MS + "ms ease";
-      d.el.style.left = d.start.x + "px";
-      d.el.style.top = d.start.y + "px";
-    }
-  }
-
-  function build() {
-    boardEl.querySelectorAll(".tile").forEach((n) => n.remove());
-    for (let t = 0; t < EMPTY; t++) {
-      const el = document.createElement("button");
-      el.type = "button";
-      el.className = "tile";
-      el.dataset.tile = String(t);
-      el.setAttribute("aria-label", "Плитка " + (t + 1));
-      el.style.backgroundImage = 'url("heart.webp")';
-      el.style.backgroundPosition = bgPos(t);
-      const num = document.createElement("span");
-      num.className = "num";
-      num.textContent = String(t + 1);
-      el.appendChild(num);
-      boardEl.appendChild(el);
-      els[t] = el;
-    }
-  }
-
-  numsEl.addEventListener("click", function () {
-    const on = document.body.classList.toggle("show-nums");
-    numsEl.setAttribute("aria-pressed", on ? "true" : "false");
-  });
-  skipEl.addEventListener("click", function (e) { e.preventDefault(); skipAll(); });
-  boardEl.addEventListener("pointerdown", onDown);
-  boardEl.addEventListener("pointermove", onMove);
-  boardEl.addEventListener("pointerup", onUp);
-  boardEl.addEventListener("pointercancel", onUp);
-  window.addEventListener("resize", function () { if (!won) layout(false); });
-
-  build();
-  shuffle();
-  layout(false);
-})();
+  if (window.QuestHUD) { QuestHUD.setStep("play"); QuestHUD.hideNext && QuestHUD.hideNext(); }
+  QuestPuzzle.start({ root: document.getElementById("pzRoot"), image: "heart.webp" });
 </script>
 </body>
 </html>

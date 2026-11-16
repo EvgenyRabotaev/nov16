@@ -653,12 +653,21 @@
     .ff-date-box { top: 14%; width: min(86vw, 460px); }
     #stSvg { top: 10%; width: min(94vw, 480px); }
   }
+  #mgPuzzle {
+    background:
+      radial-gradient(ellipse at 50% 18%, rgba(90, 160, 255, .18), transparent 42%),
+      radial-gradient(ellipse at 50% 62%, rgba(40, 80, 180, .16), transparent 50%),
+      linear-gradient(to bottom, #070b1c 0%, #0c1230 55%, #0a1024 100%);
+  }
+  #mgPuzzle .pz-wrap { height: 100%; }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p60"></script>
+<link rel="stylesheet" href="../puzzle/puzzle.css?v=20261116p61">
+<script src="../common/quest_config.js?v=20261116p61"></script>
+<script src="../puzzle/puzzle.js?v=20261116p61"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="genshin"></script>
-<link rel="stylesheet" href="../common/world_title.css?v=20261116p60">
-<script src="../common/world_title.js?v=20261116p60" data-world="genshin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261116p61">
+<script src="../common/world_title.js?v=20261116p61" data-world="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -828,12 +837,12 @@
         </g>
       </defs>
       <g class="ff-lamps">
-        <use class="ff-lamp" href="#ffLampPost" x="46" y="830"/>
-        <use class="ff-lamp" href="#ffLampPost" x="288" y="826" transform="translate(288,826) scale(.95) translate(-288,-826)"/>
+        <use class="ff-lamp" href="#ffLampPost" x="44" y="832"/>
+        <use class="ff-lamp" href="#ffLampPost" x="300" y="828" transform="translate(300,828) scale(.95) translate(-300,-828)"/>
       </g>
       <!-- qingxin / glaze lilies -->
       <g class="ff-flowers">
-        <g class="ff-lily" transform="translate(52,800)">
+        <g class="ff-lily" transform="translate(100,800)">
           <path d="M0,6 C1,-11 2,-23 1,-34" fill="none" stroke="#16301c" stroke-width="1.3"/>
           <g class="ff-bloom" transform="translate(1,-34)">
             <g class="ff-bloom-anim">
@@ -881,7 +890,7 @@
             </g>
           </g>
         </g>
-        <g class="ff-lily" transform="translate(308,806) scale(0.9)">
+        <g class="ff-lily" transform="translate(352,806) scale(0.9)">
           <path d="M0,6 C1,-11 2,-23 1,-33" fill="none" stroke="#16301c" stroke-width="1.3"/>
           <g class="ff-bloom" transform="translate(1,-33)">
             <g class="ff-bloom-anim" style="animation-delay:-1.2s">
@@ -893,7 +902,7 @@
             </g>
           </g>
         </g>
-        <g class="ff-lily" transform="translate(338,818) scale(0.72)">
+        <g class="ff-lily" transform="translate(332,818) scale(0.72)">
           <path d="M0,6 C1,-9 2,-18 1,-27" fill="none" stroke="#16301c" stroke-width="1.3"/>
           <g class="ff-bloom" transform="translate(1,-27)">
             <g class="ff-bloom-anim" style="animation-delay:-2s">
@@ -905,7 +914,7 @@
             </g>
           </g>
         </g>
-        <g class="ff-qingxin" transform="translate(30,822) scale(0.65)">
+        <g class="ff-qingxin" transform="translate(14,824) scale(0.65)">
           <path d="M0,5 C0,-9 1,-18 0,-26" fill="none" stroke="#1a3820" stroke-width="1.1"/>
           <g class="ff-bloom" transform="translate(0,-26)">
             <g class="ff-bloom-anim" style="animation-delay:-.4s">
@@ -960,7 +969,7 @@
             </g>
           </g>
         </g>
-        <g class="ff-qingxin" transform="translate(278,816) scale(0.7)">
+        <g class="ff-qingxin" transform="translate(256,818) scale(0.7)">
           <path d="M0,5 C0,-9 1,-18 0,-27" fill="none" stroke="#1a3820" stroke-width="1.1"/>
           <g class="ff-bloom" transform="translate(0,-27)">
             <g class="ff-bloom-anim" style="animation-delay:-2.2s">
@@ -1034,6 +1043,29 @@
   <button class="mg-skip" id="stSkip" type="button">Пропустить</button>
 </div>
 
+<div class="mg-scene" id="mgPuzzle" aria-label="Пятнашки">
+  <div class="pz-wrap" id="pzRoot">
+    <header class="pz-head">
+      <h1 class="pz-title" id="pzTitle">Пятнашки</h1>
+      <p class="pz-sub" id="pzHint">Собери синее сердце</p>
+      <div class="pz-bar">
+        <div class="pz-count" id="pzMoves" aria-live="polite">Ходы: 0</div>
+        <button class="pz-toggle" id="pzNums" type="button" aria-pressed="false" title="Показать номера плиток">Цифры</button>
+      </div>
+    </header>
+    <div class="pz-stage">
+      <div class="pz-frame" id="pzFrame">
+        <div class="pz-glow" aria-hidden="true"></div>
+        <div class="pz-board" id="pzBoard" role="application" aria-label="Пятнашки, поле 4 на 4">
+          <div class="pz-well" id="pzWell" hidden></div>
+        </div>
+        <div class="pz-full" id="pzFull" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="pz-win hidden" id="pzWin" aria-live="polite"></p>
+    <button class="pz-skip" id="pzSkip" type="button">Пропустить</button>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -1492,15 +1524,23 @@
     if (p && p.cook && !cooked) { beginCook(); return; }
     maybeFirefliesThenMap();
   }
-  /* Светлячки — один раз между вопросом 2 и 3, затем обычный «Летим дальше» к Q3. */
+  /* Светлячки — один раз между Q2 и Q3; пятнашки — один раз между Q3 и Q4. */
   let firefliesStoryDone = false;
+  let puzzleStoryDone = false;
   function maybeFirefliesThenMap() {
     const p = wp();
     const isQ2 = !!(p && (p.id === "wp2" || p.question === "gs-alike"));
-    if (isQ2 && !FIREFLY_DEBUG && !STARS_DEBUG && !firefliesStoryDone) {
+    const isQ3 = !!(p && (p.id === "wp3" || p.question === "gs-lady-tramp"));
+    if (isQ2 && !FIREFLY_DEBUG && !STARS_DEBUG && !puzzleStoryDone && !firefliesStoryDone) {
       firefliesStoryDone = true;
       hideTalkInstant();
       startFireflies({ onDone: markLocationReady });
+      return;
+    }
+    if (isQ3 && !FIREFLY_DEBUG && !STARS_DEBUG && !puzzleStoryDone) {
+      puzzleStoryDone = true;
+      hideTalkInstant();
+      startTeyvatPuzzle({ onDone: markLocationReady });
       return;
     }
     markLocationReady();
@@ -1885,6 +1925,44 @@
       if (line) startTalk(fairyLines(line), after);
       else after();
     }, FAST ? 200 : 800);
+  }
+  function endPuzzle() {
+    if (window.QuestPuzzle && typeof QuestPuzzle.destroy === "function") QuestPuzzle.destroy();
+    mgActive = "";
+    hideTalkInstant();
+    const scene = document.getElementById("mgPuzzle");
+    if (scene) {
+      scene.style.transition = "none";
+      scene.classList.remove("on", "done");
+      void scene.offsetWidth;
+      scene.style.transition = "";
+    }
+    document.body.classList.remove("minigame-on");
+    hideHud(false);
+  }
+  function startTeyvatPuzzle(opts) {
+    const onDone = opts && opts.onDone;
+    mgActive = "puzzle";
+    mgHideWorld();
+    setStep("puzzle");
+    const scene = document.getElementById("mgPuzzle");
+    if (!scene || !window.QuestPuzzle) { if (typeof onDone === "function") onDone(); return; }
+    scene.classList.add("on");
+    const line = ((window.QUEST_CONFIG && QUEST_CONFIG.PUZZLE) || {}).win || "Теперь оно целое 💙";
+    QuestPuzzle.start({
+      root: document.getElementById("pzRoot") || scene,
+      image: "../puzzle/heart.webp",
+      fast: FAST,
+      hideWinText: true,
+      onWin: function () {
+        setTimeout(function () {
+          startTalk(fairyLines(line), function () {
+            endPuzzle();
+            if (typeof onDone === "function") onDone();
+          });
+        }, FAST ? 200 : 700);
+      }
+    });
   }
   function endFireflies() {
     mgStopRaf();
