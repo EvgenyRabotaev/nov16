@@ -80,19 +80,106 @@
   }
   .screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
   #home { justify-content: center; }
+  .wish-panel {
+    position: relative;
+    width: min(440px, calc(100vw - 32px));
+    padding: 38px 28px 30px;
+    text-align: center;
+    border-radius: 24px;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(255, 220, 140, .22), transparent 52%),
+      radial-gradient(ellipse at 50% 120%, rgba(70, 110, 255, .18), transparent 50%),
+      linear-gradient(180deg, rgba(22, 26, 56, .92), rgba(8, 10, 28, .94));
+    border: 1px solid rgba(255, 214, 130, .55);
+    box-shadow:
+      0 0 0 1px rgba(60, 36, 8, .55) inset,
+      0 0 0 6px rgba(255, 200, 90, .06) inset,
+      0 0 48px rgba(255, 190, 80, .2),
+      0 22px 50px rgba(0, 0, 0, .48);
+    overflow: hidden;
+  }
+  .wish-panel::before, .wish-panel::after {
+    content: "";
+    position: absolute;
+    width: 46px; height: 46px;
+    pointer-events: none;
+    border: 2px solid rgba(255, 214, 130, .7);
+    z-index: 1;
+  }
+  .wish-panel::before { top: 10px; left: 10px; border-right: none; border-bottom: none; border-radius: 12px 0 0 0; }
+  .wish-panel::after { top: 10px; right: 10px; border-left: none; border-bottom: none; border-radius: 0 12px 0 0; }
+  .wish-c {
+    position: absolute; width: 46px; height: 46px; pointer-events: none;
+    border: 2px solid rgba(255, 214, 130, .7); z-index: 1;
+  }
+  .wish-c-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; border-radius: 0 0 0 12px; }
+  .wish-c-br { bottom: 10px; right: 10px; border-left: none; border-top: none; border-radius: 0 0 12px 0; }
+  .wish-sparkles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .wish-sparkles span {
+    position: absolute;
+    width: 7px; height: 7px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffe9a0' d='M8 0l1.5 5.5L15 8l-5.5 1.5L8 15l-1.5-5.5L1 8l5.5-1.5z'/%3E%3C/svg%3E") center/contain no-repeat;
+    animation: wishTwinkle 3.4s ease-in-out infinite;
+    opacity: .0;
+    filter: drop-shadow(0 0 4px rgba(255, 220, 120, .8));
+  }
+  .wish-sparkles span:nth-child(1) { left: 12%; top: 22%; animation-delay: 0s; }
+  .wish-sparkles span:nth-child(2) { left: 78%; top: 16%; animation-delay: .4s; width: 9px; height: 9px; }
+  .wish-sparkles span:nth-child(3) { left: 22%; top: 72%; animation-delay: .9s; }
+  .wish-sparkles span:nth-child(4) { left: 86%; top: 64%; animation-delay: 1.3s; width: 5px; height: 5px; }
+  .wish-sparkles span:nth-child(5) { left: 50%; top: 10%; animation-delay: .2s; width: 6px; height: 6px; }
+  .wish-sparkles span:nth-child(6) { left: 8%; top: 48%; animation-delay: 1.7s; }
+  .wish-sparkles span:nth-child(7) { left: 70%; top: 80%; animation-delay: .7s; width: 8px; height: 8px; }
+  .wish-sparkles span:nth-child(8) { left: 40%; top: 86%; animation-delay: 2.1s; }
+  @keyframes wishTwinkle {
+    0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
+    35% { opacity: .9; transform: scale(1) rotate(20deg); }
+    70% { opacity: .35; transform: scale(.7) rotate(40deg); }
+  }
+  .wish-panel .title, .wish-panel .sub, .wish-panel .wish-bal, .wish-panel #btnPull, .wish-panel #poolStatus {
+    position: relative; z-index: 1;
+  }
   .title {
-    font-size: clamp(36px, 8vw, 64px);
-    font-weight: 600;
-    letter-spacing: .14em;
+    font-family: "QuestTeyvat", "Noto Serif", Georgia, serif;
+    font-size: clamp(32px, 8vw, 56px);
+    font-weight: 700;
+    letter-spacing: .16em;
     text-transform: uppercase;
-    text-shadow: 0 0 28px rgba(120,180,255,.55);
-    margin-bottom: 6px;
+    color: #ffe7b0;
+    text-shadow: 0 0 22px rgba(255, 190, 70, .55), 0 2px 0 rgba(80, 40, 0, .35);
+    margin-bottom: 8px;
   }
   .sub {
-    font-family: "Segoe UI", system-ui, sans-serif;
-    color: var(--muted);
+    font-family: "QuestTeyvat", "Segoe UI", system-ui, sans-serif;
+    color: #d7e4ff;
     font-size: 15px;
-    margin-bottom: 42px;
+    letter-spacing: .06em;
+    margin-bottom: 18px;
+  }
+  .wish-bal {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin: 0 auto 22px;
+    padding: 6px 14px 6px 10px;
+    border-radius: 999px;
+    background: rgba(8, 14, 36, .7);
+    border: 1px solid rgba(130, 180, 255, .4);
+    color: #d6e8ff;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 0 16px rgba(70, 140, 255, .22);
+  }
+  .wish-bal b { color: #cfe6ff; font-size: 1.12em; }
+  .wish-bal .shop-gem, .wish-bal .pull-gem, #btnPull .shop-gem, #btnPull .pull-gem {
+    width: 1.2em; height: 1.2em;
+    filter: drop-shadow(0 0 4px rgba(140, 200, 255, .75));
+    flex-shrink: 0;
+  }
+  body.mystery-mode .wish-panel { display: none; }
+  @media (max-width: 420px) {
+    .wish-panel { padding: 28px 16px 22px; width: min(440px, calc(100vw - 20px)); }
+    .title { letter-spacing: .1em; }
+    #btnPull { padding: 13px 22px; font-size: 16px; min-width: 0; }
   }
   .btn-main {
     font-family: "Segoe UI", system-ui, sans-serif;
@@ -111,6 +198,33 @@
   .btn-main:hover { transform: translateY(-1px) scale(1.03); filter: brightness(1.06); }
   .btn-main:active { transform: scale(.98); }
   .btn-main[disabled] { opacity: .45; cursor: default; transform: none; }
+  #btnPull {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 240px;
+    color: #2a1a08;
+    background: linear-gradient(180deg, #ffe9a8, #f0b43a 52%, #d08a16);
+    box-shadow: 0 0 0 1px rgba(255, 240, 180, .45), 0 8px 24px rgba(200, 130, 20, .4), 0 0 32px rgba(255, 190, 60, .25);
+  }
+  #btnPull .btn-label, #btnPull .btn-dot, #btnPull .btn-cost {
+    position: relative; z-index: 1;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  #btnPull .btn-shine {
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.5) 50%, transparent 65%);
+    transform: translateX(-130%);
+    animation: btnShine 3.8s ease-in-out 1.2s infinite;
+    pointer-events: none;
+  }
+  @keyframes btnShine {
+    0% { transform: translateX(-130%); }
+    18%, 100% { transform: translateX(130%); }
+  }
   .preview-row {
     display: flex; flex-wrap: wrap; gap: 10px;
     justify-content: center;
@@ -735,7 +849,7 @@
   .qhud-hint, .qhud-panel { display: none !important; }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p46"></script>
+<script src="../common/quest_config.js?v=20261116p47"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="gacha" data-counter="off"></script>
 <script src="card_texts.js?v=20261115z3"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
 <script src="card_texts_paimon.js?v=20261116p46"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
@@ -749,10 +863,24 @@
 <div id="hud">✦ Примогемы: <b id="pg">1800</b></div>
 
 <div id="home" class="screen">
-  <div class="title">Крутка</div>
-  <p class="sub">Открытие за примогемы</p>
-  <button class="btn-main" id="btnPull">Крутить · 100</button>
-  <p id="poolStatus" aria-live="polite"></p>
+  <div class="wish-panel">
+    <div class="wish-sparkles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <span class="wish-c wish-c-bl" aria-hidden="true"></span>
+    <span class="wish-c wish-c-br" aria-hidden="true"></span>
+    <div class="title">Крутка</div>
+    <p class="sub">Открытие за примогемы</p>
+    <div class="wish-bal" id="wishBal">Примогемы: <b id="wishPg">0</b></div>
+    <button class="btn-main" id="btnPull" type="button">
+      <span class="btn-shine" aria-hidden="true"></span>
+      <span class="btn-label">Крутить</span>
+      <span class="btn-dot">·</span>
+      <span class="btn-cost" id="pullCost">160</span>
+    </button>
+    <p id="poolStatus" aria-live="polite"></p>
+  </div>
   <div id="mystery" role="button" tabindex="0" aria-label="Ой, что это?">
     <div class="orb"></div>
     <div class="mystery-t">Ой, что это?</div>
@@ -826,7 +954,7 @@
 (function () {
   'use strict';
 
-  const COST = 100;
+  const COST = 160;
   const GRAY_BASE = { c1: '#8b93a8', c2: '#eef2f8', c3: '#4a5160' };
   const GRAY = GRAY_BASE;
   const GRAY_MS = 2000;
@@ -1062,12 +1190,32 @@
     return out;
   }
 
+  function paintPullCost() {
+    const cost = document.getElementById('pullCost');
+    if (cost && cost.dataset.ready !== '1' && typeof primoHtml === 'function') {
+      cost.innerHTML = primoHtml('pull-gem') + ' <span>' + COST + '</span>';
+      cost.dataset.ready = '1';
+    }
+    const wishPg = document.getElementById('wishPg');
+    if (wishPg) wishPg.textContent = gems;
+    const bal = document.getElementById('wishBal');
+    if (bal && bal.dataset.ready !== '1' && typeof primoHtml === 'function') {
+      const b = document.createElement('b');
+      b.id = 'wishPg';
+      b.textContent = String(gems);
+      bal.innerHTML = '';
+      bal.insertAdjacentHTML('afterbegin', primoHtml('pull-gem') + ' <span>Примогемы</span> ');
+      bal.appendChild(b);
+      bal.dataset.ready = '1';
+    }
+  }
   function updatePoolUI() {
     const left = remainingCards();
     const empty = left.length === 0;
     const btn = document.getElementById('btnPull');
     const status = document.getElementById('poolStatus');
     if (btn) btn.disabled = empty || gems < COST;
+    paintPullCost();
     const mysteryNow = empty && !specialDone;
     document.body.classList.toggle('mystery-mode', mysteryNow);
     const mys = document.getElementById('mystery');
@@ -1803,7 +1951,10 @@
 
   function setGems(n) {
     gems = Math.max(0, n);
-    document.getElementById('pg').textContent = gems;
+    const pg = document.getElementById('pg');
+    if (pg) pg.textContent = gems;
+    const wishPg = document.getElementById('wishPg');
+    if (wishPg) wishPg.textContent = gems;
     if (window.QuestHUD) QuestHUD.setPrimos(gems);
   }
 

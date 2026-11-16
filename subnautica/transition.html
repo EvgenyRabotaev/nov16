@@ -630,13 +630,24 @@
       margin: -56px 0 0 -56px; cursor: grab; touch-action: none;
       filter: drop-shadow(0 0 8px rgba(180, 255, 240, .6));
     }
-    #leviDiver.in-sub { width: 200px; height: 124px; margin: -62px 0 0 -100px; }
+    #leviDiver.in-sub { width: 228px; height: 142px; margin: -71px 0 0 -114px; }
     #leviDiver:active { cursor: grabbing; }
     #leviDiver.hidden { z-index: 5; filter: drop-shadow(0 0 6px rgba(80, 200, 180, .35)); opacity: .88; }
     #leviDiver .suit-art, #diverVika .suit-art { display: block; }
     #leviDiver .seamoth-art, #diverVika .seamoth-art { display: none; }
     #leviDiver.in-sub .suit-art, #divePair.in-sub #diverVika .suit-art, html.in-sub #diverVika .suit-art { display: none; }
     #leviDiver.in-sub .seamoth-art, #divePair.in-sub #diverVika .seamoth-art, html.in-sub #diverVika .seamoth-art { display: block; }
+    img.seamoth-art {
+      width: 100%; height: 100%; object-fit: contain;
+      pointer-events: none; user-select: none; -webkit-user-drag: none;
+    }
+    /* Во время пряток от левиафана обычный спрайт Вики скрыт — остаётся только перетаскиваемый. */
+    html.levi-on #divePair {
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: none !important;
+    }
     #leviFail {
       position: absolute; inset: 0; z-index: 8; display: none;
       align-items: center; justify-content: center; flex-direction: column; gap: 14px;
@@ -733,7 +744,7 @@
     @media (max-width: 600px) {
       .levi-hide { width: min(230px, 58vw); height: min(230px, 58vw); }
       #leviDiver { width: 104px; height: 104px; margin: -52px 0 0 -52px; }
-      #leviDiver.in-sub { width: 168px; height: 108px; margin: -54px 0 0 -84px; }
+      #leviDiver.in-sub { width: 192px; height: 120px; margin: -60px 0 0 -96px; }
       #leviWarn { font-size: 11px; padding: 5px 10px; }
       #leviFail .fail-text { font-size: 18px; }
     }
@@ -770,11 +781,32 @@
       50% { margin-top: -12px; }
     }
     #divePair.in-sub #diverVika,
-    html.in-sub #diverVika { width: 200px; height: 124px; }
+    html.in-sub #diverVika { width: 228px; height: 142px; }
     @media (max-width: 640px) {
       .diver { width: 128px; height: 128px; }
       #divePair.in-sub #diverVika,
-      html.in-sub #diverVika { width: 168px; height: 104px; }
+      html.in-sub #diverVika { width: 192px; height: 120px; }
+    }
+    /* Мягкое свечение фар Мотылька (вместо прежнего SVG-блика). */
+    @keyframes smLamp {
+      0%, 100% { opacity: .65; }
+      50% { opacity: 1; }
+    }
+    #divePair.in-sub #diverVika::after,
+    html.in-sub #diverVika::after,
+    #leviDiver.in-sub::after {
+      content: "";
+      position: absolute;
+      left: 78%;
+      top: 52%;
+      width: 46%;
+      height: 30%;
+      transform: translateY(-50%);
+      background: radial-gradient(ellipse at left, rgba(255,230,160,.75) 0%, rgba(255,200,100,.22) 42%, transparent 74%);
+      filter: blur(5px);
+      pointer-events: none;
+      animation: smLamp 2.4s ease-in-out infinite;
+      z-index: 0;
     }
     #currentFx {
       position: absolute; inset: 0; z-index: 7; pointer-events: none;
@@ -832,7 +864,7 @@
     }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p46"></script>
+<script src="../common/quest_config.js?v=20261116p47"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="subnautica"></script>
 <link rel="stylesheet" href="../common/world_title.css?v=20261115p38">
 <script src="../common/world_title.js?v=20261115p38" data-world="subnautica"></script>
@@ -889,34 +921,7 @@
             <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
           </svg>
-          <svg class="seamoth-art" viewBox="0 0 160 100" width="100%" height="100%" aria-hidden="true">
-            <defs>
-              <radialGradient id="smGlowL" cx="50%" cy="50%" r="60%">
-                <stop offset="0%" stop-color="#bff" stop-opacity=".7"/>
-                <stop offset="100%" stop-color="#4ad" stop-opacity="0"/>
-              </radialGradient>
-              <linearGradient id="smHullL" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#2a6d7a"/>
-                <stop offset="55%" stop-color="#163a44"/>
-                <stop offset="100%" stop-color="#0d242c"/>
-              </linearGradient>
-              <linearGradient id="smGlassL" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#e7ffff"/>
-                <stop offset="40%" stop-color="#7ee0f0"/>
-                <stop offset="100%" stop-color="#1a6a80"/>
-              </linearGradient>
-            </defs>
-            <ellipse cx="80" cy="52" rx="72" ry="36" fill="url(#smGlowL)" opacity=".5"/>
-            <path d="M22 50 L4 28 L18 48 L8 72 Z" fill="#1b4a54" stroke="#7ad4c8" stroke-width="1.2"/>
-            <path d="M48 68 Q80 86 118 66" fill="none" stroke="#d7a13a" stroke-width="2.2" stroke-linecap="round"/>
-            <ellipse cx="86" cy="54" rx="56" ry="24" fill="url(#smHullL)" stroke="#8ee8e0" stroke-width="1.8"/>
-            <path d="M40 54 Q86 48 132 54" fill="none" stroke="#7ad4c8" stroke-width="1.4" opacity=".7"/>
-            <ellipse cx="118" cy="46" rx="20" ry="16" fill="url(#smGlassL)" stroke="#dff" stroke-width="1.4"/>
-            <ellipse cx="112" cy="40" rx="7" ry="4" fill="#fff" opacity=".45"/>
-            <circle cx="138" cy="54" r="6" fill="#ffe08a" opacity=".35"/>
-            <circle cx="138" cy="54" r="3.2" fill="#fff6b0"/>
-            <path d="M70 70 L88 88 L100 70" fill="#1b4a54" stroke="#7ad4c8" stroke-width="1.2"/>
-          </svg>
+          <img class="seamoth-art" src="seamoth.png?v=20261116p47" alt="" draggable="false" width="160" height="100">
         </div>
         <div id="leviHint">Перетащи себя в укрытие!</div>
       </div>
@@ -984,34 +989,7 @@
             <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
           </svg>
-          <svg class="seamoth-art" viewBox="0 0 160 100" width="100%" height="100%" aria-hidden="true">
-            <defs>
-              <radialGradient id="smGlowV" cx="50%" cy="50%" r="60%">
-                <stop offset="0%" stop-color="#bff" stop-opacity=".7"/>
-                <stop offset="100%" stop-color="#4ad" stop-opacity="0"/>
-              </radialGradient>
-              <linearGradient id="smHullV" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#2a6d7a"/>
-                <stop offset="55%" stop-color="#163a44"/>
-                <stop offset="100%" stop-color="#0d242c"/>
-              </linearGradient>
-              <linearGradient id="smGlassV" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#e7ffff"/>
-                <stop offset="40%" stop-color="#7ee0f0"/>
-                <stop offset="100%" stop-color="#1a6a80"/>
-              </linearGradient>
-            </defs>
-            <ellipse cx="80" cy="52" rx="72" ry="36" fill="url(#smGlowV)" opacity=".5"/>
-            <path d="M22 50 L4 28 L18 48 L8 72 Z" fill="#1b4a54" stroke="#7ad4c8" stroke-width="1.2"/>
-            <path d="M48 68 Q80 86 118 66" fill="none" stroke="#d7a13a" stroke-width="2.2" stroke-linecap="round"/>
-            <ellipse cx="86" cy="54" rx="56" ry="24" fill="url(#smHullV)" stroke="#8ee8e0" stroke-width="1.8"/>
-            <path d="M40 54 Q86 48 132 54" fill="none" stroke="#7ad4c8" stroke-width="1.4" opacity=".7"/>
-            <ellipse cx="118" cy="46" rx="20" ry="16" fill="url(#smGlassV)" stroke="#dff" stroke-width="1.4"/>
-            <ellipse cx="112" cy="40" rx="7" ry="4" fill="#fff" opacity=".45"/>
-            <circle cx="138" cy="54" r="6" fill="#ffe08a" opacity=".35"/>
-            <circle cx="138" cy="54" r="3.2" fill="#fff6b0"/>
-            <path d="M70 70 L88 88 L100 70" fill="#1b4a54" stroke="#7ad4c8" stroke-width="1.2"/>
-          </svg>
+          <img class="seamoth-art" src="seamoth.png?v=20261116p47" alt="" draggable="false" width="160" height="100">
       </div>
       <div class="diver zhenya" id="diverZhenya" aria-label="Женя">          <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
             <defs>
@@ -1487,6 +1465,14 @@
     const leviFailText = document.getElementById("leviFailText");
     const leviRetry = document.getElementById("leviRetry");
 
+    /* После события «Течение унесло Женю!» все кнопки «дальше/глубже» — «Глубже, к нему».
+       До него оставляем прежние подписи. Финальный выход из мира (телепорт) — своя «Дальше». */
+    function onwardLabel(before) {
+      return currentDone ? "Глубже, к нему" : (before || "Дальше");
+    }
+    function deeperLabel() {
+      return currentDone ? "Глубже, к нему" : "Глубже";
+    }
     function setReady(v) {
       locReady = !!v;
       document.documentElement.dataset.locReady = locReady ? "1" : "0";
@@ -1495,7 +1481,7 @@
         if (locReady && window.QuestHUD) QuestHUD.showNext("Дальше");
       } else if (locReady && !busy) {
         deeper.classList.remove("hidden"); deeper.disabled = false;
-        const label = (SUB.RADIO && index === SUB.RADIO.loc && radioDone && SUB.RADIO.nextLabel) ? SUB.RADIO.nextLabel : "Глубже";
+        const label = deeperLabel();
         const arrow = deeper.querySelector(".arrow");
         deeper.textContent = "";
         deeper.appendChild(document.createTextNode(label + " "));
@@ -1963,7 +1949,7 @@
       setTimeout(() => {
         repairEl.classList.remove("on");
         showPda("КПК", (SUB.REPAIR && SUB.REPAIR.title) || "Ремонт капсулы",
-          (SUB.REPAIR && SUB.REPAIR.done) || "Капсула в порядке.", "Дальше",
+          (SUB.REPAIR && SUB.REPAIR.done) || "Капсула в порядке.", onwardLabel("Дальше"),
           () => afterGate());
       }, 350);
     }
@@ -2179,7 +2165,7 @@
       awardEvent("sn-radio", primos, RADIO_CFG.toast || "Сигнал пойман", "📡");
       const msg = SUB.RADIO_MESSAGE || RADIO_CFG.text || "Сигнал пойман.";
       const title = RADIO_CFG.title || "Радиосигнал";
-      showPda("Радио", title, msg, "Дальше", () => afterGate());
+      showPda("Радио", title, msg, onwardLabel("Дальше"), () => afterGate());
     }
 
     function startRadio() {
@@ -2339,7 +2325,7 @@
       const P = SUB.PHOTO || {};
       const src = LOCS[index] && LOCS[index].src;
       try { localStorage.setItem(PHOTO_KEY, JSON.stringify({ src: src, title: P.title || "Заглушка: фото", loc: index })); } catch (e) {}
-      showPda("Камера", P.title || "Заглушка: фото", "Снимок сохранён. Он появится в финале.", "Дальше");
+      showPda("Камера", P.title || "Заглушка: фото", "Снимок сохранён. Он появится в финале.", onwardLabel("Дальше"));
     }
     camBtn.addEventListener("click", (e) => { e.stopPropagation(); takePhoto(); });
 
@@ -2500,6 +2486,7 @@
     }
     function closeLeviGame() {
       leviPlaying = false;
+      document.documentElement.classList.remove("levi-on");
       if (leviRaf) { cancelAnimationFrame(leviRaf); leviRaf = 0; }
       if (leviGame) { leviGame.classList.remove("on"); leviGame.setAttribute("aria-hidden", "true"); }
       if (leviFail) leviFail.classList.remove("on");
@@ -2521,6 +2508,7 @@
       if (leviDone) { afterGate(); return; }
       setReady(false);
       leviPlaying = true;
+      document.documentElement.classList.add("levi-on");
       if (window.QuestHUD) QuestHUD.setStep("leviathan");
       const L = leviCfg();
       leviDur = FAST ? Math.min(Number(L.timerMs) || 16000, 8000) : (Number(L.timerMs) || 16000);
@@ -2770,7 +2758,11 @@
         if (kick) kick.textContent = data.kicker || "Событие";
         if (title) title.textContent = data.title || "";
         if (story) story.textContent = data.text || "";
-        if (btn) btn.textContent = data.next || "Дальше";
+        if (btn) {
+          const id = data.id || "";
+          if (id === "intro" || id === "current") btn.textContent = data.next || "Дальше";
+          else btn.textContent = currentDone ? "Глубже, к нему" : (data.next || "Дальше");
+        }
         setReady(false);
         snEvCard.classList.add("show");
         snEvCard.setAttribute("aria-hidden", "false");

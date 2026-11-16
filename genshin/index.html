@@ -345,7 +345,7 @@
   .glide::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 40%, rgba(180,210,255,.12), rgba(8,12,30,.28) 70%); }
   .glider {
     position: absolute; width: 150px; height: auto; filter: drop-shadow(0 8px 12px rgba(0,0,0,.45)) drop-shadow(0 0 12px rgba(200,180,255,.5));
-    pointer-events: none; z-index: 2;
+    pointer-events: none; z-index: 2; transform-origin: 50% 50%;
   }
   .glide-skip {
     position: absolute; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
@@ -389,7 +389,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p46"></script>
+<script src="../common/quest_config.js?v=20261116p47"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="genshin"></script>
 <link rel="stylesheet" href="../common/world_title.css?v=20261115p38">
 <script src="../common/world_title.js?v=20261115p38" data-world="genshin"></script>
@@ -1067,15 +1067,20 @@
     glideAnim = requestAnimationFrame(fly);
     setFlags();
   }
+  /* Спрайт Паймон смотрит чуть влево; в полёте только зеркалим по горизонтали, без вращения. */
+  let gliderFace = 1;
   function placeGlider(from, to, e) {
     const s = mapScale();
     const t = clampCam(from.x + (to.x - from.x) * e, from.y + (to.y - from.y) * e, s);
     const x = t.tx + ((from.x + (to.x - from.x) * e) / 100) * MAP_W * s;
     const y = t.ty + ((from.y + (to.y - from.y) * e) / 100) * MAP_H * s;
-    const ang = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;
+    const dx = (to && from) ? (to.x - from.x) : 0;
+    if (dx > 0.4) gliderFace = -1;
+    else if (dx < -0.4) gliderFace = 1;
+    const bob = Math.sin(performance.now() / 220) * 9;
     glider.style.left = (x - 75) + "px";
     glider.style.top = (y - 120) + "px";
-    glider.style.transform = "rotate(" + (ang + 10) + "deg) scale(" + (0.7 + 0.15 * Math.sin(e * Math.PI)) + ")";
+    glider.style.transform = "translateY(" + bob.toFixed(1) + "px) scaleX(" + gliderFace + ") scale(0.92)";
   }
   function spawnStreaks() {
     glideWind.innerHTML = "";
@@ -1148,6 +1153,15 @@
       return;
     }
     const qDebug = Math.max(0, parseInt(params.get("q"), 10) || 0);
+    if (params.get("glide") === "1" && WAYPOINTS.length > 1) {
+      wi = qDebug >= 1 ? Math.min(qDebug, WAYPOINTS.length - 1) - 1 : 0;
+      if (wi >= WAYPOINTS.length - 1) wi = WAYPOINTS.length - 2;
+      const p = wp();
+      if (p) applyCam(p.x, p.y, mapScale());
+      mode = "map"; setStep("map"); renderPins(); setFlags();
+      setTimeout(beginGlide, FAST ? 80 : 200);
+      return;
+    }
     if (qDebug >= 1 && WAYPOINTS.length) {
       wi = Math.min(qDebug, WAYPOINTS.length) - 1;
       const p = wp();

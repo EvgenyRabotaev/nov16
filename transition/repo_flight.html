@@ -147,11 +147,13 @@
   .veil { position: fixed; inset: 0; z-index: 20; pointer-events: none; background: #0a0c14; opacity: 1; transition: opacity 1.2s ease; }
   .veil.off { opacity: 0; }
   .veil.flash { background: #fff8e6; transition: opacity .35s ease; }
-  .skip { position: fixed; z-index: 21; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(12px + env(safe-area-inset-top, 0px));
-    padding: 5px 10px; border: 1px solid rgba(255,255,255,.4); border-radius: 999px; background: rgba(20, 18, 30, .35); color: rgba(255,255,255,.88);
-    font: 500 12px/1.2 "Segoe UI", "Noto Sans", system-ui, sans-serif;
-    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .6s ease; display: block; }
-  .skip.show { opacity: .7; pointer-events: auto; }
+  /* «Пропустить» — над кнопкой подсказки HUD (правый низ), как в полёте по небу. */
+  .skip { position: fixed; z-index: 21; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    padding: 7px 14px; border: 1px solid rgba(255, 255, 255, .55); border-radius: 999px; background: rgba(255, 250, 244, .28); color: rgba(255, 255, 255, .92);
+    font: 500 14px/1.2 "Segoe UI", "Noto Sans", system-ui, sans-serif; letter-spacing: .03em; text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .8s ease, background .2s; touch-action: manipulation; display: block; }
+  .skip.show { opacity: .75; pointer-events: auto; }
+  .skip.show:hover { opacity: 1; background: rgba(255, 250, 244, .42); }
   .mute { position: fixed; z-index: 21; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); width: 38px; height: 38px; display: none;
     align-items: center; justify-content: center; padding: 0; border: 1px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(20, 18, 30, .4);
     -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); cursor: pointer; opacity: .8; touch-action: manipulation; }
@@ -180,13 +182,13 @@
   @media (max-width: 600px) {
     #laneControls { top: auto; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); transform: none; }
     #laneControls button { width: 56px; height: 56px; }
-    .skip { right: calc(10px + env(safe-area-inset-right, 0px)); top: calc(10px + env(safe-area-inset-top, 0px)); bottom: auto; font-size: 11px; padding: 4px 9px; }
+    .skip { right: calc(10px + env(safe-area-inset-right, 0px)); top: auto; bottom: calc(58px + env(safe-area-inset-bottom, 0px)); font-size: 13px; padding: 6px 12px; }
     #worldName { left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); font-size: 11px; }
     .heart { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p46"></script>
+<script src="../common/quest_config.js?v=20261116p47"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="repo-flight"></script>
 </head>
 <body>
