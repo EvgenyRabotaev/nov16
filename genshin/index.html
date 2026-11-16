@@ -393,12 +393,230 @@
     .dlg-text { font-size: 18px; }
     .fairy { width: min(160px, 32vw, 38vh); bottom: calc(36vh + env(safe-area-inset-bottom, 0px)); }
   }
+
+  /* ----- мини-игры-превью (светлячки / звёздное небо) ----- */
+  body.minigame-on .world,
+  body.minigame-on .vignette,
+  body.minigame-on .panel,
+  body.minigame-on .go-next { visibility: hidden !important; pointer-events: none !important; }
+  .mg-scene {
+    position: fixed; inset: 0; z-index: 40;
+    opacity: 0; pointer-events: none; visibility: hidden;
+    font-family: "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif;
+    color: #f5e6c0;
+    transition: opacity .45s ease, visibility 0s linear .45s;
+  }
+  .mg-scene.on { opacity: 1; pointer-events: auto; visibility: visible; transition: opacity .45s ease, visibility 0s; }
+  .mg-head {
+    position: absolute; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px));
+    transform: translateX(-50%);
+    z-index: 5; text-align: center; width: min(92vw, 520px); pointer-events: none;
+  }
+  .mg-title {
+    margin: 0 0 6px; font-size: clamp(18px, 5.4vw, 26px); font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase;
+    color: #ffe7b0; text-shadow: 0 0 18px rgba(255, 200, 90, .55), 0 2px 8px #000;
+  }
+  .mg-hint { margin: 0; font-size: 15px; color: #dce7ff; text-shadow: 0 1px 6px #000; opacity: .92; }
+  .mg-count {
+    display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 999px;
+    background: rgba(10, 16, 32, .45); border: 1px solid rgba(211, 188, 142, .45);
+    font-size: 14px; font-weight: 600; letter-spacing: .04em;
+  }
+  .mg-skip {
+    position: absolute; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%); z-index: 6;
+    appearance: none; cursor: pointer;
+    padding: 8px 18px; min-height: 40px; border-radius: 999px;
+    border: 1px solid rgba(211, 188, 142, .7);
+    background: rgba(20, 16, 30, .5); color: #f5e6c0;
+    font: 600 14px/1 "QuestTeyvat", sans-serif;
+    backdrop-filter: blur(6px);
+  }
+  .mg-skip.hidden { display: none; }
+  .mg-stage { position: absolute; inset: 0; overflow: hidden; }
+
+  /* светлячки: ночной луг */
+  #mgFireflies {
+    background:
+      radial-gradient(ellipse at 18% 12%, rgba(255, 244, 200, .22), transparent 32%),
+      radial-gradient(ellipse at 70% 8%, rgba(160, 200, 255, .12), transparent 28%),
+      linear-gradient(to bottom, #0b1230 0%, #16204a 34%, #24304e 50%, #1a2c28 68%, #0d1a14 100%);
+  }
+  .ff-moon {
+    position: absolute; left: 12%; top: 10%; width: 64px; height: 64px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 32%, #fff8d6, #f0e0a0 55%, #d8c078 100%);
+    box-shadow: 0 0 24px 10px rgba(255, 236, 180, .35), 0 0 80px 24px rgba(255, 220, 140, .18);
+    pointer-events: none;
+  }
+  .ff-hill, .ff-hill2, .ff-hill3 {
+    position: absolute; left: -10%; right: -10%; pointer-events: none;
+    border-radius: 50% 50% 0 0;
+  }
+  .ff-hill { bottom: -18%; height: 42%; background: linear-gradient(to top, #0a1610, #163224 70%, #1b3a28); }
+  .ff-hill2 { bottom: -12%; height: 30%; left: 20%; right: -20%; background: linear-gradient(to top, #08140e, #12281c); opacity: .95; }
+  .ff-hill3 { bottom: -16%; height: 26%; left: -20%; right: 25%; background: linear-gradient(to top, #07120c, #102418); }
+  .ff-grass {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 18%; pointer-events: none;
+    background:
+      repeating-linear-gradient(100deg, transparent 0 10px, rgba(80, 160, 90, .08) 10px 12px),
+      linear-gradient(to top, rgba(6, 16, 10, .85), transparent);
+  }
+  .ff-date-box {
+    position: absolute; left: 50%; top: 16%;
+    width: min(88vw, 520px); aspect-ratio: 2 / 1;
+    transform: translateX(-50%);
+    pointer-events: none; z-index: 2;
+  }
+  .ff-date {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0; font-weight: 700; letter-spacing: .06em;
+    font-size: calc(min(88vw, 520px) * 0.275);
+    line-height: 1;
+    color: rgba(186, 255, 230, calc(0.10 + 0.70 * var(--ff-p, 0)));
+    text-shadow:
+      0 0 10px rgba(140, 255, 220, calc(0.15 + 0.65 * var(--ff-p, 0))),
+      0 0 28px rgba(80, 220, 200, calc(0.08 + 0.5 * var(--ff-p, 0))),
+      0 0 60px rgba(255, 230, 140, calc(0 * var(--ff-p, 0) + 0.25 * var(--ff-p, 0)));
+    transition: color .5s ease, text-shadow .5s ease;
+  }
+  #mgFireflies.done .ff-date,
+  #mgFireflies.finishing .ff-date {
+    color: #f3fff9;
+    text-shadow: 0 0 14px rgba(180, 255, 230, .95), 0 0 40px rgba(120, 255, 210, .7), 0 0 80px rgba(255, 220, 140, .45);
+  }
+  #mgFireflies.finishing .ff-date-box::after {
+    content: ""; position: absolute; inset: 10% 8%;
+    border-radius: 40%;
+    background: radial-gradient(ellipse, rgba(255, 240, 180, .28), rgba(140, 255, 220, .1) 45%, transparent 72%);
+    animation: ffBloom 1.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes ffBloom {
+    from { opacity: 0; transform: scale(.7); }
+    50% { opacity: 1; transform: scale(1.05); }
+    to { opacity: .85; transform: scale(1); }
+  }
+  .ff-bug {
+    position: absolute; width: 38px; height: 38px; left: 0; top: 0;
+    transform: translate(-50%,-50%);
+    border: 0; padding: 0; background: none; cursor: pointer;
+    filter: drop-shadow(0 0 5px #8ff9e4) drop-shadow(0 0 12px rgba(90, 224, 200, .8));
+    z-index: 3; touch-action: none; appearance: none;
+  }
+  .ff-bug svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  .ff-bug .ff-w { fill: rgba(200, 255, 245, .72); transform-origin: 16px 16px; animation: ffFlap var(--flap, 0.9s) ease-in-out infinite; }
+  .ff-bug .ff-w2 { fill: rgba(160, 240, 230, .55); animation-duration: calc(var(--flap, 0.9s) * 0.85); }
+  .ff-bug .ff-body { fill: #c8fff0; }
+  .ff-bug .ff-core { fill: #fff; }
+  @keyframes ffFlap {
+    0%, 100% { transform: scaleX(1) scaleY(1); }
+    50% { transform: scaleX(.55) scaleY(1.08); }
+  }
+  .ff-bug.collecting { z-index: 4; filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 18px #8ff9e4); }
+  .ff-dock {
+    position: absolute; width: 14px; height: 14px; pointer-events: none; z-index: 3;
+    border: 0; padding: 0; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff 0 28%, #d4fff4 48%, rgba(140, 255, 220, .15) 70%, transparent 74%);
+    box-shadow: 0 0 8px 3px rgba(180, 255, 230, .9), 0 0 18px 7px rgba(120, 255, 210, .45);
+    animation: ffDock 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes ffDock {
+    from { box-shadow: 0 0 6px 2px rgba(180, 255, 230, .7), 0 0 14px 6px rgba(120, 255, 210, .35); }
+    to { box-shadow: 0 0 12px 5px rgba(220, 255, 245, 1), 0 0 24px 10px rgba(150, 255, 220, .55); }
+  }
+
+  /* звёздное небо */
+  #mgStars {
+    background:
+      radial-gradient(ellipse at 50% 120%, rgba(70, 40, 90, .45), transparent 50%),
+      radial-gradient(ellipse at 80% 10%, rgba(90, 120, 200, .18), transparent 32%),
+      linear-gradient(to bottom, #050714 0%, #12183a 46%, #1a1540 100%);
+  }
+  .st-milky {
+    position: absolute; left: -10%; right: -10%; top: 22%; height: 46%; pointer-events: none;
+    background: linear-gradient(118deg, transparent 8%, rgba(200, 210, 255, .08) 32%, rgba(255, 230, 200, .12) 48%, rgba(180, 200, 255, .08) 64%, transparent 90%);
+    filter: blur(10px); transform: rotate(-12deg);
+  }
+  .st-sparkle {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1.2px 1.2px at 8% 18%, #fff, transparent),
+      radial-gradient(1.1px 1.1px at 22% 40%, #dfe9ff, transparent),
+      radial-gradient(1.4px 1.4px at 70% 16%, #fff, transparent),
+      radial-gradient(1px 1px at 82% 48%, #ffe9c0, transparent),
+      radial-gradient(1.2px 1.2px at 40% 12%, #fff, transparent),
+      radial-gradient(1px 1px at 58% 58%, #d0e0ff, transparent),
+      radial-gradient(1.5px 1.5px at 90% 28%, #fff, transparent),
+      radial-gradient(1px 1px at 14% 62%, #ffe7b0, transparent),
+      radial-gradient(1.2px 1.2px at 33% 72%, #fff, transparent),
+      radial-gradient(.9px .9px at 95% 70%, #e8f0ff, transparent);
+    animation: stTwinkle 4.5s ease-in-out infinite alternate;
+  }
+  @keyframes stTwinkle { from { opacity: .7; } to { opacity: 1; } }
+  #stSvg {
+    position: absolute; left: 50%; top: 12%;
+    width: min(96vw, 560px); height: auto;
+    aspect-ratio: 100 / 68;
+    transform: translateX(-50%);
+    overflow: visible; z-index: 3;
+  }
+  .st-heart-fill {
+    fill: rgba(255, 170, 190, 0); stroke: none;
+    transition: fill .8s ease;
+  }
+  #mgStars.done .st-heart-fill { fill: rgba(255, 170, 196, .28); }
+  .st-edge { fill: none; stroke-linecap: round; stroke-width: 0.7; }
+  .st-edge.dim { stroke: rgba(230, 210, 150, .22); }
+  .st-edge.on { stroke: #ffe9b0; stroke-width: 0.95; filter: drop-shadow(0 0 1.2px #ffe9b0); }
+  .st-star { cursor: pointer; touch-action: manipulation; }
+  .st-star .st-halo { fill: rgba(255, 236, 180, .18); stroke: rgba(255, 230, 160, .35); stroke-width: .25; }
+  .st-star .st-core { fill: #efe4c0; }
+  .st-star .st-num {
+    fill: transparent; font-size: 3.8px; font-weight: 700;
+    text-anchor: middle; font-family: "QuestTeyvat", "Segoe UI", sans-serif;
+    pointer-events: none;
+  }
+  .st-star.next .st-halo {
+    fill: rgba(255, 230, 140, .28);
+    stroke: #ffe7a0; stroke-width: .45;
+    transform-origin: 0 0;
+    animation: stPulse 1.2s ease-in-out infinite;
+  }
+  .st-star.next .st-core { fill: #fff6d0; }
+  .st-star.next .st-num { fill: #ffe7a0; font-size: 4px; }
+  .st-star.lit .st-halo { fill: rgba(255, 220, 140, .4); stroke: #ffe9b0; animation: none; }
+  .st-star.lit .st-core { fill: #fff; }
+  .st-star.lit .st-num { fill: transparent; }
+  .st-star.shake .st-halo,
+  .st-star.shake .st-core { animation: stShake .38s ease; }
+  @keyframes stPulse {
+    0%, 100% { transform: scale(1); opacity: .85; }
+    50% { transform: scale(1.28); opacity: 1; }
+  }
+  @keyframes stShake {
+    20% { transform: translate(-1.4px, 0); }
+    40% { transform: translate(1.4px, 0); }
+    60% { transform: translate(-0.8px, 0); }
+    80% { transform: translate(0.6px, 0); }
+  }
+  #mgStars.done .st-edge.on { stroke: #fff3c8; filter: drop-shadow(0 0 2px #ffe9b0) drop-shadow(0 0 6px rgba(255, 200, 140, .8)); }
+  @media (max-width: 420px) {
+    .mg-hint { font-size: 14px; }
+    .ff-bug { width: 42px; height: 42px; }
+    .st-star .st-num { font-size: 4px; }
+  }
+  @media (max-height: 700px) {
+    .ff-date-box { top: 14%; width: min(86vw, 460px); }
+    #stSvg { top: 10%; width: min(94vw, 480px); }
+  }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p54"></script>
+<script src="../common/quest_config.js?v=20261116p55"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="genshin"></script>
-<link rel="stylesheet" href="../common/world_title.css?v=20261115p38">
-<script src="../common/world_title.js?v=20261115p38" data-world="genshin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261116p55">
+<script src="../common/world_title.js?v=20261116p55" data-world="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -463,6 +681,40 @@
 </div>
 
 <button class="go-next" id="goNext" type="button">Летим дальше</button>
+
+
+<div class="mg-scene" id="mgFireflies" aria-label="Светлячки">
+  <div class="ff-moon" aria-hidden="true"></div>
+  <div class="ff-hill" aria-hidden="true"></div>
+  <div class="ff-hill2" aria-hidden="true"></div>
+  <div class="ff-hill3" aria-hidden="true"></div>
+  <div class="ff-grass" aria-hidden="true"></div>
+  <div class="mg-stage" id="ffStage">
+    <div class="ff-date-box" id="ffDateBox">
+      <div class="ff-date">16.11</div>
+    </div>
+  </div>
+  <div class="mg-head">
+    <h1 class="mg-title">Светлячки</h1>
+    <p class="mg-hint">Собери светлячков — они сложат дату</p>
+    <div class="mg-count" id="ffCounter">Собрано: 0/20</div>
+  </div>
+  <button class="mg-skip" id="ffSkip" type="button">Пропустить</button>
+</div>
+
+<div class="mg-scene" id="mgStars" aria-label="Звёздное небо">
+  <div class="st-milky" aria-hidden="true"></div>
+  <div class="st-sparkle" aria-hidden="true"></div>
+  <div class="mg-stage" id="stStage">
+    <svg id="stSvg" viewBox="0 0 100 68" role="img" aria-label="Созвездие"></svg>
+  </div>
+  <div class="mg-head">
+    <h1 class="mg-title">Звёздное небо</h1>
+    <p class="mg-hint">Соедини звёзды по порядку</p>
+  </div>
+  <button class="mg-skip" id="stSkip" type="button">Пропустить</button>
+</div>
+
 
 <script>
 (function () {
@@ -1225,8 +1477,343 @@
   document.addEventListener("touchmove", (e) => { if (!allowInnerScroll(e.target)) e.preventDefault(); }, { passive: false });
   document.addEventListener("wheel", (e) => { if (!allowInnerScroll(e.target)) e.preventDefault(); }, { passive: false });
 
+  /* ----- мини-игры-превью: ?fireflies=1 / ?stars=1 (в основной поток не вшиты) ----- */
+  const FIREFLY_DEBUG = params.get("fireflies") === "1" || params.get("svetlyachki") === "1";
+  const STARS_DEBUG = params.get("stars") === "1" || params.get("constellation") === "1" || params.get("constellations") === "1";
+  const FF_CFG = Object.assign({
+    title: "Светлячки",
+    hint: "Собери светлячков — они сложат дату",
+    skip: "Пропустить",
+    counter: "Собрано: {n}/{N}",
+    primos: 40,
+    awardId: "tv-fireflies",
+    paimon: "Это наш день ✨"
+  }, G.FIREFLIES || {});
+  const ST_CFG = Object.assign({
+    title: "Звёздное небо",
+    hint: "Соедини звёзды по порядку",
+    skip: "Пропустить",
+    primos: 40,
+    awardId: "tv-stars",
+    paimon: "Хе-хе, теперь это ваше созвездие ✨"
+  }, G.STARS || {});
+  /* Точки посадки «16.11» в % коробки 2:1 (отобранные по контуру цифр). */
+  const FF_POINTS = [
+    [9.5, 31.75], [9.88, 62.5], [17.88, 29.75], [19.0, 46.25], [22.75, 69.75],
+    [29.38, 49.0], [34.12, 29.5], [35.5, 66.25], [41.25, 46.75], [48.25, 68.5],
+    [58.25, 34.25], [58.5, 70.0], [62.88, 52.75], [67.88, 30.5], [71.38, 70.0],
+    [77.5, 36.25], [80.5, 70.0], [82.25, 53.5], [87.0, 31.5], [91.25, 69.25]
+  ];
+  /* Созвездие: сердце (1–10) и две фигурки внутри, держащиеся за руки (11–18). */
+  const ST_POINTS = [
+    [50, 16], [36, 12], [22, 18], [18, 30], [30, 42],
+    [50, 54], [70, 42], [82, 30], [78, 18], [64, 12],
+    [40, 24], [40, 31], [35, 38], [45, 38],
+    [60, 24], [60, 31], [55, 38], [65, 38]
+  ];
+  const ST_EDGES = [
+    [0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,0],
+    [10,11],[11,12],[11,13],[14,15],[15,16],[15,17],[11,15]
+  ];
+
+  const FF_SVG = '<svg viewBox="0 0 32 32" aria-hidden="true"><g class="ff-wings"><ellipse class="ff-w" cx="7.5" cy="13" rx="9" ry="5.5" transform="rotate(-22 7.5 13)"/><ellipse class="ff-w" cx="24.5" cy="13" rx="9" ry="5.5" transform="rotate(22 24.5 13)"/><ellipse class="ff-w ff-w2" cx="9.5" cy="20" rx="6.2" ry="4.2" transform="rotate(-12 9.5 20)"/><ellipse class="ff-w ff-w2" cx="22.5" cy="20" rx="6.2" ry="4.2" transform="rotate(12 22.5 20)"/></g><circle class="ff-body" cx="16" cy="16.5" r="3"/><circle class="ff-core" cx="16" cy="16.5" r="1.4"/></svg>';
+
+  let mgRaf = 0, mgActive = "";
+  function mgAward(id, n) {
+    if (window.QuestHUD && typeof QuestHUD.award === "function") QuestHUD.award(id, n);
+  }
+  function mgStopRaf() { if (mgRaf) cancelAnimationFrame(mgRaf); mgRaf = 0; }
+  function mgHideWorld() {
+    document.body.classList.add("minigame-on");
+    if (panel) panel.classList.add("hidden");
+    if (goNext) goNext.classList.remove("show");
+    if (glide) glide.classList.remove("on");
+    if (cook) cook.classList.remove("on");
+    if (note) note.classList.remove("on");
+    hideHud(false);
+    if (window.QuestHUD) QuestHUD.hideNext && QuestHUD.hideNext();
+  }
+  function mgFinishTalk(cfg, scene) {
+    if (scene) scene.classList.add("done");
+    mgAward(cfg.awardId, cfg.primos != null ? cfg.primos : 40);
+    const line = cfg.paimon || "";
+    setTimeout(() => {
+      if (!line) return;
+      startTalk(fairyLines(line), () => { setFlags(); });
+    }, FAST ? 200 : 800);
+  }
+
+  function startFireflies() {
+    mgActive = "fireflies";
+    mgHideWorld();
+    setStep("fireflies");
+    const scene = document.getElementById("mgFireflies");
+    const stage = document.getElementById("ffStage");
+    const box = document.getElementById("ffDateBox");
+    const counter = document.getElementById("ffCounter");
+    const skip = document.getElementById("ffSkip");
+    if (!scene || !stage) return;
+    scene.classList.add("on");
+    const N = FF_POINTS.length;
+    const bugs = [];
+    const filled = new Array(N).fill(false);
+    let collected = 0, done = false, dragging = false;
+    const slots = FF_POINTS.map((p) => ({ x: p[0], y: p[1] }));
+
+    function boxRect() { return box.getBoundingClientRect(); }
+    function stageRect() { return stage.getBoundingClientRect(); }
+    function slotScreen(i) {
+      const r = boxRect();
+      return { x: r.left + slots[i].x / 100 * r.width, y: r.top + slots[i].y / 100 * r.height };
+    }
+    function nextSlot() {
+      for (let i = 0; i < N; i++) if (!filled[i]) return i;
+      return -1;
+    }
+    function updateHud() {
+      const tpl = FF_CFG.counter || "Собрано: {n}/{N}";
+      if (counter) counter.textContent = tpl.replace("{n}", String(collected)).replace("{N}", String(N));
+      scene.style.setProperty("--ff-p", String(collected / N));
+    }
+    function spawnBugs() {
+      stage.querySelectorAll(".ff-bug, .ff-dock").forEach((n) => n.remove());
+      const sr = stageRect();
+      for (let i = 0; i < N; i++) {
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "ff-bug";
+        el.innerHTML = FF_SVG;
+        el.style.setProperty("--flap", (0.7 + Math.random() * 0.6).toFixed(2) + "s");
+        el.style.setProperty("--hue", String(-12 + Math.random() * 28));
+        stage.appendChild(el);
+        const pad = 28;
+        const x = pad + Math.random() * Math.max(40, sr.width - pad * 2);
+        const y = sr.height * 0.42 + Math.random() * (sr.height * 0.5);
+        bugs.push({
+          el, x, y,
+          vx: (Math.random() * 2 - 1) * 18,
+          vy: (Math.random() * 2 - 1) * 12,
+          phase: Math.random() * Math.PI * 2,
+          bob: 8 + Math.random() * 8,
+          collected: false, flying: false, slot: -1,
+          t0: 0, sx: 0, sy: 0, tx: 0, ty: 0
+        });
+      }
+    }
+    function collectBug(b) {
+      if (!b || b.collected || done) return;
+      const slot = nextSlot();
+      if (slot < 0) return;
+      b.collected = true;
+      b.flying = true;
+      b.slot = slot;
+      filled[slot] = true;
+      collected += 1;
+      b.t0 = performance.now();
+      b.sx = b.x; b.sy = b.y;
+      const sr = stageRect();
+      const t = slotScreen(slot);
+      b.tx = t.x - sr.left; b.ty = t.y - sr.top;
+      b.el.classList.add("collecting");
+      b.el.style.pointerEvents = "none";
+      updateHud();
+    }
+    function dock(b) {
+      b.flying = false;
+      b.el.innerHTML = "";
+      b.el.classList.remove("ff-bug", "collecting");
+      b.el.classList.add("ff-dock");
+      const sr = stageRect();
+      const br = boxRect();
+      const sl = slots[b.slot];
+      b.el.style.left = (br.left - sr.left + sl.x / 100 * br.width) + "px";
+      b.el.style.top = (br.top - sr.top + sl.y / 100 * br.height) + "px";
+      b.el.style.transform = "translate(-50%,-50%)";
+      if (collected >= N) complete();
+    }
+    function complete() {
+      if (done) return;
+      done = true;
+      skip.classList.add("hidden");
+      updateHud();
+      scene.classList.add("finishing");
+      mgFinishTalk(FF_CFG, scene);
+    }
+    function skipAll() {
+      if (done) return;
+      bugs.forEach((b) => { if (!b.collected) collectBug(b); });
+    }
+    function hit(cx, cy) {
+      const sr = stageRect();
+      const x = cx - sr.left, y = cy - sr.top;
+      let best = null, bestD = 34 * 34;
+      bugs.forEach((b) => {
+        if (b.collected) return;
+        const d = (b.x - x) * (b.x - x) + (b.y - y) * (b.y - y);
+        if (d < bestD) { bestD = d; best = b; }
+      });
+      if (best) collectBug(best);
+    }
+
+    spawnBugs();
+    updateHud();
+    let last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const sr = stageRect();
+      bugs.forEach((b) => {
+        if (b.flying) {
+          const p = Math.min(1, (now - b.t0) / (FAST ? 280 : 700));
+          const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+          const lift = Math.sin(p * Math.PI) * 40;
+          b.x = b.sx + (b.tx - b.sx) * e;
+          b.y = b.sy + (b.ty - b.sy) * e - lift;
+          b.el.style.left = b.x + "px";
+          b.el.style.top = b.y + "px";
+          if (p >= 1) dock(b);
+          return;
+        }
+        if (b.collected) return;
+        b.phase += dt * 1.6;
+        b.vx += Math.sin(b.phase * 0.7) * 10 * dt;
+        b.vy += Math.cos(b.phase * 0.9) * 8 * dt;
+        b.vx *= 0.99; b.vy *= 0.99;
+        const sp = Math.hypot(b.vx, b.vy);
+        if (sp > 36) { b.vx *= 36 / sp; b.vy *= 36 / sp; }
+        b.x += b.vx * dt * 8;
+        b.y += b.vy * dt * 8;
+        const m = 16;
+        if (b.x < m) { b.x = m; b.vx = Math.abs(b.vx); }
+        if (b.x > sr.width - m) { b.x = sr.width - m; b.vx = -Math.abs(b.vx); }
+        if (b.y < sr.height * 0.28) { b.y = sr.height * 0.28; b.vy = Math.abs(b.vy); }
+        if (b.y > sr.height - 120) { b.y = sr.height - 120; b.vy = -Math.abs(b.vy); }
+        const bob = Math.sin(b.phase) * b.bob;
+        b.el.style.left = b.x + "px";
+        b.el.style.top = (b.y + bob) + "px";
+        const flip = b.vx < 0 ? -1 : 1;
+        b.el.style.transform = "translate(-50%,-50%) scaleX(" + flip + ")";
+      });
+      if (!done || bugs.some((b) => b.flying)) mgRaf = requestAnimationFrame(tick);
+    };
+    mgStopRaf();
+    mgRaf = requestAnimationFrame(tick);
+
+    const onDown = (e) => { if (done) return; dragging = true; try { stage.setPointerCapture(e.pointerId); } catch (err) {} hit(e.clientX, e.clientY); };
+    const onMove = (e) => { if (!dragging || done) return; hit(e.clientX, e.clientY); };
+    const onUp = () => { dragging = false; };
+    stage.addEventListener("pointerdown", onDown);
+    stage.addEventListener("pointermove", onMove);
+    stage.addEventListener("pointerup", onUp);
+    stage.addEventListener("pointercancel", onUp);
+    skip.addEventListener("click", (e) => { e.stopPropagation(); skipAll(); });
+  }
+
+  function startStars() {
+    mgActive = "stars";
+    mgHideWorld();
+    setStep("stars");
+    const scene = document.getElementById("mgStars");
+    const stage = document.getElementById("stStage");
+    const svg = document.getElementById("stSvg");
+    const skip = document.getElementById("stSkip");
+    if (!scene || !stage || !svg) return;
+    scene.classList.add("on");
+    const N = ST_POINTS.length;
+    let next = 0, done = false;
+    const lit = new Array(N).fill(false);
+
+    const heartPoly = ST_POINTS.slice(0, 10).map((p) => p[0] + "," + p[1]).join(" ");
+    const fill = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    fill.setAttribute("class", "st-heart-fill");
+    fill.setAttribute("points", heartPoly);
+    svg.appendChild(fill);
+
+    const edgeEls = ST_EDGES.map((e) => {
+      const a = ST_POINTS[e[0]], b = ST_POINTS[e[1]];
+      const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      ln.setAttribute("x1", a[0]); ln.setAttribute("y1", a[1]);
+      ln.setAttribute("x2", b[0]); ln.setAttribute("y2", b[1]);
+      ln.setAttribute("class", "st-edge dim");
+      svg.appendChild(ln);
+      return { a: e[0], b: e[1], el: ln };
+    });
+
+    const starEls = ST_POINTS.map((p, i) => {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("class", "st-star" + (i === 0 ? " next" : ""));
+      g.setAttribute("data-i", String(i));
+      g.setAttribute("transform", "translate(" + p[0] + " " + p[1] + ")");
+      g.innerHTML = '<circle class="st-halo" r="4.3"/><circle class="st-core" r="1.85"/><text class="st-num" x="0" y="-6">' + (i + 1) + "</text>";
+      svg.appendChild(g);
+      g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); ev.preventDefault(); tap(i); });
+      g.addEventListener("click", (ev) => { ev.stopPropagation(); ev.preventDefault(); });
+      return g;
+    });
+
+    function refreshEdges() {
+      edgeEls.forEach((e) => {
+        const on = lit[e.a] && lit[e.b];
+        e.el.setAttribute("class", "st-edge" + (on ? " on" : " dim"));
+      });
+    }
+    function refreshStars() {
+      starEls.forEach((g, i) => {
+        g.setAttribute("class", "st-star" + (lit[i] ? " lit" : "") + (i === next && !done ? " next" : ""));
+      });
+    }
+    function tap(i) {
+      if (done) return;
+      if (i !== next) {
+        starEls[i].classList.add("shake");
+        setTimeout(() => starEls[i].classList.remove("shake"), 380);
+        return;
+      }
+      lit[i] = true;
+      next += 1;
+      refreshEdges();
+      refreshStars();
+      if (next >= N) complete();
+    }
+    function complete() {
+      if (done) return;
+      done = true;
+      next = N;
+      for (let i = 0; i < N; i++) lit[i] = true;
+      refreshEdges();
+      refreshStars();
+      scene.classList.add("finishing", "done");
+      skip.classList.add("hidden");
+      mgFinishTalk(ST_CFG, scene);
+    }
+    function skipAll() {
+      if (done) return;
+      const step = () => {
+        if (next >= N) { complete(); return; }
+        lit[next] = true;
+        next += 1;
+        refreshEdges();
+        refreshStars();
+        if (next >= N) complete();
+        else setTimeout(step, FAST ? 30 : 90);
+      };
+      step();
+    }
+    refreshEdges();
+    refreshStars();
+    skip.addEventListener("click", (e) => { e.stopPropagation(); skipAll(); });
+  }
+
+  function startMiniGamePreview() {
+    if (FIREFLY_DEBUG) { startFireflies(); return true; }
+    if (STARS_DEBUG) { startStars(); return true; }
+    return false;
+  }
+
   if (window.QuestHUD) { QuestHUD.setStep("map"); QuestHUD.hideNext && QuestHUD.hideNext(); }
-  if (!WAYPOINTS.length && !QUESTIONS.length) finish();
+  if (startMiniGamePreview()) {
+    /* превью мини-игр: основной поток Тейвата не запускаем */
+  } else if (!WAYPOINTS.length && !QUESTIONS.length) finish();
   else startWorld();
 })();
 </script>

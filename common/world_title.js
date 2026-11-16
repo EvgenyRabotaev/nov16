@@ -19,7 +19,7 @@
     if (!id || !worldCfg(id)) return false;
     if (FORCE) return true;
     if (FAST || params.get("auto") === "1") return false;
-    const skipKeys = ["q", "loc", "radio", "levi", "leviathan", "cave", "glow", "intro", "current", "reunion", "meet", "seamoth", "moth", "event", "stage", "craft", "book", "exit", "end", "done", "shop", "skip"];
+    const skipKeys = ["q", "loc", "radio", "levi", "leviathan", "cave", "glow", "intro", "current", "reunion", "meet", "seamoth", "moth", "event", "stage", "craft", "book", "exit", "end", "done", "shop", "skip", "fireflies", "svetlyachki", "stars", "constellation", "constellations", "scanner", "missyou"];
     for (let i = 0; i < skipKeys.length; i++) {
       const v = params.get(skipKeys[i]);
       if (v != null && v !== "") return false;
