@@ -102,6 +102,7 @@
   .mc-ach.off { animation: achOut .4s ease forwards; }
   .mc-ach .ico { width: 48px; height: 48px; image-rendering: pixelated; flex: 0 0 48px; background: #111; border: 2px solid #000; }
   .mc-ach .kicker { color: #fcfc54; font-size: 16px; letter-spacing: .04em; }
+  .mc-ach .pts { color: #7dff7d; font-size: 14px; margin-top: 2px; text-shadow: 2px 2px 0 #000; }
   .panel.craft-q #answerBtn, .panel.craft-q .ans-inputs { display: none; }
   @keyframes achIn { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes achOut { to { transform: translateY(-16px); opacity: 0; } }
@@ -176,9 +177,9 @@
     .q-text { font-size: 15px; line-height: 1.4; margin: 8px 0 10px; max-height: min(42vh, calc(100dvh - 220px)); }
   }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p67">
-<script src="../common/quest_config.js?v=20261116p67"></script>
-<script src="../common/hud.js?v=20261116p67" data-screen="minecraft"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p68">
+<script src="../common/quest_config.js?v=20261116p68"></script>
+<script src="../common/hud.js?v=20261116p68" data-screen="minecraft"></script>
 <link rel="stylesheet" href="../common/world_title.css?v=20261115p37">
 <script src="../common/world_title.js?v=20261115p37" data-world="minecraft"></script>
 <script src="craft.js?v=20261115p34"></script>
@@ -505,7 +506,17 @@
   }
   function achievement(craft) {
     const titles = (MC.ACHIEVEMENTS || {});
-    const title = titles[craft] || craft;
+    const raw = titles[craft];
+    const title = (raw && typeof raw === "object") ? (raw.title || craft) : (raw || craft);
+    const primos = (raw && typeof raw === "object" && raw.primos != null)
+      ? raw.primos
+      : (MC.ACHIEVEMENT_PRIMOS != null ? MC.ACHIEVEMENT_PRIMOS : 40);
+    const awardId = (raw && typeof raw === "object" && raw.awardId) || ("mc-ach-" + craft);
+    let granted = false;
+    if (primos && window.QuestHUD && typeof QuestHUD.award === "function") {
+      granted = !!QuestHUD.award(awardId, primos);
+    }
+    document.querySelectorAll(".mc-ach").forEach((n) => n.remove());
     const t = document.createElement("div");
     t.className = "mc-ach";
     const ico = document.createElement("div"); ico.className = "ico";
@@ -514,8 +525,14 @@
       ico.appendChild(img);
     }
     const tx = document.createElement("div");
-    tx.innerHTML = '<div class="kicker">Новое достижение!</div><div></div>';
-    tx.lastChild.textContent = title;
+    tx.innerHTML = '<div class="kicker">Новое достижение!</div><div class="ttl"></div>';
+    tx.querySelector(".ttl").textContent = title;
+    if (granted && primos) {
+      const pts = document.createElement("div");
+      pts.className = "pts";
+      pts.textContent = "+" + primos + " примогемов";
+      tx.appendChild(pts);
+    }
     t.appendChild(ico); t.appendChild(tx);
     document.body.appendChild(t);
     setTimeout(() => t.classList.add("off"), 5600);
@@ -776,7 +793,7 @@
   answerBtn.addEventListener("click", submit);
   window.addEventListener("resize", layout);
   layout();
-  window.__mc = { get state() { return { question, step, shown, busy, done, n: QUESTIONS.length, houseLevel }; }, layout, render };
+  window.__mc = { get state() { return { question, step, shown, busy, done, n: QUESTIONS.length, houseLevel }; }, layout, render, achievement };
 
   /* Отладка: house.html?craft=N (N = 2…5) — сразу крафт после вопроса N (предыдущие этапы дома уже стоят).
      house.html?exit=1 — сразу вопрос «Двигаемся дальше?»; house.html?craft=boat — сразу крафт лодки.

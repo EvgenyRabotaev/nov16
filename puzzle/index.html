@@ -7,10 +7,10 @@
 <title>Пятнашки</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 14s-6-3.8-6-8.2C2 3.5 3.7 2 5.6 2 6.8 2 7.6 2.7 8 3.6 8.4 2.7 9.2 2 10.4 2 12.3 2 14 3.5 14 5.8 14 10.2 8 14 8 14z' fill='%236ec8ff'/%3E%3C/svg%3E">
 <link rel="preload" as="image" href="heart.webp">
-<link rel="stylesheet" href="../common/hud.css?v=20261116p67">
-<link rel="stylesheet" href="puzzle.css?v=20261116p67">
-<script src="../common/quest_config.js?v=20261116p67"></script>
-<script src="../common/hud.js?v=20261116p67" data-screen="puzzle"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p68">
+<link rel="stylesheet" href="puzzle.css?v=20261116p68">
+<script src="../common/quest_config.js?v=20261116p68"></script>
+<script src="../common/hud.js?v=20261116p68" data-screen="puzzle"></script>
 <style>
   @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-cyrillic-ext.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
   @font-face { font-family: "QuestTeyvat"; src: url("../genshin/fonts/SofiaSans-cyrillic.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
@@ -51,7 +51,7 @@
     <p class="pz-win" id="pzWin" aria-live="polite"></p>
     <button class="pz-skip" id="pzSkip" type="button">Пропустить</button>
   </div>
-<script src="puzzle.js?v=20261116p67"></script>
+<script src="puzzle.js?v=20261116p68"></script>
 <script>
   if (window.QuestHUD) { QuestHUD.setStep("play"); QuestHUD.hideNext && QuestHUD.hideNext(); }
   QuestPuzzle.start({ root: document.getElementById("pzRoot"), image: "heart.webp" });

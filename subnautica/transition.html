@@ -949,9 +949,9 @@
       #snEvCard.has-video .ev-body { padding: 10px 12px 12px; }
     }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p67">
-<script src="../common/quest_config.js?v=20261116p67"></script>
-<script src="../common/hud.js?v=20261116p67" data-screen="subnautica"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p68">
+<script src="../common/quest_config.js?v=20261116p68"></script>
+<script src="../common/hud.js?v=20261116p68" data-screen="subnautica"></script>
 <link rel="stylesheet" href="../common/world_title.css?v=20261115p38">
 <script src="../common/world_title.js?v=20261115p38" data-world="subnautica"></script>
 <style>
@@ -1008,7 +1008,7 @@
             <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
           </svg>
-          <img class="seamoth-art" src="seamoth.png?v=20261116p67" alt="" draggable="false" width="160" height="100">
+          <img class="seamoth-art" src="seamoth.png?v=20261116p68" alt="" draggable="false" width="160" height="100">
         </div>
         <div id="leviHint">Перетащи себя в укрытие!</div>
       </div>
@@ -1076,7 +1076,7 @@
             <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
           </svg>
-          <img class="seamoth-art" src="seamoth.png?v=20261116p67" alt="" draggable="false" width="160" height="100">
+          <img class="seamoth-art" src="seamoth.png?v=20261116p68" alt="" draggable="false" width="160" height="100">
       </div>
       <div class="diver zhenya" id="diverZhenya" aria-label="Женя">          <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
             <defs>
@@ -1152,7 +1152,7 @@
     const SEAMOTH_DEBUG = params.get("seamoth") === "1" || params.get("moth") === "1";
     const MISSYOU_DEBUG = params.get("missyou") === "1" || params.get("miss") === "1";
     const SCANNER_DEBUG = params.get("scanner") === "1" || params.get("scan") === "1";
-    const ASSET_V = "20261116p67";
+    const ASSET_V = "20261116p68";
     const FISH_SRC = {
       peeper: "fish_peeper.png?v=" + ASSET_V,
       boomerang: "fish_boomerang.png?v=" + ASSET_V,
@@ -3026,14 +3026,14 @@
       if (!vid || !media) return;
       const src = data && data.video;
       if (!src) { stopEventVideo(); return; }
-      const bust = /[?]/.test(src) ? src : (src + "?v=20261116p67");
+      const bust = /[?]/.test(src) ? src : (src + "?v=20261116p68");
       media.hidden = false;
       snEvCard.classList.add("has-video");
       vid.setAttribute("playsinline", "");
       vid.setAttribute("webkit-playsinline", "");
       vid.muted = false;
       const poster = data.poster || (String(src).replace(/\.mp4(\?.*)?$/i, ".jpg"));
-      if (poster) vid.setAttribute("poster", /[?]/.test(poster) ? poster : (poster + "?v=20261116p67"));
+      if (poster) vid.setAttribute("poster", /[?]/.test(poster) ? poster : (poster + "?v=20261116p68"));
       vid.src = bust;
       if (play) {
         play.textContent = data.tapLabel || "Смотреть";
