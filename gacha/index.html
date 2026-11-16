@@ -819,7 +819,7 @@
   .qhud-hint, .qhud-panel { display: none !important; }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261115p41"></script>
+<script src="../common/quest_config.js?v=20261115p42"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="gacha" data-counter="off"></script>
 <script src="card_texts.js?v=20261115z3"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
 <script src="card_texts_paimon.js?v=20261115z6"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
@@ -2316,7 +2316,9 @@
   }
   function shopItems() {
     const list = (window.QUEST_CONFIG && window.QUEST_CONFIG.STARGLITTER_SHOP) || [
-      { id: 'intimate_tale', name: 'Интимная сказка', price: 2 }
+      { id: 'intimate_tale', name: 'Интимная сказка', price: 2 },
+      { id: 'rolls', name: 'Роллы', price: 2, emoji: '🍣' },
+      { id: 'mangabuff', name: 'Подписка на Мангабафф', price: 2, emoji: '📚' }
     ];
     return (Array.isArray(list) ? list : []).filter(it => it && it.id && it.name && (it.price | 0) > 0);
   }
@@ -2342,6 +2344,19 @@
           '<ellipse cx="17.5" cy="16.5" rx="5" ry="3.3" fill="#fff8ef"/>' +
           '<ellipse cx="11.5" cy="21.5" rx="3.4" ry="2.5" fill="#6fa043"/>' +
         '</g>' +
+        '</svg>';
+    }
+    if (item.id === 'mangabuff') {
+      return '<svg class="shop-manga" viewBox="0 0 80 80" aria-hidden="true">' +
+        '<ellipse cx="40" cy="71" rx="22" ry="5" fill="#c9b896" opacity=".5"/>' +
+        '<path fill="#c45e22" d="M22 16c0-1.4 1-2.6 2.4-2.8L26 13h30c3 0 5 2 5 5v46c0 3-2 5-5 5H26c-2.4 0-4.4-1.8-4.8-4.2L21 63V18c0-.7.3-1.4.8-1.8z"/>' +
+        '<path fill="#e07a3a" d="M26 14h30c2.2 0 4 1.8 4 4v44c0 2.2-1.8 4-4 4H26c-2.2 0-4-1.8-4-4V18c0-2.2 1.8-4 4-4z"/>' +
+        '<path fill="#fff6e8" d="M29 19h25v36H29z"/>' +
+        '<rect x="31.5" y="21.5" width="20" height="12" rx="1.2" fill="#f0b27a"/>' +
+        '<rect x="31.5" y="35.5" width="9.2" height="9" rx="1" fill="#d98a54"/>' +
+        '<rect x="42.3" y="35.5" width="9.2" height="9" rx="1" fill="#f3c9a0"/>' +
+        '<path fill="#c45e22" d="M22.5 16.5c0-1 .8-1.8 1.8-1.8V63c-1 0-1.8-.8-1.8-1.8V16.5z"/>' +
+        '<circle cx="54" cy="20" r="7" fill="#ffe28a"/><path fill="#e07a3a" d="M54 15.6l1.15 3.3h3.45l-2.8 2.05 1.07 3.3L54 22.2l-2.87 2.05 1.07-3.3-2.8-2.05h3.45z"/>' +
         '</svg>';
     }
     if (item.emoji) {
