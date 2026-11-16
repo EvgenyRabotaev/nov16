@@ -36,8 +36,14 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1730; color: #3b4255;
-    font-family: "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif; user-select: none; -webkit-user-select: none; }
+  html, body {
+    margin: 0; width: 100%; height: 100%; height: 100dvh;
+    overflow: hidden; overscroll-behavior: none;
+    background: #1a1730; color: #3b4255;
+    font-family: "QuestTeyvat", "Segoe UI", "Noto Sans", sans-serif;
+    user-select: none; -webkit-user-select: none;
+  }
+  body { position: fixed; inset: 0; touch-action: manipulation; }
   .vignette { position: fixed; inset: 0; pointer-events: none; z-index: 4; box-shadow: inset 0 0 120px rgba(10, 16, 36, .45); }
 
   /* ----- карта ----- */
@@ -48,7 +54,7 @@
     will-change: transform;
     z-index: 1;
   }
-  .world-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  .world-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; pointer-events: none; }
 
   .pin {
     position: absolute;
@@ -389,7 +395,7 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p49"></script>
+<script src="../common/quest_config.js?v=20261116p50"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="genshin"></script>
 <link rel="stylesheet" href="../common/world_title.css?v=20261115p38">
 <script src="../common/world_title.js?v=20261115p38" data-world="genshin"></script>
@@ -571,13 +577,12 @@
     return "";
   }
 
-  function mapScale() { return Math.max(innerWidth / MAP_W, innerHeight / MAP_H); }
+  function mapScale() { return Math.min(innerWidth / MAP_W, innerHeight / MAP_H); }
   function clampCam(x, y, s) {
+    /* contain-fit: вся карта в экране, без прокрутки и панорамирования */
     const dw = MAP_W * s, dh = MAP_H * s;
-    let tx = innerWidth / 2 - (x / 100) * dw;
-    let ty = innerHeight / 2 - (y / 100) * dh;
-    tx = Math.min(0, Math.max(innerWidth - dw, tx));
-    ty = Math.min(0, Math.max(innerHeight - dh, ty));
+    const tx = (innerWidth - dw) / 2;
+    const ty = (innerHeight - dh) / 2;
     return { tx, ty, s };
   }
   function applyCam(x, y, s) {
@@ -1214,6 +1219,11 @@
   goNext.addEventListener("click", (e) => { e.stopPropagation(); beginGlide(); });
   glideSkip.addEventListener("click", (e) => { e.stopPropagation(); endGlide(); });
   window.addEventListener("resize", () => resizeCam());
+  function allowInnerScroll(t) {
+    return !!(t && t.closest && t.closest(".q-text, .ans-input, textarea, input, .note-card, .gs-video-card"));
+  }
+  document.addEventListener("touchmove", (e) => { if (!allowInnerScroll(e.target)) e.preventDefault(); }, { passive: false });
+  document.addEventListener("wheel", (e) => { if (!allowInnerScroll(e.target)) e.preventDefault(); }, { passive: false });
 
   if (window.QuestHUD) { QuestHUD.setStep("map"); QuestHUD.hideNext && QuestHUD.hideNext(); }
   if (!WAYPOINTS.length && !QUESTIONS.length) finish();
