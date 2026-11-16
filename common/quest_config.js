@@ -521,7 +521,7 @@ window.QUEST_CONFIG = {
       question: "sn-maomao"
     },
     /* Сюжет подводного мира. Карточки событий — в стиле PUBG (заголовок + текст + «Дальше»).
-       Отладка: ?intro=1, ?current=1, ?radio=1, ?seamoth=1, ?leviathan=1, ?cave=1, ?reunion=1, ?glow=1. */
+       Отладка: ?intro=1, ?current=1, ?radio=1, ?seamoth=1, ?leviathan=1, ?missyou=1, ?cave=1, ?reunion=1, ?glow=1. */
     STORY: {
       INTRO: {
         id: "intro",
@@ -556,6 +556,21 @@ window.QUEST_CONFIG = {
         caption: "Глубина 300 м. Вика пересаживается в Мотылёк.",
         leaveCaption: "Вика оставляет Мотылёк у входа в пещеру.",
         o2Label: "O₂ · Мотылёк"
+      },
+      /* После успешных пряток от левиафана, до поиска входа в пещеру.
+         Видео: subnautica/videos/leviathan_after.mp4. Отладка: ?missyou=1. */
+      MISSYOU: {
+        id: "missyou",
+        kicker: "Событие",
+        title: "Без него страшно",
+        text: "Левиафан проплыл совсем рядом. Сердце колотится, и так хочется, чтобы Женя был здесь. Вика закрывает глаза и представляет, что бы он сейчас ей рассказывал — какую-нибудь свою нелепую историю, лишь бы стало не так страшно.",
+        next: "Глубже, к нему",
+        video: "videos/leviathan_after.mp4",
+        poster: "videos/leviathan_after.jpg",
+        tapLabel: "Смотреть",
+        primos: 40,
+        toast: "Скучаю",
+        awardId: "sn-story-missyou"
       },
       REUNION: {
         id: "reunion",
