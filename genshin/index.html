@@ -7,6 +7,11 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23d3bc8e'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%236b8cff'/%3E%3C/svg%3E">
 <link rel="preload" as="image" href="map_bg.jpg">
 <link rel="preload" as="image" href="fairy.png">
+<link rel="preload" as="image" href="chests/chest1.png">
+<link rel="preload" as="image" href="chests/chest2.png">
+<link rel="preload" as="image" href="chests/chest3.png">
+<link rel="preload" as="image" href="chests/chest4.png">
+<link rel="preload" as="image" href="chests/chest5.png">
 <link rel="preload" as="font" type="font/woff2" href="fonts/SofiaSans-cyrillic.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/SofiaSans-latin.woff2" crossorigin>
 <style>
@@ -653,6 +658,111 @@
     .ff-date-box { top: 14%; width: min(86vw, 460px); }
     #stSvg { top: 10%; width: min(94vw, 480px); }
   }
+  /* ----- сундук после вопроса ----- */
+  #gsTreasure {
+    position: fixed; inset: 0; z-index: 30;
+    pointer-events: none; opacity: 0; visibility: hidden;
+    transition: opacity .4s ease, visibility 0s linear .4s;
+  }
+  #gsTreasure.on {
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transition: opacity .4s ease, visibility 0s;
+  }
+  #gsTreasure .tr-stage {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -46%);
+    width: min(280px, 72vw);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  @media (max-height: 700px) {
+    #gsTreasure .tr-stage { width: min(230px, 62vw); transform: translate(-50%, -44%); }
+  }
+  #gsTreasure .tr-hint {
+    margin: 0 0 12px; padding: 7px 16px;
+    font: 600 15px/1.3 "QuestTeyvat", "Segoe UI", sans-serif;
+    color: #f5ecd6; letter-spacing: .02em;
+    background: rgba(30, 36, 52, .7);
+    border: 1.5px solid rgba(211, 188, 142, .8);
+    border-radius: 999px;
+    box-shadow: 0 4px 16px rgba(20, 16, 40, .4);
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .4s ease, transform .4s ease;
+    pointer-events: none; text-align: center;
+    text-shadow: 0 1px 4px rgba(0,0,0,.45);
+  }
+  #gsTreasure.on .tr-hint.show { opacity: 1; transform: none; }
+  #gsTreasure .tr-box {
+    appearance: none; background: none; border: 0; padding: 0; margin: 0;
+    position: relative; width: 100%; cursor: pointer;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    transform-origin: 50% 70%;
+    animation: trPop .55s cubic-bezier(.2, 1.4, .3, 1) both;
+  }
+  @keyframes trPop {
+    from { opacity: 0; transform: scale(.72) translateY(20px); }
+    to { opacity: 1; transform: none; }
+  }
+  #gsTreasure .tr-img {
+    position: relative; z-index: 2;
+    width: 100%; height: auto; display: block;
+    filter: drop-shadow(0 12px 18px rgba(20, 16, 40, .5));
+    pointer-events: none; user-select: none; -webkit-user-drag: none;
+  }
+  #gsTreasure .tr-box.shake { animation: trShake .42s ease; }
+  @keyframes trShake {
+    0%, 100% { transform: translateX(0) rotate(0) translateY(0); }
+    18% { transform: translateX(-9px) rotate(-3.5deg) translateY(-8px); }
+    38% { transform: translateX(8px) rotate(3deg) translateY(-2px); }
+    58% { transform: translateX(-5px) rotate(-2deg) translateY(-10px); }
+    78% { transform: translateX(3px) rotate(1.2deg) translateY(-3px); }
+  }
+  #gsTreasure .tr-spark {
+    position: absolute; z-index: 3; width: 10px; height: 10px;
+    margin: -5px 0 0 -5px; border-radius: 50%;
+    background: radial-gradient(circle, #fffdf0 0%, #ffe08a 40%, rgba(255,200,80,0) 70%);
+    pointer-events: none;
+    animation: trSpark .6s ease-out forwards;
+  }
+  @keyframes trSpark {
+    0% { opacity: 1; transform: scale(.5) translate(0, 0); }
+    100% { opacity: 0; transform: scale(.15) translate(var(--sx), var(--sy)); }
+  }
+  #gsTreasure .tr-rays, #gsTreasure .tr-glow {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 1;
+  }
+  #gsTreasure .tr-rays {
+    left: 50%; top: 46%; width: 160%; height: 160%;
+    transform: translate(-50%, -50%) scale(.35);
+    background: repeating-conic-gradient(from 0deg,
+      rgba(255,230,150,0) 0 12deg,
+      rgba(255,236,180,.55) 14deg,
+      rgba(255,230,150,0) 20deg);
+    -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,.9) 0%, rgba(0,0,0,.35) 38%, transparent 68%);
+    mask-image: radial-gradient(circle, rgba(0,0,0,.9) 0%, rgba(0,0,0,.35) 38%, transparent 68%);
+  }
+  #gsTreasure .tr-glow {
+    inset: 8% 6% 6%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,230,150,.6), rgba(255,200,80,0) 70%);
+  }
+  #gsTreasure.open .tr-rays {
+    opacity: 1;
+    animation: trRayIn .55s ease-out both, trSpin 12s linear infinite;
+  }
+  #gsTreasure.open .tr-glow { opacity: 1; animation: trGlowIn .6s ease both; }
+  @keyframes trRayIn { from { opacity: 0; transform: translate(-50%, -50%) scale(.2); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+  @keyframes trSpin { to { transform: translate(-50%, -50%) scale(1) rotate(360deg); } }
+  @keyframes trGlowIn { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+  #gsTreasure.open .tr-box { animation: trOpen .7s cubic-bezier(.2, 1.2, .3, 1) both; }
+  @keyframes trOpen {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.14); }
+    100% { transform: scale(1.06); }
+  }
+  #gsTreasure.open .tr-img {
+    filter: drop-shadow(0 0 22px rgba(255,220,120,.95)) drop-shadow(0 0 42px rgba(255,200,80,.55)) brightness(1.18);
+  }
+
   #mgPuzzle {
     background:
       radial-gradient(ellipse at 50% 18%, rgba(90, 160, 255, .18), transparent 42%),
@@ -661,13 +771,13 @@
   }
   #mgPuzzle .pz-wrap { height: 100%; }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p62">
-<link rel="stylesheet" href="../puzzle/puzzle.css?v=20261116p62">
-<script src="../common/quest_config.js?v=20261116p62"></script>
-<script src="../puzzle/puzzle.js?v=20261116p62"></script>
-<script src="../common/hud.js?v=20261116p62" data-screen="genshin"></script>
-<link rel="stylesheet" href="../common/world_title.css?v=20261116p62">
-<script src="../common/world_title.js?v=20261116p62" data-world="genshin"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p63">
+<link rel="stylesheet" href="../puzzle/puzzle.css?v=20261116p63">
+<script src="../common/quest_config.js?v=20261116p63"></script>
+<script src="../puzzle/puzzle.js?v=20261116p63"></script>
+<script src="../common/hud.js?v=20261116p63" data-screen="genshin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261116p63">
+<script src="../common/world_title.js?v=20261116p63" data-world="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -733,6 +843,16 @@
 
 <button class="go-next" id="goNext" type="button">Летим дальше</button>
 
+<div id="gsTreasure" aria-label="Сундук">
+  <div class="tr-stage">
+    <p class="tr-hint" id="trHint">Тапни по сундуку</p>
+    <button type="button" class="tr-box" id="trBox" aria-label="Открыть сундук">
+      <span class="tr-rays" aria-hidden="true"></span>
+      <span class="tr-glow" aria-hidden="true"></span>
+      <img class="tr-img" id="trImg" alt="" draggable="false">
+    </button>
+  </div>
+</div>
 
 <div class="mg-scene" id="mgFireflies" aria-label="Светлячки">
   <div class="ff-sky" aria-hidden="true">
@@ -1086,6 +1206,7 @@
   function spotTitle() { return SPOT.title || "Огоньки воспоминаний"; }
   const params = new URLSearchParams(location.search);
   const FAST = params.get("fast") === "1";
+  const CHEST_DEBUG = Math.max(0, parseInt(params.get("chest"), 10) || 0);
   const TYPE_MS = FAST ? 0 : (Number(G.TYPE_MS) || 24);
   const IDLE_MS = FAST ? Math.min(Number(G.IDLE_MS) || 20000, 2500) : (Number(G.IDLE_MS) || 20000);
   const GLIDE_MS = FAST ? 800 : (Number(G.GLIDE_MS) || 4800);
@@ -1522,7 +1643,122 @@
     const p = wp();
     if (p && p.chest && !openedChests[p.id]) { beginChest(p); return; }
     if (p && p.cook && !cooked) { beginCook(); return; }
+    maybeTreasureThenStory();
+  }
+  /* Сундук N после правильного ответа на вопрос N, затем обычный поток (светлячки / пятнашки / «Летим дальше»). */
+  const treasureOpened = Object.create(null);
+  const CHEST_CFG = Object.assign({
+    hint: "Тапни по сундуку",
+    images: ["chests/chest1.png", "chests/chest2.png", "chests/chest3.png", "chests/chest4.png", "chests/chest5.png"],
+    paimon: [
+      "Ого, сундук! Простенький, но Паймон всё равно рада 😋",
+      "О, а этот уже с железными обручами! Крепкий такой — Паймон одобряет ✨",
+      "Смотри-ка, тут даже золото есть! Тебе очень идёт, Викуля 💛",
+      "Вау-у! Какая филигрань… Паймон аж глаза разбежались! ✨",
+      "Роскошный сундук! Прямо как ваша любовь — самое ценное сокровище Тейвата 💙"
+    ]
+  }, G.CHESTS || {});
+  function maybeTreasureThenStory() {
+    if (CHEST_DEBUG || FIREFLY_DEBUG || STARS_DEBUG) {
+      maybeFirefliesThenMap();
+      return;
+    }
+    const n = qi + 1;
+    if (n >= 1 && n <= 5 && !treasureOpened[n]) {
+      treasureOpened[n] = true;
+      startTreasure(n, { onDone: maybeFirefliesThenMap });
+      return;
+    }
     maybeFirefliesThenMap();
+  }
+  function treasureTapsNeeded(n) { return n + 2; }
+  function spawnTreasureSparks(box, burst) {
+    if (!box) return;
+    const n = burst ? (FAST ? 10 : 18) : (FAST ? 5 : 9);
+    const rect = box.getBoundingClientRect();
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement("span");
+      s.className = "tr-spark";
+      const ang = (Math.PI * 2 * i) / n + Math.random() * 0.5;
+      const dist = (burst ? 70 : 40) + Math.random() * (burst ? 70 : 50);
+      s.style.left = (42 + Math.random() * 16) + "%";
+      s.style.top = (38 + Math.random() * 24) + "%";
+      s.style.setProperty("--sx", (Math.cos(ang) * dist) + "px");
+      s.style.setProperty("--sy", (Math.sin(ang) * dist - 16) + "px");
+      box.appendChild(s);
+      setTimeout(() => { if (s.parentNode) s.remove(); }, 650);
+    }
+  }
+  function endTreasure() {
+    const scene = document.getElementById("gsTreasure");
+    const box = document.getElementById("trBox");
+    const hint = document.getElementById("trHint");
+    if (box) {
+      box.onclick = null;
+      box.classList.remove("shake", "open");
+      box.querySelectorAll(".tr-spark").forEach((el) => el.remove());
+    }
+    if (hint) hint.classList.remove("show");
+    if (scene) scene.classList.remove("on", "open");
+  }
+  function startTreasure(n, opts) {
+    n = Math.max(1, Math.min(5, n | 0));
+    const onDone = opts && opts.onDone;
+    const scene = document.getElementById("gsTreasure");
+    const img = document.getElementById("trImg");
+    const box = document.getElementById("trBox");
+    const hint = document.getElementById("trHint");
+    if (!scene || !img || !box) { if (typeof onDone === "function") onDone(); return; }
+    hideTalkInstant();
+    if (panel) panel.classList.add("hidden");
+    if (goNext) goNext.classList.remove("show");
+    mode = "treasure";
+    setStep("chest");
+    const src = (CHEST_CFG.images && CHEST_CFG.images[n - 1]) || ("chests/chest" + n + ".png");
+    img.src = src;
+    img.alt = "Сундук";
+    if (hint) {
+      hint.textContent = CHEST_CFG.hint || "Тапни по сундуку";
+      hint.classList.add("show");
+    }
+    scene.classList.remove("open");
+    box.classList.remove("shake", "open");
+    box.querySelectorAll(".tr-spark").forEach((el) => el.remove());
+    let taps = 0;
+    const need = treasureTapsNeeded(n);
+    let locked = false;
+    function finishOpen() {
+      scene.classList.add("open");
+      box.classList.add("open");
+      spawnTreasureSparks(box, true);
+      const line = (CHEST_CFG.paimon && CHEST_CFG.paimon[n - 1]) || "";
+      setTimeout(function () {
+        startTalk(fairyLines(line), function () {
+          endTreasure();
+          hideTalkInstant();
+          if (mode === "treasure") mode = "map";
+          setFlags();
+          if (typeof onDone === "function") onDone();
+        });
+      }, FAST ? 260 : 700);
+    }
+    box.onclick = function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (locked || !scene.classList.contains("on")) return;
+      taps += 1;
+      if (hint) hint.classList.remove("show");
+      box.classList.remove("shake");
+      void box.offsetWidth;
+      box.classList.add("shake");
+      spawnTreasureSparks(box, false);
+      if (taps >= need) {
+        locked = true;
+        setTimeout(finishOpen, FAST ? 180 : 360);
+      }
+    };
+    scene.classList.add("on");
+    setFlags();
   }
   /* Светлячки — один раз между Q2 и Q3; пятнашки — один раз между Q3 и Q4. */
   let firefliesStoryDone = false;
@@ -2365,6 +2601,17 @@
   function startMiniGamePreview() {
     if (FIREFLY_DEBUG) { startFireflies(); return true; }
     if (STARS_DEBUG) { startStars(); return true; }
+    if (CHEST_DEBUG >= 1) {
+      const n = Math.min(5, CHEST_DEBUG);
+      wi = Math.max(0, n - 1);
+      resizeCam();
+      const p = wp();
+      if (p) applyCam(p.x, p.y, mapScale());
+      renderPins();
+      setStep("chest");
+      startTreasure(n, { onDone: function () { mode = "map"; setStep("map"); setFlags(); } });
+      return true;
+    }
     return false;
   }
 
