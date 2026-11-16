@@ -762,6 +762,26 @@
   #gsTreasure.open .tr-img {
     filter: drop-shadow(0 0 22px rgba(255,220,120,.95)) drop-shadow(0 0 42px rgba(255,200,80,.55)) brightness(1.18);
   }
+  #gsTreasure .tr-primos {
+    margin: 14px 0 0; padding: 6px 16px;
+    font: 700 16px/1.3 "QuestTeyvat", "Segoe UI", sans-serif;
+    color: #fff6c8; letter-spacing: .02em;
+    background: rgba(30, 36, 52, .72);
+    border: 1.5px solid rgba(255, 214, 120, .9);
+    border-radius: 999px;
+    box-shadow: 0 0 16px rgba(255, 200, 80, .35), 0 4px 16px rgba(20, 16, 40, .4);
+    text-shadow: 0 1px 4px rgba(0,0,0,.5);
+    opacity: 0; transform: translateY(8px) scale(.92);
+    pointer-events: none; text-align: center;
+  }
+  #gsTreasure.open .tr-primos.show {
+    opacity: 1; transform: none;
+    animation: trPrimosIn .45s cubic-bezier(.2, 1.3, .3, 1) both;
+  }
+  @keyframes trPrimosIn {
+    from { opacity: 0; transform: translateY(12px) scale(.86); }
+    to { opacity: 1; transform: none; }
+  }
 
   #mgPuzzle {
     background:
@@ -771,13 +791,13 @@
   }
   #mgPuzzle .pz-wrap { height: 100%; }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p69">
-<link rel="stylesheet" href="../puzzle/puzzle.css?v=20261116p69">
-<script src="../common/quest_config.js?v=20261116p69"></script>
-<script src="../puzzle/puzzle.js?v=20261116p69"></script>
-<script src="../common/hud.js?v=20261116p69" data-screen="genshin"></script>
-<link rel="stylesheet" href="../common/world_title.css?v=20261116p69">
-<script src="../common/world_title.js?v=20261116p69" data-world="genshin"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p70">
+<link rel="stylesheet" href="../puzzle/puzzle.css?v=20261116p70">
+<script src="../common/quest_config.js?v=20261116p70"></script>
+<script src="../puzzle/puzzle.js?v=20261116p70"></script>
+<script src="../common/hud.js?v=20261116p70" data-screen="genshin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261116p70">
+<script src="../common/world_title.js?v=20261116p70" data-world="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -851,6 +871,7 @@
       <span class="tr-glow" aria-hidden="true"></span>
       <img class="tr-img" id="trImg" alt="" draggable="false">
     </button>
+    <p class="tr-primos" id="trPrimos" hidden></p>
   </div>
 </div>
 
@@ -1650,6 +1671,8 @@
   const CHEST_CFG = Object.assign({
     hint: "Тапни по сундуку",
     images: ["chests/chest1.png", "chests/chest2.png", "chests/chest3.png", "chests/chest4.png", "chests/chest5.png"],
+    primos: [50, 60, 70, 80, 90],
+    awardPrefix: "tv-chest-",
     paimon: [
       "Ого, сундук! Простенький, но Паймон всё равно рада 😋",
       "О, а этот уже с железными обручами! Крепкий такой — Паймон одобряет ✨",
@@ -1672,6 +1695,25 @@
     maybeFirefliesThenMap();
   }
   function treasureTapsNeeded(n) { return n + 2; }
+  function chestPrimos(n) {
+    const list = CHEST_CFG.primos;
+    if (Array.isArray(list) && list[n - 1] != null) return list[n - 1] | 0;
+    return 40 + n * 10;
+  }
+  function chestAwardId(n) { return (CHEST_CFG.awardPrefix || "tv-chest-") + n; }
+  function showTreasurePrimos(amount) {
+    const el = document.getElementById("trPrimos");
+    if (!el) return;
+    if (amount) {
+      el.hidden = false;
+      el.textContent = "+" + amount + " примогемов";
+      el.classList.add("show");
+    } else {
+      el.hidden = true;
+      el.textContent = "";
+      el.classList.remove("show");
+    }
+  }
   function spawnTreasureSparks(box, burst) {
     if (!box) return;
     const n = burst ? (FAST ? 10 : 18) : (FAST ? 5 : 9);
@@ -1699,6 +1741,7 @@
       box.querySelectorAll(".tr-spark").forEach((el) => el.remove());
     }
     if (hint) hint.classList.remove("show");
+    showTreasurePrimos(0);
     if (scene) scene.classList.remove("on", "open");
   }
   function startTreasure(n, opts) {
@@ -1721,6 +1764,7 @@
       hint.textContent = CHEST_CFG.hint || "Тапни по сундуку";
       hint.classList.add("show");
     }
+    showTreasurePrimos(0);
     scene.classList.remove("open");
     box.classList.remove("shake", "open");
     box.querySelectorAll(".tr-spark").forEach((el) => el.remove());
@@ -1731,6 +1775,13 @@
       scene.classList.add("open");
       box.classList.add("open");
       spawnTreasureSparks(box, true);
+      const primos = chestPrimos(n);
+      const awardId = chestAwardId(n);
+      let granted = false;
+      if (primos && window.QuestHUD && typeof QuestHUD.award === "function") {
+        granted = !!QuestHUD.award(awardId, primos);
+      }
+      if (granted && primos) showTreasurePrimos(primos);
       const line = (CHEST_CFG.paimon && CHEST_CFG.paimon[n - 1]) || "";
       setTimeout(function () {
         startTalk(fairyLines(line), function () {
