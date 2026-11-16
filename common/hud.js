@@ -5,7 +5,8 @@
      <script src="../common/hud.js" data-screen="pubg-flight"></script>
    API: window.QuestHUD.getPrimos() / setPrimos(n) / addPrimos(n) / spend(n)
         award(id, n) / setStep(step) / next() / showNext(label) / reset()
-        Подсказки-задания на вопросах: QUEST_CONFIG.HINT_TASKS, сброс ?resethints=1 */
+        Подсказки-задания на вопросах: QUEST_CONFIG.HINT_TASKS;
+        «Согласна» сдвигает общий счётчик, «Не сейчас» — нет. Сброс ?resethints=1 / ?newgame=1 */
 (function () {
   "use strict";
   var script = document.currentScript;
@@ -86,6 +87,9 @@
   var HINT_TASKS_CFG = CFG.HINT_TASKS || {};
   var HINT_TASK_ITEMS = Array.isArray(HINT_TASKS_CFG) ? HINT_TASKS_CFG : (HINT_TASKS_CFG.items || HINT_TASKS_CFG.tasks || []);
   var HINT_TASK_TITLE = HINT_TASKS_CFG.title || "Подсказка за задание";
+  var HINT_TASK_YES = HINT_TASKS_CFG.yes || "Согласна 💙";
+  var HINT_TASK_NO = HINT_TASKS_CFG.no || "Не сейчас";
+  var HINT_TASK_ACCEPTED = HINT_TASKS_CFG.accepted || "Выполни — и Женя подскажет 💙";
   var TKEY = HINT_TASKS_CFG.storageKey || "nov16_hint_tasks";
   function isPlaceholderHint(t) {
     t = String(t || "").trim();
@@ -102,33 +106,32 @@
   function isQuestionHint() {
     return /^q\d+$/i.test(String(step || ""));
   }
-  function taskKey() { return screenId + ":" + step; }
+  function lastTaskIndex() {
+    return Math.max(0, (HINT_TASK_ITEMS && HINT_TASK_ITEMS.length ? HINT_TASK_ITEMS.length : 1) - 1);
+  }
   function loadTasksState() {
     try {
       var st = JSON.parse(lsGet(TKEY) || "") || {};
-      return { used: st.used | 0, assigned: st.assigned && typeof st.assigned === "object" ? st.assigned : {} };
-    } catch (e) { return { used: 0, assigned: {} }; }
+      var idx = (st.index != null) ? (st.index | 0) : (st.used | 0);
+      return { index: Math.max(0, Math.min(idx, lastTaskIndex())) };
+    } catch (e) { return { index: 0 }; }
   }
   function saveTasksState(st) {
-    lsSet(TKEY, JSON.stringify({ used: st.used | 0, assigned: st.assigned || {} }));
+    lsSet(TKEY, JSON.stringify({ index: st.index | 0 }));
   }
   function resetHintTasks() {
     lsDel(TKEY);
   }
-  function peekTaskIndex() {
-    var st = loadTasksState();
-    var k = taskKey();
-    return Object.prototype.hasOwnProperty.call(st.assigned, k) ? st.assigned[k] : null;
+  function currentTaskIndex() {
+    return loadTasksState().index | 0;
   }
-  function assignTaskIndex() {
+  function acceptCurrentTask() {
     var st = loadTasksState();
-    var k = taskKey();
-    if (Object.prototype.hasOwnProperty.call(st.assigned, k)) return st.assigned[k];
-    var idx = st.used | 0;
-    st.assigned[k] = idx;
-    st.used = idx + 1;
+    var max = lastTaskIndex();
+    if ((st.index | 0) < max) st.index = (st.index | 0) + 1;
+    else st.index = max;
     saveTasksState(st);
-    return idx;
+    return st.index;
   }
   function taskTextFor(index) {
     var items = HINT_TASK_ITEMS;
@@ -136,15 +139,8 @@
     var i = Math.max(0, index | 0);
     return items[Math.min(i, items.length - 1)];
   }
-  function hintText(assign) {
-    if (isQuestionHint()) {
-      var idx = peekTaskIndex();
-      if (idx == null) {
-        if (!assign) return taskTextFor(loadTasksState().used);
-        idx = assignTaskIndex();
-      }
-      return taskTextFor(idx);
-    }
+  function hintText() {
+    if (isQuestionHint()) return taskTextFor(currentTaskIndex());
     var t = rawHint();
     return isPlaceholderHint(t) ? FALLBACK_HINT : t;
   }
@@ -230,7 +226,7 @@
   };
   var LABEL = { pubg: "ПОДСКАЗКА", subnautica: "ПОДСКАЗКА", minecraft: "Подсказка", genshin: "Подсказка", quest: "Подсказка" };
 
-  var root, row, counter, num, btn, panel, panelText, panelTitle, nextBtn, built = false;
+  var root, row, counter, num, btn, panel, panelText, panelTitle, panelActions, panelYes, panelNo, nextBtn, built = false;
 
   function build() {
     if (built) return;
@@ -242,7 +238,11 @@
       '<div class="qhud-panel" role="dialog" aria-label="Подсказка" hidden>' +
         '<div class="qhud-panel-head"><span class="qhud-panel-title">Подсказка</span>' +
         '<button type="button" class="qhud-close" aria-label="Закрыть">✕</button></div>' +
-        '<div class="qhud-panel-text"></div></div>' +
+        '<div class="qhud-panel-text"></div>' +
+        '<div class="qhud-actions" hidden>' +
+          '<button type="button" class="qhud-act qhud-act--yes">' + HINT_TASK_YES + '</button>' +
+          '<button type="button" class="qhud-act qhud-act--no">' + HINT_TASK_NO + '</button>' +
+        '</div></div>' +
       '<div class="qhud-row">' +
         '<div class="qhud-counter" title="Примогемы">' + GEM + '<span class="qhud-num">0</span></div>' +
         '<button type="button" class="qhud-hint" aria-label="Подсказка">' + (ICON[theme] || ICON.quest) +
@@ -256,11 +256,16 @@
     panel = root.querySelector(".qhud-panel");
     panelText = root.querySelector(".qhud-panel-text");
     panelTitle = root.querySelector(".qhud-panel-title");
+    panelActions = root.querySelector(".qhud-actions");
+    panelYes = root.querySelector(".qhud-act--yes");
+    panelNo = root.querySelector(".qhud-act--no");
     if (script && script.dataset.counter === "off") counter.style.display = "none";
 
     syncHintBtn();
     btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
     root.querySelector(".qhud-close").addEventListener("click", function (e) { e.stopPropagation(); close(); });
+    if (panelYes) panelYes.addEventListener("click", function (e) { e.stopPropagation(); acceptCurrentTask(); showAccepted(); });
+    if (panelNo) panelNo.addEventListener("click", function (e) { e.stopPropagation(); close(); });
     panel.addEventListener("click", function (e) { e.stopPropagation(); });
     root.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
     document.addEventListener("click", function () { close(); });
@@ -272,23 +277,37 @@
     setTimeout(layout, 300);
   }
 
-  function fillPanel(assign) {
+  function fillPanel() {
     if (!panel || !panelText) return;
     var task = isQuestionHint();
     var title = task ? HINT_TASK_TITLE : "Подсказка";
     if (panelTitle) panelTitle.textContent = title;
     panel.setAttribute("aria-label", title);
     panel.classList.toggle("qhud-panel--task", task);
+    panel.classList.remove("qhud-panel--accepted");
     if (root) root.classList.toggle("qhud--task", task);
-    panelText.textContent = hintText(!!assign);
+    panelText.textContent = hintText();
+    if (panelActions) panelActions.hidden = !task;
+  }
+  function showAccepted() {
+    if (!panel || !panelText) return;
+    panelText.textContent = HINT_TASK_ACCEPTED;
+    panel.classList.add("qhud-panel--accepted");
+    if (panelActions) panelActions.hidden = true;
   }
   function open() {
     if (!panel) return;
-    fillPanel(true);
+    fillPanel();
     panel.hidden = false;
     root.classList.add("qhud--open");
   }
-  function close() { if (!panel) return; panel.hidden = true; root.classList.remove("qhud--open", "qhud--task"); if (panel) panel.classList.remove("qhud-panel--task"); }
+  function close() {
+    if (!panel) return;
+    panel.hidden = true;
+    root.classList.remove("qhud--open", "qhud--task");
+    panel.classList.remove("qhud-panel--task", "qhud-panel--accepted");
+    if (panelActions) panelActions.hidden = true;
+  }
   function toggle() { if (panel.hidden) open(); else close(); }
 
   function render(delta) {
@@ -393,10 +412,10 @@
     setStep: function (s) {
       step = s || "";
       syncHintBtn();
-      if (panel && !panel.hidden) fillPanel(true);
+      if (panel && !panel.hidden) fillPanel();
     },
     getStep: function () { return step; },
-    hintText: function () { return hintText(false); },
+    hintText: function () { return hintText(); },
     hasHint: hasHint, isQuestionHint: isQuestionHint,
     hintTasksState: loadTasksState, resetHintTasks: resetHintTasks,
     openHint: function () { build(); open(); }, closeHint: close,

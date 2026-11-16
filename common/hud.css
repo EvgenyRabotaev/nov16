@@ -58,9 +58,41 @@
 }
 .qhud-panel--task .qhud-panel-title { letter-spacing: .08em; }
 .qhud-panel--task .qhud-panel-text { font-size: 16px; line-height: 1.5; }
+.qhud-actions[hidden] { display: none !important; }
+.qhud-actions {
+  display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+}
+.qhud-act {
+  appearance: none; cursor: pointer;
+  flex: 1 1 calc(50% - 8px);
+  min-height: 42px; padding: 8px 12px;
+  font: inherit; font-weight: 700; font-size: 14px; line-height: 1.2;
+  border-radius: 10px;
+  transition: filter .15s, transform .15s, background .15s, box-shadow .15s;
+}
+.qhud-act:active { transform: translateY(1px); }
+.qhud-act--yes { background: #4f8fe6; color: #fff; border: 0; box-shadow: 0 4px 12px rgba(60, 120, 230, .35); }
+.qhud-act--no { background: transparent; color: inherit; border: 1px solid rgba(160, 180, 200, .45); opacity: .95; }
+.qhud-act--yes:hover { filter: brightness(1.08); }
+.qhud-act--no:hover { background: rgba(255, 255, 255, .08); }
+.qhud--pubg .qhud-act { border-radius: 2px; font-family: "QHUD Barlow", "Barlow Condensed", sans-serif; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 15px; }
+.qhud--pubg .qhud-act--yes { background: #f2c230; color: #15130c; box-shadow: none; }
+.qhud--pubg .qhud-act--no { border: 1px solid rgba(255, 255, 255, .22); color: #f0efe9; }
+.qhud--minecraft .qhud-act { border-radius: 0; border: 3px solid #1b1b1b; text-shadow: 2px 2px 0 #3f3f3f; font-size: 13px; }
+.qhud--minecraft .qhud-act--yes { background: #3c8527; color: #fff; box-shadow: inset 3px 3px 0 #62b44a, inset -3px -3px 0 #2a5c1c; }
+.qhud--minecraft .qhud-act--no { background: #8b8b8b; color: #fff; box-shadow: inset 3px 3px 0 #c6c6c6, inset -3px -3px 0 #555; opacity: 1; }
+.qhud--subnautica .qhud-act { border-radius: 999px; letter-spacing: .04em; }
+.qhud--subnautica .qhud-act--yes { background: linear-gradient(180deg, rgba(20, 110, 140, .95), rgba(8, 60, 80, .95)); color: #e6fcff; border: 1px solid rgba(90, 230, 255, .85); box-shadow: 0 0 12px rgba(60, 210, 255, .35); }
+.qhud--subnautica .qhud-act--no { border: 1px solid rgba(90, 230, 255, .4); color: #dffaff; }
+.qhud--genshin .qhud-act { border-radius: 999px; }
+.qhud--genshin .qhud-act--yes { background: #ece5d8; color: #495366; border: 2px solid #d3bc8e; box-shadow: 0 0 0 1px rgba(255,255,255,.4), 0 3px 10px rgba(40,30,10,.25); }
+.qhud--genshin .qhud-act--no { border: 2px solid rgba(211, 188, 142, .65); color: #3b4255; background: transparent; }
+.qhud--quest .qhud-act--yes { background: linear-gradient(180deg, #8cc4ff, #4f8fe6); border-radius: 999px; }
+.qhud--quest .qhud-act--no { border-radius: 999px; border: 1px solid rgba(150, 195, 255, .5); }
 @media (max-width: 600px) {
   .qhud-panel--task { width: min(340px, calc(100vw - 20px)); font-size: 15px; }
   .qhud-panel--task .qhud-panel-text { font-size: 15px; }
+  .qhud-act { min-height: 44px; font-size: 14px; }
 }
 
 /* «Дальше» */
