@@ -771,13 +771,13 @@
   }
   #mgPuzzle .pz-wrap { height: 100%; }
 </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p68">
-<link rel="stylesheet" href="../puzzle/puzzle.css?v=20261116p68">
-<script src="../common/quest_config.js?v=20261116p68"></script>
-<script src="../puzzle/puzzle.js?v=20261116p68"></script>
-<script src="../common/hud.js?v=20261116p68" data-screen="genshin"></script>
-<link rel="stylesheet" href="../common/world_title.css?v=20261116p68">
-<script src="../common/world_title.js?v=20261116p68" data-world="genshin"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p69">
+<link rel="stylesheet" href="../puzzle/puzzle.css?v=20261116p69">
+<script src="../common/quest_config.js?v=20261116p69"></script>
+<script src="../puzzle/puzzle.js?v=20261116p69"></script>
+<script src="../common/hud.js?v=20261116p69" data-screen="genshin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261116p69">
+<script src="../common/world_title.js?v=20261116p69" data-world="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -1144,7 +1144,7 @@
   </div>
   <div class="mg-head">
     <h1 class="mg-title">Светлячки</h1>
-    <p class="mg-hint">Собери светлячков — они сложат дату</p>
+    <p class="mg-hint">Собери светлячков ✨</p>
     <div class="mg-count" id="ffCounter">Собрано: 0/28</div>
   </div>
   <button class="mg-skip" id="ffSkip" type="button">Пропустить</button>
@@ -2097,7 +2097,7 @@
   const STARS_DEBUG = params.get("stars") === "1" || params.get("constellation") === "1" || params.get("constellations") === "1";
   const FF_CFG = Object.assign({
     title: "Светлячки",
-    hint: "Собери светлячков — они сложат дату",
+    hint: "Собери светлячков ✨",
     skip: "Пропустить",
     counter: "Собрано: {n}/{N}",
     primos: 40,
@@ -2335,6 +2335,10 @@
     if (!scene || !stage || !box) { if (typeof onDone === "function") onDone(); return; }
     scene.classList.remove("done", "finishing");
     scene.classList.add("on");
+    const titleEl = scene.querySelector(".mg-title");
+    const hintEl = scene.querySelector(".mg-hint");
+    if (titleEl && FF_CFG.title) titleEl.textContent = FF_CFG.title;
+    if (hintEl) hintEl.textContent = FF_CFG.hint || "Собери светлячков ✨";
     if (skip) skip.classList.remove("hidden");
     const begin = function (points) {
     const slots = (points && points.length ? points : FF_POINTS_FALLBACK).map((p) => ({ x: p[0], y: p[1] }));
