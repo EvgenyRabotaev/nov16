@@ -655,10 +655,10 @@
   }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p58"></script>
+<script src="../common/quest_config.js?v=20261116p59"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="genshin"></script>
-<link rel="stylesheet" href="../common/world_title.css?v=20261116p58">
-<script src="../common/world_title.js?v=20261116p58" data-world="genshin"></script>
+<link rel="stylesheet" href="../common/world_title.css?v=20261116p59">
+<script src="../common/world_title.js?v=20261116p59" data-world="genshin"></script>
 </head>
 <body>
 <div class="world" id="world">
@@ -1280,6 +1280,13 @@
     if (typeof ret === "function") ret();
     setFlags();
   }
+  function hideTalkInstant() {
+    stopType();
+    talk.style.transition = "none";
+    talk.classList.remove("on");
+    void talk.offsetWidth;
+    talk.style.transition = "";
+  }
 
   function fairyLines(arr, whoFallback) {
     if (!arr) return [];
@@ -1483,6 +1490,19 @@
     const p = wp();
     if (p && p.chest && !openedChests[p.id]) { beginChest(p); return; }
     if (p && p.cook && !cooked) { beginCook(); return; }
+    maybeFirefliesThenMap();
+  }
+  /* Светлячки — один раз между вопросом 2 и 3, затем обычный «Летим дальше» к Q3. */
+  let firefliesStoryDone = false;
+  function maybeFirefliesThenMap() {
+    const p = wp();
+    const isQ2 = !!(p && (p.id === "wp2" || p.question === "gs-alike"));
+    if (isQ2 && !FIREFLY_DEBUG && !STARS_DEBUG && !firefliesStoryDone) {
+      firefliesStoryDone = true;
+      hideTalkInstant();
+      startFireflies({ onDone: markLocationReady });
+      return;
+    }
     markLocationReady();
   }
 
@@ -1796,7 +1816,7 @@
   document.addEventListener("touchmove", (e) => { if (!allowInnerScroll(e.target)) e.preventDefault(); }, { passive: false });
   document.addEventListener("wheel", (e) => { if (!allowInnerScroll(e.target)) e.preventDefault(); }, { passive: false });
 
-  /* ----- мини-игры-превью: ?fireflies=1 / ?stars=1 (в основной поток не вшиты) ----- */
+  /* ----- мини-игры: светлячки в потоке между Q2 и Q3; ?fireflies=1 / ?stars=1 — превью ----- */
   const FIREFLY_DEBUG = params.get("fireflies") === "1" || params.get("svetlyachki") === "1";
   const STARS_DEBUG = params.get("stars") === "1" || params.get("constellation") === "1" || params.get("constellations") === "1";
   const FF_CFG = Object.assign({
@@ -1853,14 +1873,32 @@
     hideHud(false);
     if (window.QuestHUD) QuestHUD.hideNext && QuestHUD.hideNext();
   }
-  function mgFinishTalk(cfg, scene) {
+  function mgFinishTalk(cfg, scene, onDone) {
     if (scene) scene.classList.add("done");
     mgAward(cfg.awardId, cfg.primos != null ? cfg.primos : 40);
     const line = cfg.paimon || "";
+    const after = function () {
+      if (typeof onDone === "function") onDone();
+      else setFlags();
+    };
     setTimeout(() => {
-      if (!line) return;
-      startTalk(fairyLines(line), () => { setFlags(); });
+      if (line) startTalk(fairyLines(line), after);
+      else after();
     }, FAST ? 200 : 800);
+  }
+  function endFireflies() {
+    mgStopRaf();
+    mgActive = "";
+    hideTalkInstant();
+    const scene = document.getElementById("mgFireflies");
+    if (scene) {
+      scene.style.transition = "none";
+      scene.classList.remove("on", "done", "finishing");
+      void scene.offsetWidth;
+      scene.style.transition = "";
+    }
+    document.body.classList.remove("minigame-on");
+    hideHud(false);
   }
 
   function sampleDateSlots(box) {
@@ -1970,7 +2008,8 @@
     return all;
   }
 
-  function startFireflies() {
+  function startFireflies(opts) {
+    const onDone = opts && opts.onDone;
     mgActive = "fireflies";
     mgHideWorld();
     setStep("fireflies");
@@ -1979,8 +2018,10 @@
     const box = document.getElementById("ffDateBox");
     const counter = document.getElementById("ffCounter");
     const skip = document.getElementById("ffSkip");
-    if (!scene || !stage || !box) return;
+    if (!scene || !stage || !box) { if (typeof onDone === "function") onDone(); return; }
+    scene.classList.remove("done", "finishing");
     scene.classList.add("on");
+    if (skip) skip.classList.remove("hidden");
     const begin = function (points) {
     const slots = (points && points.length ? points : FF_POINTS_FALLBACK).map((p) => ({ x: p[0], y: p[1] }));
     const N = slots.length;
@@ -2067,7 +2108,7 @@
       skip.classList.add("hidden");
       updateHud();
       scene.classList.add("finishing");
-      mgFinishTalk(FF_CFG, scene);
+      mgFinishTalk(FF_CFG, scene, onDone ? function () { endFireflies(); onDone(); } : null);
     }
     function skipAll() {
       if (done) return;

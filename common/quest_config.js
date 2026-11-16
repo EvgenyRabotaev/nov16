@@ -638,7 +638,7 @@ window.QUEST_CONFIG = {
      WAYPOINTS, INTRO, OUTRO — пять готовых точек и вступительные/финальные реплики.
      COMMISSIONS / COOKING / chest — по желанию, сейчас не используются.
      SPOT_NAME — как называть точки в интерфейсе.
-     FIREFLIES / STARS — превью мини-игр (?fireflies=1, ?stars=1), в основной поток пока не вшиты. */
+     FIREFLIES — мини-игра между вопросами 2 и 3 (также превью ?fireflies=1). STARS — только превью ?stars=1. */
   GENSHIN: {
     FIREFLIES: {
       title: "Светлячки",
