@@ -336,9 +336,9 @@
       .btn { padding: 8px 20px; min-width: 124px; font-size: 13px; }
     }
   </style>
-<link rel="stylesheet" href="../common/hud.css?v=20261116p64">
-<script src="../common/quest_config.js?v=20261116p64"></script>
-<script src="../common/hud.js?v=20261116p64" data-screen="pubg-airdrop" data-theme="pubg" data-avoid="#nextBtn"></script>
+<link rel="stylesheet" href="../common/hud.css?v=20261116p65">
+<script src="../common/quest_config.js?v=20261116p65"></script>
+<script src="../common/hud.js?v=20261116p65" data-screen="pubg-airdrop" data-theme="pubg" data-avoid="#nextBtn"></script>
 </head>
 <body>
   <div class="bg" aria-hidden="true">
@@ -433,8 +433,10 @@
   </div>
 
   <script>
-    /* Количество бонусных примогемов в аирдропе. Подставить нужное число позже. */
-    const PRIMO_COUNT = 100;
+    /* Количество бонусных примогемов в аирдропе. Берётся из QUEST_CONFIG.PUBG_AIRDROP. */
+    const AIR_CFG = (window.QUEST_CONFIG && window.QUEST_CONFIG.PUBG_AIRDROP) || {};
+    const PRIMO_COUNT = AIR_CFG.primos != null ? AIR_CFG.primos : 200;
+    const AIR_AWARD = AIR_CFG.awardId || "pubg-airdrop";
     const LOOT_ORDER = ["awm", "helmet", "vest", "primo"];
     const LOOT_TOTAL = LOOT_ORDER.length;
 
@@ -476,7 +478,7 @@
 
     function updateChrome() {
       const n = placed.size;
-      if (placed.has("primo") && window.QuestHUD) QuestHUD.award("pubg-airdrop", PRIMO_COUNT);
+      if (placed.has("primo") && window.QuestHUD) QuestHUD.award(AIR_AWARD, PRIMO_COUNT);
       packCount.textContent = n + " / " + LOOT_TOTAL;
       slotList.classList.toggle("has-items", n > 0);
       const empty = n >= LOOT_TOTAL;
