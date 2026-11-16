@@ -947,10 +947,10 @@
   .qhud-hint, .qhud-panel { display: none !important; }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p53"></script>
+<script src="../common/quest_config.js?v=20261116p54"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="gacha" data-counter="off"></script>
-<script src="card_texts.js?v=20261116p53"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
-<script src="card_texts_paimon.js?v=20261116p53"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
+<script src="card_texts.js?v=20261116p54"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
+<script src="card_texts_paimon.js?v=20261116p54"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
 <link rel="preload" as="image" href="../genshin/fairy.png">
 </head>
 <body>
@@ -1026,15 +1026,15 @@
     <div class="shop-bal" id="shopBal" data-primos="0"></div>
   </div>
   <div class="shop-grid" id="shopGrid"></div>
-  <button type="button" class="shop-last-gift" id="shopLastGift" aria-haspopup="dialog">Последний подарок 💙</button>
+  <button type="button" class="shop-last-gift" id="shopLastGift" aria-haspopup="dialog">Финальный сюрприз 💙</button>
 </div>
 
-<div id="giftModal" class="gift-modal hidden" role="dialog" aria-modal="true" aria-label="Последний подарок" aria-hidden="true">
+<div id="giftModal" class="gift-modal hidden" role="dialog" aria-modal="true" aria-label="Финальный сюрприз" aria-hidden="true">
   <button type="button" class="gift-modal-close" id="giftModalClose" aria-label="Закрыть">✕</button>
   <div class="gift-stage" id="giftStage">
     <video id="giftVideo" playsinline webkit-playsinline controls preload="metadata"
-           poster="videos/last_gift.jpg?v=20261116p53"
-           src="videos/last_gift.mp4?v=20261116p53"></video>
+           poster="videos/last_gift.jpg?v=20261116p54"
+           src="videos/last_gift.mp4?v=20261116p54"></video>
   </div>
 </div>
 
@@ -2622,8 +2622,8 @@
   function shopConfirmNo() {
     hideSgModal();
   }
-  const GIFT_VIDEO = 'videos/last_gift.mp4?v=20261116p53';
-  const GIFT_POSTER = 'videos/last_gift.jpg?v=20261116p53';
+  const GIFT_VIDEO = 'videos/last_gift.mp4?v=20261116p54';
+  const GIFT_POSTER = 'videos/last_gift.jpg?v=20261116p54';
   const GIFT_YT = 'https://www.youtube.com/embed/OKrGGScVBgo?autoplay=1&playsinline=1';
   function stopGiftMedia() {
     const vid = document.getElementById('giftVideo');
@@ -2644,7 +2644,7 @@
     ifr.src = GIFT_YT;
     ifr.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
     ifr.setAttribute('allowfullscreen', '');
-    ifr.title = 'Последний подарок';
+    ifr.title = 'Финальный сюрприз';
     stage.appendChild(ifr);
   }
   function openGiftModal() {
