@@ -211,8 +211,48 @@
     .fish.kind-peeper { width: 72px; }
     .fish.kind-boomerang { width: 58px; }
     .fish.kind-reginald { width: 84px; }
+    .fish.kind-hover { width: 76px; }
+    .fish.kind-hole { width: 78px; }
+    .fish.kind-garry { width: 112px; }
     .fish img { display: block; width: 100%; height: auto; pointer-events: none; background: transparent; border: none; }
-    .fish.scanned { opacity: .45; cursor: default; filter: grayscale(.4) drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
+    .fish.deco { pointer-events: none; opacity: .92; cursor: default; }
+    .fish.scan-target {
+      cursor: pointer;
+      filter: drop-shadow(0 0 8px rgba(120, 240, 230, .7)) drop-shadow(0 2px 6px rgba(0,0,0,.4));
+      animation: scanGlow 1.8s ease-in-out infinite;
+    }
+    @keyframes scanGlow {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(120, 240, 230, .55)) drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+      50% { filter: drop-shadow(0 0 14px rgba(160, 255, 245, .95)) drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+    }
+    .fish.scan-target.scanning { animation: none; filter: drop-shadow(0 0 16px rgba(180, 255, 250, 1)); }
+    .fish.scanned { opacity: .45; cursor: default; animation: none;
+      filter: grayscale(.4) drop-shadow(0 2px 4px rgba(0,0,0,.25)); pointer-events: none; }
+    .scan-ring {
+      position: absolute; left: 50%; top: 50%; width: 118%; height: auto; aspect-ratio: 1;
+      transform: translate(-50%, -50%); pointer-events: none; opacity: 0;
+    }
+    .fish.scanning .scan-ring { opacity: 1; }
+    .scan-ring circle { fill: none; stroke-width: 2.4; }
+    .scan-ring .track { stroke: rgba(180, 245, 255, .28); }
+    .scan-ring .prog { stroke: #9ff6ee; stroke-linecap: round; transform-origin: 50% 50%; transform: rotate(-90deg); }
+    #scanHud {
+      position: absolute; left: 50%; top: auto;
+      bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      z-index: 18; pointer-events: none;
+      padding: 7px 16px; border-radius: 999px;
+      background: rgba(6, 22, 30, .72); border: 1px solid rgba(122, 212, 200, .45);
+      color: #e7f7ff; font: 600 15px/1.3 "Segoe UI", system-ui, sans-serif;
+      letter-spacing: .04em; text-shadow: 0 1px 4px #000;
+      opacity: 0; visibility: hidden; transition: opacity .3s ease;
+    }
+    #scanHud.on { opacity: 1; visibility: visible; }
+    .pda.q-pop .pda-text { font-size: 16px; line-height: 1.45; color: #cfe7ee; margin: 0 0 16px; }
+    .pda.q-pop > .pda-btn {
+      border-radius: 10px; padding: 12px 20px; text-transform: uppercase; letter-spacing: .1em;
+      background: rgba(36, 140, 150, .38); border: 1px solid rgba(150, 230, 230, .65); font-size: 13px;
+    }
     .fish-label {
       position: absolute; left: 50%; top: 110%; transform: translateX(-50%);
       white-space: nowrap; font-size: 11px; color: #e7f7ff; letter-spacing: .04em;
@@ -910,7 +950,7 @@
     }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p50"></script>
+<script src="../common/quest_config.js?v=20261116p51"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="subnautica"></script>
 <link rel="stylesheet" href="../common/world_title.css?v=20261115p38">
 <script src="../common/world_title.js?v=20261115p38" data-world="subnautica"></script>
@@ -940,6 +980,7 @@
     
     <div id="o2"><span class="label" id="o2Label">O₂</span><div class="bar"><div class="fill" id="o2fill"></div></div><div class="val"><span id="o2val">100</span>%</div></div>
     <div id="fauna"></div>
+    <div id="scanHud" aria-live="polite"></div>
     <div id="radioPing" title="Радиосигнал"></div>
     <button id="camBtn" type="button" title="Сделать снимок">📷</button>
     <div id="flash"></div>
@@ -967,7 +1008,7 @@
             <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
           </svg>
-          <img class="seamoth-art" src="seamoth.png?v=20261116p50" alt="" draggable="false" width="160" height="100">
+          <img class="seamoth-art" src="seamoth.png?v=20261116p51" alt="" draggable="false" width="160" height="100">
         </div>
         <div id="leviHint">Перетащи себя в укрытие!</div>
       </div>
@@ -1035,7 +1076,7 @@
             <rect x="37" y="30" width="5" height="11" rx="2" fill="#d7a13a"/>
             <path d="M24 56 q8 4 16 0" fill="none" stroke="#2a8a7a" stroke-width="3" stroke-linecap="round"/>
           </svg>
-          <img class="seamoth-art" src="seamoth.png?v=20261116p50" alt="" draggable="false" width="160" height="100">
+          <img class="seamoth-art" src="seamoth.png?v=20261116p51" alt="" draggable="false" width="160" height="100">
       </div>
       <div class="diver zhenya" id="diverZhenya" aria-label="Женя">          <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
             <defs>
@@ -1110,13 +1151,34 @@
     const REUNION_DEBUG = params.get("reunion") === "1" || params.get("meet") === "1";
     const SEAMOTH_DEBUG = params.get("seamoth") === "1" || params.get("moth") === "1";
     const MISSYOU_DEBUG = params.get("missyou") === "1" || params.get("miss") === "1";
-    const ASSET_V = "20261115s";
+    const SCANNER_DEBUG = params.get("scanner") === "1" || params.get("scan") === "1";
+    const ASSET_V = "20261116p51";
     const FISH_SRC = {
       peeper: "fish_peeper.png?v=" + ASSET_V,
       boomerang: "fish_boomerang.png?v=" + ASSET_V,
-      reginald: "fish_reginald.png?v=" + ASSET_V
+      reginald: "fish_reginald.png?v=" + ASSET_V,
+      hover: "fish_hover.png?v=" + ASSET_V,
+      hole: "fish_hole.png?v=" + ASSET_V,
+      garry: "fish_garry.png?v=" + ASSET_V
     };
     const FISH_KIND_BY_ID = { fish1: "boomerang", fish2: "peeper", kelp1: "peeper", kelp2: "reginald" };
+    const SCAN_SLOTS = [
+      { x: 18, y: 70, kind: "hover" },
+      { x: 80, y: 68, kind: "hole" },
+      { x: 50, y: 74, kind: "garry" },
+      { x: 32, y: 56, kind: "peeper" },
+      { x: 66, y: 54, kind: "boomerang" },
+      { x: 88, y: 46, kind: "reginald" }
+    ];
+    const SCAN_DECO = [
+      { loc: 0, x: 10, y: 50, kind: "boomerang", scale: 0.62 },
+      { loc: 0, x: 28, y: 74, kind: "peeper", scale: 0.6 },
+      { loc: 0, x: 58, y: 76, kind: "hover", scale: 0.56 },
+      { loc: 0, x: 72, y: 40, kind: "garry", scale: 0.68 },
+      { loc: 1, x: 38, y: 48, kind: "peeper", scale: 0.75 },
+      { loc: 1, x: 62, y: 36, kind: "reginald", scale: 0.8 },
+      { loc: 1, x: 22, y: 62, kind: "hole", scale: 0.7 }
+    ];
     const LEVI_SRC = "leviathan.png?v=" + ASSET_V;
     const SUB = (window.QUEST_CONFIG && window.QUEST_CONFIG.SUBNAUTICA) || {};
     const O2CFG = Object.assign({ max: 100, drainPerSec: 1.1, warnAt: 28, bubbleHeal: 26, minFloor: 16 }, SUB.OXYGEN || {});
@@ -1129,7 +1191,8 @@
     let o2Last = 0, o2WarnShown = false;
     let scanned = {};
     let pdaAfter = null;
-    let repairDone = false, radioDone = false, photoDone = false, leviDone = false, leviQDone = false, heartQDone = false, caveDone = false;
+    let repairDone = false, radioDone = false, photoDone = false, leviDone = false, leviQDone = false, heartQDone = false, caveDone = false, scannerDone = false, scannerPlaying = false;
+    let scanHold = null, scanHoldRaf = 0;
     let airTimer = 0, o2Raf = 0, faunaRaf = 0, leviRaf = 0;
     let faunaState = [];
     let images = [];
@@ -1596,6 +1659,7 @@
     let glowPending = false, glowRaf = 0, glowParts = [];
     function afterGate() {
       if (glowPending) return;
+      if (needsScanner()) { startScanner(); return; }
       const q = pendingQuestion(index);
       if (q) showLeviQuestion(q, qStep(q));
       else if (needsCave()) startCaveSearch();
@@ -1760,17 +1824,18 @@
     }
     if (answerBtn) answerBtn.addEventListener("click", (e) => { e.stopPropagation(); submitLeviQuestion(); });
 
-    function showPda(kicker, title, text, btn, after) {
+    function showPda(kicker, title, text, btn, after, opts) {
       pdaKicker.textContent = kicker || "КПК";
       pdaTitle.textContent = title || "";
       pdaText.textContent = text || "";
       pdaBtn.textContent = btn || "Закрыть";
       pdaAfter = after || null;
+      pda.classList.toggle("q-pop", !!(opts && opts.glass));
       pda.classList.add("on");
       if (window.QuestHUD) QuestHUD.setStep(kicker === "Сканер" ? "scan" : (kicker || "pda").toLowerCase());
     }
     function closePda() {
-      pda.classList.remove("on");
+      pda.classList.remove("on", "q-pop");
       const fn = pdaAfter; pdaAfter = null;
       if (typeof fn === "function") fn();
     }
@@ -1862,59 +1927,199 @@
     }
 
     /* ----- сканер ----- */
+    const scanHud = document.getElementById("scanHud");
+    function scannerCfg() {
+      const raw = SUB.SCANNER;
+      if (!raw || Array.isArray(raw)) return { loc: 0, items: [], scanMs: 1000, primos: 50, toast: "Сканирование завершено", awardId: "sn-scanner" };
+      return raw;
+    }
+    function scannerLoc() {
+      const c = scannerCfg();
+      return c.loc != null ? c.loc : 0;
+    }
+    function scannerItems() {
+      const items = (scannerCfg().items || []).filter((it) => it && (it.name || it.text));
+      return items.slice(0, 6);
+    }
+    function needsScanner() {
+      return index === scannerLoc() && !scannerDone && scannerItems().length > 0;
+    }
+    function scanTotal() { return scannerItems().length; }
+    function scanCount() {
+      return scannerItems().filter((it, i) => scanned["scan-" + i]).length;
+    }
+    function updateScanHud() {
+      if (!scanHud) return;
+      const N = scanTotal(), n = scanCount();
+      const tpl = (scannerCfg().counter || "Отсканировано: {n}/{N}");
+      scanHud.textContent = tpl.replace("{n}", String(n)).replace("{N}", String(N));
+      scanHud.classList.toggle("on", !!(scannerPlaying && !scannerDone && N));
+    }
+    function stopScanHold() {
+      if (scanHoldRaf) { cancelAnimationFrame(scanHoldRaf); scanHoldRaf = 0; }
+      if (scanHold && scanHold.el) {
+        scanHold.el.classList.remove("scanning");
+        const ring = scanHold.el.querySelector(".scan-ring .prog");
+        if (ring) ring.style.strokeDashoffset = String(scanHold.circ || 97);
+      }
+      scanHold = null;
+    }
+    function finishOneScan(item, el) {
+      stopScanHold();
+      if (!item || scanned[item.id]) return;
+      scanned[item.id] = true;
+      if (el) { el.classList.add("scanned"); el.classList.remove("scan-target", "scanning"); }
+      updateScanHud();
+      const leftover = scanTotal() - scanCount();
+      showPda("Сканер", item.name || "Существо", item.text || "", "Закрыть", () => {
+        if (window.QuestHUD) QuestHUD.setStep("scan");
+        if (leftover <= 0) completeScanner();
+      }, { glass: true });
+    }
+    function completeScanner() {
+      if (scannerDone) { setReady(true); return; }
+      scannerDone = true;
+      scannerPlaying = false;
+      stopScanHold();
+      document.documentElement.classList.remove("scanner-on");
+      updateScanHud();
+      if (scanHud) scanHud.classList.remove("on");
+      const c = scannerCfg();
+      const primos = c.primos != null ? c.primos : 50;
+      if (primos) awardEvent(c.awardId || "sn-scanner", primos, c.toast || "Сканирование завершено", "📡");
+      setReady(true);
+    }
+    function startScanner() {
+      if (scannerDone || !scannerItems().length) { afterGate(); return; }
+      if (scannerPlaying) return;
+      setReady(false);
+      scannerPlaying = true;
+      document.documentElement.classList.add("scanner-on");
+      if (window.QuestHUD) QuestHUD.setStep("scan");
+      renderFauna();
+      updateScanHud();
+      const intro = scannerCfg().intro;
+      if (intro && !SCANNER_DEBUG) showStoryCaption(intro, FAST ? 600 : 2800);
+      if (AUTO) {
+        setTimeout(() => {
+          if (!scannerPlaying || scannerDone) return;
+          scannerItems().forEach((it, i) => { scanned[it.id] = true; });
+          renderFauna();
+          updateScanHud();
+          completeScanner();
+        }, FAST ? 200 : 700);
+      }
+    }
     function cancelFauna() {
+      stopScanHold();
       if (faunaRaf) cancelAnimationFrame(faunaRaf);
       faunaRaf = 0;
       faunaState = [];
     }
+    function bindScanHold(el, item) {
+      const ms = Math.max(280, Number(scannerCfg().scanMs) || 1000);
+      const holdMs = FAST ? Math.min(ms, 350) : ms;
+      const circ = 2 * Math.PI * 15.5;
+      const onDown = (e) => {
+        if (!scannerPlaying || scannerDone || scanned[item.id] || pda.classList.contains("on")) return;
+        e.preventDefault(); e.stopPropagation();
+        stopScanHold();
+        const prog = el.querySelector(".scan-ring .prog");
+        if (prog) { prog.style.strokeDasharray = String(circ); prog.style.strokeDashoffset = String(circ); }
+        el.classList.add("scanning");
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+        const t0 = performance.now();
+        scanHold = { item, el, t0, ms: holdMs, circ, pid: e.pointerId };
+        const tick = (now) => {
+          if (!scanHold || scanHold.el !== el) return;
+          const p = Math.min(1, (now - scanHold.t0) / scanHold.ms);
+          if (prog) prog.style.strokeDashoffset = String(circ * (1 - p));
+          if (p >= 1) { finishOneScan(item, el); return; }
+          scanHoldRaf = requestAnimationFrame(tick);
+        };
+        scanHoldRaf = requestAnimationFrame(tick);
+      };
+      const onUp = (e) => {
+        if (!scanHold || scanHold.el !== el) return;
+        e.preventDefault(); e.stopPropagation();
+        stopScanHold();
+      };
+      el.addEventListener("pointerdown", onDown);
+      el.addEventListener("pointerup", onUp);
+      el.addEventListener("pointercancel", onUp);
+      el.addEventListener("lostpointercapture", onUp);
+    }
+    function addFishEl(f, i) {
+      const kind = f.kind || FISH_KIND_BY_ID[f.id] || ["peeper", "boomerang", "reginald", "hover", "hole", "garry"][i % 6];
+      const el = document.createElement("button");
+      el.type = "button";
+      const deco = !!f.deco;
+      const canScan = !deco && !!(f.item);
+      el.className = "fish kind-" + kind + (deco ? " deco" : "") + (canScan && scanned[f.id] ? " scanned" : "") + (canScan && scannerPlaying && !scanned[f.id] ? " scan-target" : "");
+      el.style.left = f.x + "%";
+      el.style.top = f.y + "%";
+      if (f.scale && f.scale !== 1) el.style.setProperty("--fishScale", String(f.scale));
+      const img = document.createElement("img");
+      img.src = FISH_SRC[kind] || FISH_SRC.peeper;
+      img.alt = "";
+      img.draggable = false;
+      el.appendChild(img);
+      if (canScan) {
+        const ring = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        ring.setAttribute("class", "scan-ring");
+        ring.setAttribute("viewBox", "0 0 36 36");
+        ring.setAttribute("aria-hidden", "true");
+        ring.innerHTML = '<circle class="track" cx="18" cy="18" r="15.5"/><circle class="prog" cx="18" cy="18" r="15.5"/>';
+        el.appendChild(ring);
+        bindScanHold(el, f.item);
+      }
+      faunaBox.appendChild(el);
+      const scale = f.scale || 1;
+      return {
+        el, scale,
+        frozen: false,
+        phase: i * 1.37,
+        range: (18 + (i % 5) * 6) * scale,
+        omega: 0.22 + (i % 7) * 0.035,
+        bob: (3 + (i % 3) * 1.4) * scale,
+        bobFreq: 0.5 + i * 0.06,
+        tailFreq: 2.2 + i * 0.2
+      };
+    }
     function renderFauna() {
       cancelFauna();
+      if (!faunaBox) return;
       faunaBox.innerHTML = "";
-      const list = (SUB.SCANNER || []).filter((f) => f.loc === index);
-      faunaState = list.map((f, i) => {
-        const kind = f.kind || FISH_KIND_BY_ID[f.id] || ["peeper", "boomerang", "reginald"][i % 3];
-        const el = document.createElement("button");
-        el.type = "button";
-        el.className = "fish kind-" + kind + (scanned[f.id] ? " scanned" : "");
-        el.style.left = f.x + "%";
-        el.style.top = f.y + "%";
-        const img = document.createElement("img");
-        img.src = FISH_SRC[kind] || FISH_SRC.peeper;
-        img.alt = "";
-        img.draggable = false;
-        const label = document.createElement("span");
-        label.className = "fish-label";
-        label.textContent = f.name || "Сканировать";
-        el.appendChild(img);
-        el.appendChild(label);
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (scanned[f.id]) return;
-          scanned[f.id] = true;
-          el.classList.add("scanned");
-          showPda("Сканер", f.name || "Существо", f.comment || "Заглушка: запись КПК.", "Закрыть");
-        });
-        faunaBox.appendChild(el);
-        return {
-          el,
-          phase: i * 1.37,
-          range: 26 + i * 8,
-          omega: 0.28 + i * 0.04,
-          bob: 4 + (i % 3) * 1.5,
-          bobFreq: 0.55 + i * 0.07,
-          tailFreq: 2.4 + i * 0.25
-        };
+      const list = [];
+      SCAN_DECO.forEach((d) => {
+        if ((d.loc != null ? d.loc : 0) === index) list.push(Object.assign({ deco: true }, d));
       });
+      if (index === scannerLoc()) {
+        scannerItems().forEach((it, i) => {
+          const slot = SCAN_SLOTS[i] || SCAN_SLOTS[i % SCAN_SLOTS.length];
+          list.push({
+            id: "scan-" + i,
+            x: it.x != null ? it.x : slot.x,
+            y: it.y != null ? it.y : slot.y,
+            kind: it.kind || slot.kind,
+            item: Object.assign({ id: "scan-" + i }, it)
+          });
+        });
+      }
+      faunaState = list.map((f, i) => addFishEl(f, i));
       if (faunaState.length) {
         const t0 = performance.now();
         const tick = (now) => {
           const t = (now - t0) / 1000;
           faunaState.forEach((s) => {
-            const ox = Math.sin(t * s.omega + s.phase) * s.range;
-            const dir = Math.cos(t * s.omega + s.phase) >= 0 ? 1 : -1;
-            const oy = Math.sin(t * s.bobFreq + s.phase) * s.bob;
+            const hold = scanHold && scanHold.el === s.el;
+            const ox = hold ? 0 : Math.sin(t * s.omega + s.phase) * s.range;
+            const dir = Math.cos(t * s.omega + s.phase) >= 0 ? 1 : (hold ? (s._dir || 1) : -1);
+            if (!hold) s._dir = dir;
+            const oy = hold ? 0 : Math.sin(t * s.bobFreq + s.phase) * s.bob;
             const squash = 1 + Math.sin(t * s.tailFreq + s.phase) * 0.025;
-            s.el.style.transform = "translate(-50%,-50%) translate(" + ox.toFixed(2) + "px," + oy.toFixed(2) + "px) scaleX(" + (dir * squash).toFixed(3) + ")";
+            const sc = s.scale || 1;
+            s.el.style.transform = "translate(-50%,-50%) translate(" + ox.toFixed(2) + "px," + oy.toFixed(2) + "px) scale(" + sc + ") scaleX(" + (dir * squash).toFixed(3) + ")";
           });
           faunaRaf = requestAnimationFrame(tick);
         };
@@ -2003,7 +2208,7 @@
         repairEl.classList.remove("on");
         showPda("КПК", (SUB.REPAIR && SUB.REPAIR.title) || "Ремонт капсулы",
           (SUB.REPAIR && SUB.REPAIR.done) || "Капсула в порядке.", onwardLabel("Дальше"),
-          () => afterGate());
+          () => { if (needsScanner()) startScanner(); else afterGate(); });
       }, 350);
     }
 
@@ -2821,14 +3026,14 @@
       if (!vid || !media) return;
       const src = data && data.video;
       if (!src) { stopEventVideo(); return; }
-      const bust = /[?]/.test(src) ? src : (src + "?v=20261116p50");
+      const bust = /[?]/.test(src) ? src : (src + "?v=20261116p51");
       media.hidden = false;
       snEvCard.classList.add("has-video");
       vid.setAttribute("playsinline", "");
       vid.setAttribute("webkit-playsinline", "");
       vid.muted = false;
       const poster = data.poster || (String(src).replace(/\.mp4(\?.*)?$/i, ".jpg"));
-      if (poster) vid.setAttribute("poster", /[?]/.test(poster) ? poster : (poster + "?v=20261116p50"));
+      if (poster) vid.setAttribute("poster", /[?]/.test(poster) ? poster : (poster + "?v=20261116p51"));
       vid.src = bust;
       if (play) {
         play.textContent = data.tapLabel || "Смотреть";
@@ -3032,6 +3237,7 @@
       const needRadio = SUB.RADIO && i === SUB.RADIO.loc && !radioDone;
       const needLevi = SUB.LEVIATHAN && i === SUB.LEVIATHAN.loc && !leviDone;
       if (needRepair) startRepair();
+      else if (needsScanner()) startScanner();
       else if (needRadio) startRadio();
       else if (needLevi) startLeviathan();
       else if (needsMissYou()) { await playMissYouEvent(); afterGate(); }
@@ -3051,6 +3257,12 @@
       if (locDepth(index) >= seamothDepth()) seamothDone = true;
       syncDivePair();
       if (SUB.REPAIR && index === SUB.REPAIR.loc && !repairDone) { repairDone = true; repairEl.classList.remove("on"); }
+      if (needsScanner() || scannerPlaying) {
+        scannerDone = true; scannerPlaying = false;
+        stopScanHold();
+        document.documentElement.classList.remove("scanner-on");
+        if (scanHud) scanHud.classList.remove("on");
+      }
       if (SUB.RADIO && index === SUB.RADIO.loc && !radioDone) { radioDone = true; radioPing.classList.remove("show"); closeRadioTune(); }
       if (needsCave() || (caveSearch && caveSearch.classList.contains("on"))) { caveDone = true; closeCaveSearch(); }
       if (SUB.LEVIATHAN && index === SUB.LEVIATHAN.loc && !leviDone) {
@@ -3101,6 +3313,8 @@
           if (q.loc != null && q.loc <= index) markQDone(q);
         });
         syncQFlags();
+      } else if (SCANNER_DEBUG) {
+        index = scannerLoc();
       } else if (INTRO_DEBUG) {
         index = 0;
       } else if (RADIO_DEBUG) {
@@ -3132,7 +3346,7 @@
       } else if (START_LOC > 0) {
         index = START_LOC;
       }
-      const jump = index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || MISSYOU_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG;
+      const jump = index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || MISSYOU_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG || SCANNER_DEBUG;
       if (jump || INTRO_DEBUG) {
         if (SUB.REPAIR && (index > SUB.REPAIR.loc || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || MISSYOU_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG)) repairDone = true;
         if (SUB.RADIO && (index > SUB.RADIO.loc || (Q_DEBUG && index === SUB.RADIO.loc) || ((CAVE_DEBUG || LEVI_DEBUG || MISSYOU_DEBUG || GLOW_DEBUG || REUNION_DEBUG) && index >= SUB.RADIO.loc))) radioDone = true;
@@ -3144,7 +3358,8 @@
         if (index > heartLoc()) heartQDone = true;
         if (CAVE_DEBUG) { leviDone = true; leviQDone = true; caveDone = false; }
         if (MISSYOU_DEBUG) { leviDone = true; leviQDone = true; caveDone = false; missyouDone = false; }
-        if (!INTRO_DEBUG && (index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || MISSYOU_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG)) introDone = true;
+        if (SCANNER_DEBUG) { repairDone = true; introDone = true; scannerDone = false; }
+        if (!INTRO_DEBUG && (index > 0 || Q_DEBUG || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || MISSYOU_DEBUG || GLOW_DEBUG || CURRENT_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG || SCANNER_DEBUG)) introDone = true;
         if (!CURRENT_DEBUG && (index > currentLoc() || RADIO_DEBUG || CAVE_DEBUG || LEVI_DEBUG || MISSYOU_DEBUG || GLOW_DEBUG || REUNION_DEBUG || SEAMOTH_DEBUG || (Q_DEBUG && index > currentLoc()) || (Q_DEBUG && index === currentLoc() && Q_DEBUG > 1))) currentDone = true;
         if (GLOW_DEBUG || index > heartLoc()) reunionDone = true;
         if (!SEAMOTH_DEBUG && locDepth(index) >= seamothDepth() && index > seamothEntryLoc()) seamothDone = true;
@@ -3165,7 +3380,7 @@
       window.__ready = true;
       window.__goNext = goNext;
       window.__subnautica = {
-        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, introDone, currentDone, reunionDone, seamothDone, inSeamoth: inSeamoth(), inCave: inCaveSpace(), together: !currentDone || reunionDone, radioFreq, leviPlaying, leviHidden, scanned: Object.assign({}, scanned) }; },
+        get state() { return { index, locReady, oxygen, repairDone, radioDone, photoDone, leviDone, leviQDone, heartQDone, caveDone, introDone, currentDone, reunionDone, seamothDone, scannerDone, scannerPlaying, inSeamoth: inSeamoth(), inCave: inCaveSpace(), together: !currentDone || reunionDone, radioFreq, leviPlaying, leviHidden, scanned: Object.assign({}, scanned) }; },
         story: { playIntro, playCurrent: playCurrentEvent, playReunion, showCard: showEventCard },
         completeGate: forceComplete,
         spawnBubble: spawnAirBubble,
