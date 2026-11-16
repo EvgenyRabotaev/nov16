@@ -845,6 +845,56 @@
   @media (max-width: 420px) {
     .shop-last-gift { font-size: 16px; padding: 13px 16px; min-height: 48px; }
   }
+  .shop-last-gift { appearance: none; -webkit-appearance: none; cursor: pointer; }
+  .gift-modal {
+    position: fixed; inset: 0; z-index: 10050;
+    display: flex; align-items: center; justify-content: center;
+    padding: calc(56px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    background: rgba(3, 4, 12, .82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .gift-modal.hidden { display: none; }
+  .gift-modal-close {
+    position: absolute;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    z-index: 2;
+    width: 44px; height: 44px;
+    border: 1px solid rgba(255, 230, 180, .28);
+    border-radius: 50%;
+    background: rgba(16, 12, 24, .78);
+    color: #fff4e4;
+    font: 700 20px/1 "Segoe UI", system-ui, sans-serif;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gift-modal-close:hover,
+  .gift-modal-close:focus-visible { background: rgba(36, 28, 48, .92); border-color: rgba(255, 230, 180, .5); }
+  .gift-stage {
+    position: relative;
+    width: min(92vw, calc((100dvh - 80px) * 9 / 16), 420px);
+    aspect-ratio: 9 / 16;
+    max-height: calc(100dvh - 80px);
+    max-width: 92vw;
+    background: #000;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 18px 50px rgba(0,0,0,.6), 0 0 0 1px rgba(255, 230, 180, .16);
+  }
+  .gift-stage video,
+  .gift-stage iframe {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    background: #000;
+    border: 0;
+    display: block;
+  }
+  .gift-stage video.hidden,
+  .gift-stage iframe.hidden { display: none; }
   .sg-modal {
     position: fixed; inset: 0; z-index: 20;
     display: flex; align-items: center; justify-content: center;
@@ -897,10 +947,10 @@
   .qhud-hint, .qhud-panel { display: none !important; }
 </style>
 <link rel="stylesheet" href="../common/hud.css?v=20261115p41">
-<script src="../common/quest_config.js?v=20261116p52"></script>
+<script src="../common/quest_config.js?v=20261116p53"></script>
 <script src="../common/hud.js?v=20261115p41" data-screen="gacha" data-counter="off"></script>
-<script src="card_texts.js?v=20261116p52"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
-<script src="card_texts_paimon.js?v=20261116p52"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
+<script src="card_texts.js?v=20261116p53"></script><!-- тексты карточек: card_texts.md → tools/card_texts_build.py -->
+<script src="card_texts_paimon.js?v=20261116p53"></script><!-- реплики Паймон: card_texts_paimon.md → tools/card_texts_build.py -->
 <link rel="preload" as="image" href="../genshin/fairy.png">
 </head>
 <body>
@@ -976,9 +1026,16 @@
     <div class="shop-bal" id="shopBal" data-primos="0"></div>
   </div>
   <div class="shop-grid" id="shopGrid"></div>
-  <a class="shop-last-gift" id="shopLastGift"
-     href="https://youtube.com/shorts/OKrGGScVBgo?si=quWnkCEtmb5a6MXF"
-     target="_blank" rel="noopener">Последний подарок 💙</a>
+  <button type="button" class="shop-last-gift" id="shopLastGift" aria-haspopup="dialog">Последний подарок 💙</button>
+</div>
+
+<div id="giftModal" class="gift-modal hidden" role="dialog" aria-modal="true" aria-label="Последний подарок" aria-hidden="true">
+  <button type="button" class="gift-modal-close" id="giftModalClose" aria-label="Закрыть">✕</button>
+  <div class="gift-stage" id="giftStage">
+    <video id="giftVideo" playsinline webkit-playsinline controls preload="metadata"
+           poster="videos/last_gift.jpg?v=20261116p53"
+           src="videos/last_gift.mp4?v=20261116p53"></video>
+  </div>
 </div>
 
 <div id="sgModal" class="sg-modal hidden" role="dialog" aria-modal="true" aria-labelledby="sgModalText">
@@ -2565,6 +2622,73 @@
   function shopConfirmNo() {
     hideSgModal();
   }
+  const GIFT_VIDEO = 'videos/last_gift.mp4?v=20261116p53';
+  const GIFT_POSTER = 'videos/last_gift.jpg?v=20261116p53';
+  const GIFT_YT = 'https://www.youtube.com/embed/OKrGGScVBgo?autoplay=1&playsinline=1';
+  function stopGiftMedia() {
+    const vid = document.getElementById('giftVideo');
+    if (vid) {
+      try { vid.pause(); } catch (e) {}
+      try { vid.currentTime = 0; } catch (e) {}
+    }
+    const frame = document.getElementById('giftFrame');
+    if (frame) { frame.src = 'about:blank'; frame.remove(); }
+  }
+  function showGiftFallback() {
+    const stage = document.getElementById('giftStage');
+    const vid = document.getElementById('giftVideo');
+    if (vid) { try { vid.pause(); } catch (e) {} vid.classList.add('hidden'); }
+    if (!stage || document.getElementById('giftFrame')) return;
+    const ifr = document.createElement('iframe');
+    ifr.id = 'giftFrame';
+    ifr.src = GIFT_YT;
+    ifr.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    ifr.setAttribute('allowfullscreen', '');
+    ifr.title = 'Последний подарок';
+    stage.appendChild(ifr);
+  }
+  function openGiftModal() {
+    const modal = document.getElementById('giftModal');
+    const vid = document.getElementById('giftVideo');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('gift-modal-on');
+    if (!vid) { showGiftFallback(); return; }
+    vid.classList.remove('hidden');
+    if (!vid.getAttribute('src')) vid.src = GIFT_VIDEO;
+    if (!vid.getAttribute('poster')) vid.setAttribute('poster', GIFT_POSTER);
+    vid.setAttribute('playsinline', '');
+    vid.setAttribute('webkit-playsinline', '');
+    const tryPlay = function () { const p = vid.play(); if (p && p.catch) p.catch(function () {}); };
+    if (vid.readyState >= 2) tryPlay();
+    else vid.addEventListener('canplay', tryPlay, { once: true });
+    vid.onerror = function () { showGiftFallback(); };
+  }
+  function closeGiftModal() {
+    const modal = document.getElementById('giftModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('gift-modal-on');
+    stopGiftMedia();
+  }
+  document.getElementById('shopLastGift').addEventListener('click', function (e) {
+    e.preventDefault();
+    openGiftModal();
+  });
+  document.getElementById('giftModalClose').addEventListener('click', function (e) {
+    e.preventDefault(); e.stopPropagation();
+    closeGiftModal();
+  });
+  document.getElementById('giftModal').addEventListener('click', function (e) {
+    if (e.target.id === 'giftModal') closeGiftModal();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.body.classList.contains('gift-modal-on')) closeGiftModal();
+  });
+
   document.getElementById('sgModalYes').addEventListener('click', shopConfirmYes);
   document.getElementById('sgModalNo').addEventListener('click', shopConfirmNo);
   document.getElementById('sgModal').addEventListener('click', function (e) {
